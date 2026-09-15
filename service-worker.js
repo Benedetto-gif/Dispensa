@@ -8,7 +8,7 @@
  * l'app continua comunque a funzionare senza connessione.
  */
 
-const VERSIONE = 'dispensabuilder-v16';
+const VERSIONE = 'dispensabuilder-v18';
 
 const FILE = [
   './',

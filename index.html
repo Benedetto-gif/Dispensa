@@ -1414,7 +1414,7 @@ footer.note{
   <header class="top">
     <p class="kicker">Cosa cucino con quello che ho</p>
     <h1>DispensaBuilder</h1>
-    <p>Farine, lieviti, grassi e inclusioni: <span class="bot-count">71</span> ingredienti con forza, assorbimento, percentuale tipica e i limiti da non superare.</p>
+    <p>Spunta quello che hai in casa: l’app cerca fra oltre quattrocento ricette quelle che puoi fare subito, quelle che lo diventano con una sostituzione e quelle a cui manca poco.</p>
   </header>
 
   <nav class="tabs">
@@ -1425,6 +1425,7 @@ footer.note{
     <button data-tab="ricettario">📒 Ricettario</button>
     <button data-tab="abbinamenti">🧬 Food pairing</button>
     <button data-tab="mie">✍️ Le mie ricette</button>
+    <button data-tab="musica">🎵 Musica</button>
     <button data-tab="attrezzature">🔩 Attrezzature</button>
     <button data-tab="sostituzioni">🔄 Sostituzioni</button>
   </nav>
@@ -1470,6 +1471,12 @@ footer.note{
         <h3>Le mie ricette</h3>
         <p>Se nessuna proposta ti convince, scrivi la tua:
           entra nell’archivio e partecipa alle ricerche come le altre.</p>
+      </div>
+      <div class="home-card" data-goto="musica" style="--c:var(--c-speziato)">
+        <div class="hc-icon">🎵</div>
+        <h3>Musica</h3>
+        <p>Otto generi di radio da tenere accesi mentre cucini,
+          dalla classica al jazz alla house.</p>
       </div>
       <div class="home-card" data-goto="attrezzature" style="--c:var(--c-marino)">
         <div class="hc-icon">🔩</div>
@@ -1572,7 +1579,6 @@ footer.note{
             in cima: alcune voci sono raggruppate, per esempio il pane raffermo sta sotto <em>pane</em>.</li>
           <li><strong>Solo quello che posso fare ora</strong> è il cuore dell’app: mostra le ricette
             fattibili senza uscire a comprare, comprese quelle che lo diventano con una sostituzione.</li>
-          <li>Il pulsante <strong>♪</strong> in basso a destra accende una radio di sottofondo.</li>
           <li>Con <em>svuota</em> azzeri la selezione; con <em>cerca sul web</em> porti gli ingredienti su un motore di ricerca.</li>
         </ol>
       </div>
@@ -1802,6 +1808,25 @@ footer.note{
     <datalist id="elenco-ingredienti"></datalist>
   </section>
 
+  <!-- MUSICA -->
+  <section class="panel" id="panel-musica">
+    <details class="howto">
+      <summary>Come funziona</summary>
+      <div class="howto-body">
+        <p>Scegli un genere e parte una radio di sottofondo, che resta accesa mentre giri fra le ricette.
+          In fondo allo schermo compare una barra con volume, pausa, stazione successiva e spegnimento.</p>
+        <p>Sono stream pubblici e gratuiti di emittenti terze — il servizio pubblico svizzero e SomaFM.
+          Possono cambiare indirizzo o non rispondere: per questo ogni genere ha più stazioni e l’app
+          passa da sola alla successiva se una non si collega.</p>
+        <p>È l’unica parte dell’app che richiede una connessione: tutto il resto funziona anche offline.</p>
+      </div>
+    </details>
+    <div class="prove-head">
+      <h2>Musica mentre cucini</h2>
+    </div>
+    <div class="ck-filters" id="musica-generi"></div>
+  </section>
+
   <!-- ATTREZZATURE -->
   <section class="panel" id="panel-attrezzature">
     <details class="howto">
@@ -1850,12 +1875,6 @@ footer.note{
 
   <!-- MUSICA -->
   <button class="musica-fab" id="musica-fab" type="button" aria-label="Musica">♪</button>
-  <div class="musica-pannello" id="musica-pannello" hidden>
-    <div class="tp-title">Musica mentre cucini</div>
-    <div class="ck-filters" id="musica-generi"></div>
-    <p class="cond-hint" style="margin:12px 0 0;">Radio pubbliche e gratuite. Sono servizi esterni:
-      se una stazione non risponde l’app passa da sola alla successiva.</p>
-  </div>
   <div class="musica-barra" id="musica-barra" hidden>
     <div class="mb-testo">
       <span class="mb-genere" id="musica-genere"></span>
@@ -1896,9 +1915,9 @@ footer.note{
   <footer class="note">
     Le dosi sono per quattro persone e si scalano automaticamente. Gli allergeni sono ricavati dagli
     ingredienti e vanno verificati sulle etichette. “Chiedi” confronta la frase con l’archivio e
-    “Incolla una ricetta” struttura il testo che le dai: nessuna delle due è un’intelligenza artificiale,
-    e nessuna legge i siti al posto tuo. Dispensa, filtri, attrezzature, zona e ricette tue restano
-    su questo dispositivo.
+    “Incolla una ricetta” struttura il testo che le dai: nessuna delle due è un’intelligenza artificiale.
+    Le radio sono stream pubblici di emittenti terze. Dispensa, filtri, attrezzature, zona e ricette tue
+    restano su questo dispositivo.
   </footer>
 </div>
 <div id="print-area" class="print-only"></div>
@@ -3296,7 +3315,6 @@ let indiceStazione = 0;
 let tentativi = 0;
 
 const fab = document.getElementById('musica-fab');
-const pannello = document.getElementById('musica-pannello');
 const barra = document.getElementById('musica-barra');
 
 function stazioneCorrente(){
@@ -3360,15 +3378,13 @@ function renderGeneri(){
     b.addEventListener('click', () => {
       suona(g, 0);
       renderGeneri();
-      pannello.hidden = true;
     });
     cont.appendChild(b);
   });
 }
 
-fab.addEventListener('click', (e) => { e.stopPropagation(); pannello.hidden = !pannello.hidden; });
-pannello.addEventListener('click', (e) => e.stopPropagation());
-document.addEventListener('click', () => { if (!pannello.hidden) pannello.hidden = true; });
+// scorciatoia: porta alla scheda Musica
+fab.addEventListener('click', () => showTab('musica'));
 
 document.getElementById('musica-play').addEventListener('click', () => {
   if (audio.paused) audio.play().catch(() => cambiaStazione(true)); else audio.pause();
