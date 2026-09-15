@@ -1,4 +1,4 @@
-/* ImpastoBuilder — service worker
+/* DispensaBuilder — service worker
  *
  * Cambia VERSIONE a ogni aggiornamento dei file: basta questo
  * per far scaricare al telefono la versione nuova.
@@ -8,7 +8,7 @@
  * l'app continua comunque a funzionare senza connessione.
  */
 
-const VERSIONE = 'impastobuilder-v5';
+const VERSIONE = 'dispensabuilder-v6';
 
 const FILE = [
   './',
