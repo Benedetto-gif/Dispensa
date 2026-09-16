@@ -1,7 +1,7 @@
 {
-  "name": "DispensaBuilder — cosa cucino con quello che ho",
-  "short_name": "DispensaBuilder",
-  "description": "Spunta gli ingredienti che hai in casa e trova fra 54 ricette quelle che puoi preparare subito, con dosi scalabili e procedimento.",
+  "name": "Che cucino? — dalla dispensa al piatto",
+  "short_name": "Che cucino?",
+  "description": "Spunta gli ingredienti che hai in casa e trova fra oltre quattrocento ricette quelle che puoi preparare subito, con dosi scalabili e procedimento.",
   "lang": "it",
   "start_url": "./",
   "scope": "./",

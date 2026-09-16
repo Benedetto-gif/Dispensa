@@ -1,4 +1,4 @@
-/* DispensaBuilder — service worker
+/* Che cucino? — service worker
  *
  * Cambia VERSIONE a ogni aggiornamento dei file: basta questo
  * per far scaricare al telefono la versione nuova.
@@ -8,7 +8,7 @@
  * l'app continua comunque a funzionare senza connessione.
  */
 
-const VERSIONE = 'dispensabuilder-v18';
+const VERSIONE = 'checucino-v19';
 
 const FILE = [
   './',
