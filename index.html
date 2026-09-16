@@ -421,6 +421,15 @@ nav.tabs{
   box-shadow:var(--sh-1), var(--sh-inset);
 }
 nav.tabs::-webkit-scrollbar{display:none;}
+nav.tabs{scroll-snap-type:x proximity;scroll-padding:0 5px;}
+nav.tabs button{scroll-snap-align:start;}
+/* Da qui in su ci stanno tutte: niente mezzo pulsante tagliato */
+@media (min-width:1000px){
+  nav.tabs{flex-wrap:wrap;overflow-x:visible;row-gap:4px;justify-content:flex-start;}
+}
+@media (max-width:520px){
+  nav.tabs button{padding:9px 12px;font-size:13px;}
+}
 nav.tabs button{
   font-family:'Public Sans',sans-serif;
   font-size:13.5px;
@@ -1475,11 +1484,11 @@ footer.note{
   <nav class="tabs">
     <button data-tab="stasera" class="active">🍽️ Stasera</button>
     <button data-tab="home">🏠 Home</button>
-    <button data-tab="storia">📖 Come funziona</button>
+    <button data-tab="storia">📖 Guida</button>
     <button data-tab="dispensa">🧺 Dispensa</button>
     <button data-tab="chiedi">💬 Chiedi</button>
     <button data-tab="ricettario">📒 Ricettario</button>
-    <button data-tab="abbinamenti">🧬 Food pairing</button>
+    <button data-tab="abbinamenti">🧬 Pairing</button>
     <button data-tab="mie">✍️ Le mie ricette</button>
     <button data-tab="musica">🎵 Musica</button>
     <button data-tab="attrezzature">🔩 Attrezzature</button>
@@ -4195,6 +4204,10 @@ function showTab(name){
   const panel = document.getElementById('panel-' + name);
   if (!panel) return;
   document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  const attivo = document.querySelector('nav.tabs button.active');
+  if (attivo && attivo.scrollIntoView){
+    try { attivo.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } catch(e){}
+  }
   document.querySelectorAll('section.panel').forEach(p => p.classList.remove('active'));
   panel.classList.add('active');
   window.scrollTo(0, 0);
