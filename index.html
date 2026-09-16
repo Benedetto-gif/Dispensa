@@ -218,13 +218,55 @@ body::after{
   100%{transform:translate3d(1.5%,-1%,0) scale(1.02);}
 }
 
-/* Filigrana botanica, appena percettibile */
+/* ---------- Percorso guidato "Stasera" ---------- */
+.flow-head{margin-bottom:26px;}
+.flow-head h2{margin:2px 0 8px;font-size:clamp(26px,5vw,38px);line-height:1.1;}
+.flow-sub{margin:0;color:var(--ink-soft);font-size:15px;line-height:1.55;max-width:62ch;}
+.flow-barra{display:flex;gap:10px;margin:0 0 20px;flex-wrap:wrap;}
+.flow-step[hidden]{display:none;}
+.flow-scelte{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px;}
+@media(max-width:820px){.flow-scelte{grid-template-columns:1fr;}}
+.flow-card{
+  border:1px solid var(--line-strong);border-radius:var(--r-card);padding:22px 20px;
+  background:var(--surface-2);cursor:pointer;text-align:left;
+  transition:transform .14s var(--ease),box-shadow var(--dur) var(--ease),border-color var(--dur) var(--ease);
+}
+.flow-card:active{transform:scale(.985);}
+@media(hover:hover){.flow-card:hover{transform:translateY(-3px);border-color:var(--c);box-shadow:var(--sh-2);}}
+.flow-card .fc-ic{font-size:30px;line-height:1;margin-bottom:12px;display:block;}
+.flow-card h3{margin:0 0 7px;font-size:19px;color:var(--c);}
+.flow-card p{margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.5;}
+.flow-domanda{margin:0 0 10px;font-size:16px;font-weight:650;}
+.flow-nota{margin:8px 0 0;font-size:13px;color:var(--ink-soft);opacity:.85;line-height:1.5;}
+.flow-blocco{margin-bottom:26px;}
+.flow-azioni{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;}
+.verdetto{border-radius:var(--r-card);padding:22px 20px;margin-bottom:22px;border:1px solid var(--line-strong);}
+.verdetto h3{margin:0 0 8px;font-size:22px;}
+.verdetto p{margin:0 0 6px;font-size:14.5px;line-height:1.55;}
+.verdetto.si{border-color:#5a8f4d;background:rgba(90,143,77,.08);}
+.verdetto.si h3{color:#3f6d34;}
+.verdetto.forse{border-color:var(--c-agrumato);background:rgba(200,150,40,.08);}
+.verdetto.no{border-color:var(--red-sym);background:rgba(170,60,50,.07);}
+.verdetto.no h3{color:var(--red-sym);}
+.battuta{font-style:italic;opacity:.8;font-size:13.5px;margin-top:10px;}
+.flow-lista{display:flex;flex-direction:column;gap:10px;}
+.flow-voce{
+  display:flex;justify-content:space-between;align-items:center;gap:12px;
+  border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  background:var(--surface-2);cursor:pointer;text-align:left;width:100%;
+}
+.flow-voce:active{transform:scale(.99);}
+.flow-voce .fv-n{font-weight:650;font-size:14.5px;}
+.flow-voce .fv-m{font-size:12.5px;color:var(--ink-soft);}
+.flow-conta{font-size:13px;color:var(--ink-soft);margin:0 0 14px;}
+
+/* Filigrana di dispensa: pomodoro, pasta, pesce, aglio */
 body::before{
   content:"";
   position:fixed;
   inset:0;
   background-image:
-    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='240'%20height='240'%20viewBox='0%200%20240%20240'%3E%3Cg%20fill='none'%20stroke='%231F4A3A'%20stroke-opacity='0.16'%20stroke-width='3'%20stroke-linecap='round'%3E%3Cpath%20d='M60%2040%20C90%2055%2C%2090%2095%2C%2060%20115%20C30%2095%2C%2030%2055%2C%2060%2040%20Z'/%3E%3Cpath%20d='M60%2042%20L60%20112'/%3E%3C/g%3E%3Cg%20fill='%231F4A3A'%20fill-opacity='0.16'%3E%3Cpath%20d='M170%20130%20L170%20190'%20stroke='%231F4A3A'%20stroke-opacity='0.16'%20stroke-width='3'/%3E%3Ccircle%20cx='162'%20cy='140'%20r='8'/%3E%3Ccircle%20cx='180'%20cy='144'%20r='8'/%3E%3Ccircle%20cx='170'%20cy='126'%20r='8'/%3E%3C/g%3E%3C/svg%3E");
+    url("data:image/svg+xml,<svg%20xmlns='http://www.w3.org/2000/svg'%20width='240'%20height='240'%20viewBox='0%200%20240%20240'><g%20fill='none'%20stroke='%231F4A3A'%20stroke-opacity='0.16'%20stroke-width='3'%20stroke-linecap='round'%20stroke-linejoin='round'><circle%20cx='58'%20cy='60'%20r='21'/><path%20d='M58%2039%20L58%2031'/><path%20d='M58%2037%20L45%2031'/><path%20d='M58%2037%20L71%2031'/><path%20d='M154%2034%20C164%2046%20146%2058%20156%2070%20C166%2082%20148%2094%20158%20106'/><path%20d='M172%2034%20C182%2046%20164%2058%20174%2070%20C184%2082%20166%2094%20176%20106'/><path%20d='M190%2034%20C200%2046%20182%2058%20192%2070%20C202%2082%20184%2094%20194%20106'/><path%20d='M34%20182%20C50%20166%2082%20166%2098%20182%20C82%20198%2050%20198%2034%20182%20Z'/><path%20d='M98%20182%20L114%20171%20L114%20193%20Z'/><path%20d='M178%20150%20L178%20158'/><path%20d='M178%20158%20C165%20166%20158%20180%20158%20191%20C158%20200%20167%20206%20178%20206%20C189%20206%20198%20200%20198%20191%20C198%20180%20191%20166%20178%20158%20Z'/><path%20d='M170%20205%20C167%20192%20171%20172%20178%20159'/><path%20d='M186%20205%20C189%20192%20185%20172%20178%20159'/></g><g%20fill='%231F4A3A'%20fill-opacity='0.16'><circle%20cx='50'%20cy='178'%20r='2.6'/></g></svg>");
   background-repeat:repeat;
   background-size:150px 150px;
   opacity:var(--fil-op);
@@ -1431,7 +1473,8 @@ footer.note{
   </header>
 
   <nav class="tabs">
-    <button data-tab="home" class="active">🏠 Home</button>
+    <button data-tab="stasera" class="active">🍽️ Stasera</button>
+    <button data-tab="home">🏠 Home</button>
     <button data-tab="storia">📖 Come funziona</button>
     <button data-tab="dispensa">🧺 Dispensa</button>
     <button data-tab="chiedi">💬 Chiedi</button>
@@ -1444,8 +1487,53 @@ footer.note{
   </nav>
   </div>
 
+  <!-- STASERA: percorso guidato -->
+  <section class="panel active" id="panel-stasera">
+    <div class="flow-head">
+      <p class="hero-kicker" id="flow-kicker">Si comincia da qui</p>
+      <h2 id="flow-titolo">Che si fa stasera?</h2>
+      <p class="flow-sub" id="flow-sub">Tre strade. Prendi quella che ti somiglia di più adesso.</p>
+    </div>
+
+    <div class="flow-barra" id="flow-barra" hidden>
+      <button class="ghost-btn" id="flow-indietro">← Indietro</button>
+      <button class="ghost-btn" id="flow-ricomincia">Ricomincia</button>
+    </div>
+
+    <div class="flow-step" id="passo-intro" hidden></div>
+
+    <div class="flow-step" id="passo-scelta">
+      <div class="flow-scelte">
+        <button class="flow-card" type="button" data-ramo="so" style="--c:var(--c-agrumato)">
+          <span class="fc-ic">🎯</span>
+          <h3>So già cosa voglio</h3>
+          <p>Hai in testa un piatto. Dimmi quale e ti dico in tre tocchi se stasera si può fare.</p>
+        </button>
+        <button class="flow-card" type="button" data-ramo="tu" style="--c:var(--c-mediterraneo)">
+          <span class="fc-ic">🧺</span>
+          <h3>Guarda tu</h3>
+          <p>Non hai idee. Confermi cosa c'è in casa, rispondi a due domande e scegli fra quello che viene fuori.</p>
+        </button>
+        <button class="flow-card" type="button" data-ramo="finire" style="--c:var(--c-erbaceo)">
+          <span class="fc-ic">⏳</span>
+          <h3>Ho una cosa da finire</h3>
+          <p>Le melanzane che stanno andando, mezza ricotta aperta, il pane di ieri. Parti da lì.</p>
+        </button>
+      </div>
+      <p class="flow-nota">Se l'app la conosci già, il menù qui sopra porta dove vuoi senza passare da qui.</p>
+    </div>
+
+    <div class="flow-step" id="passo-piatto" hidden></div>
+    <div class="flow-step" id="passo-verifica" hidden></div>
+    <div class="flow-step" id="passo-verdetto" hidden></div>
+    <div class="flow-step" id="passo-conferma" hidden></div>
+    <div class="flow-step" id="passo-domande" hidden></div>
+    <div class="flow-step" id="passo-risultati" hidden></div>
+    <div class="flow-step" id="passo-finire" hidden></div>
+  </section>
+
   <!-- HOME -->
-  <section class="panel active" id="panel-home">
+  <section class="panel" id="panel-home">
     <div class="home-hero" data-goto="dispensa">
       <p class="hero-kicker">Si comincia da qui</p>
       <h2>Apri il frigorifero</h2>
@@ -1514,6 +1602,14 @@ footer.note{
     <div class="storia">
       <h2>Come funziona</h2>
       <p class="storia-sub">Poche regole, e il grosso del lavoro lo fa la lista della spesa che non devi fare.</p>
+
+      <h3>Stasera: il percorso guidato</h3>
+      <p>È la schermata che si apre per prima e serve a chi non ha voglia di decidere da dove partire.
+        Tre strade: <em>so già cosa voglio</em> chiede solo gli ingredienti del piatto che hai in testa e
+        risponde sì o no; <em>guarda tu</em> conferma la dispensa, chiede portata e tempo e propone;
+        <em>ho una cosa da finire</em> parte da un ingrediente solo. Quando un piatto non si può fare,
+        l'app propone sempre qualcosa di simile che invece si può. Il menù in alto resta lì per chi
+        l'app la conosce già: le due vie portano agli stessi dati.</p>
 
       <h3>Gli ingredienti base</h3>
       <p>Sale, acqua, olio extravergine e pepe nero sono considerati sempre presenti: sono la base di
@@ -3592,6 +3688,507 @@ audio.volume = 0.7;
 
 renderGeneri();
 
+
+// ---------- Percorso guidato "Stasera" ----------
+// Non tiene stato proprio: muove gli stessi filtri e la stessa dispensa
+// dei pannelli esperti, e alla fine ti lascia lì.
+const CHIAVE_INTRO = 'dispensa_intro_v1';
+const PASSI = ['intro','scelta','piatto','verifica','verdetto','conferma','domande','risultati','finire'];
+let flowPila = [];
+let flowPiatto = null;
+let flowTempo = 0;          // 0 = nessun limite
+let flowSenzaForno = false;
+let flowIngrediente = '';
+
+function flowEl(id){ return document.getElementById('passo-' + id); }
+
+function flowVai(passo, titolo, sotto){
+  PASSI.forEach(p => { const el = flowEl(p); if (el) el.hidden = (p !== passo); });
+  document.getElementById('flow-titolo').textContent = titolo;
+  document.getElementById('flow-sub').textContent = sotto || '';
+  document.getElementById('flow-barra').hidden = (passo === 'scelta' || passo === 'intro');
+  document.getElementById('flow-kicker').textContent =
+    passo === 'scelta' ? 'Si comincia da qui' : 'Stasera';
+  window.scrollTo(0, 0);
+}
+function flowAvanti(passo, titolo, sotto, disegna){
+  flowPila.push({ passo, titolo, sotto, disegna });
+  if (disegna) disegna();
+  flowVai(passo, titolo, sotto);
+}
+function flowIndietro(){
+  flowPila.pop();
+  const p = flowPila[flowPila.length - 1];
+  if (!p){ flowHome(); return; }
+  if (p.disegna) p.disegna();
+  flowVai(p.passo, p.titolo, p.sotto);
+}
+function flowHome(){
+  flowPila = [];
+  flowPiatto = null; flowIngrediente = '';
+  flowVai('scelta', 'Che si fa stasera?', 'Tre strade. Prendi quella che ti somiglia di più adesso.');
+}
+
+function btn(testo, classe, onClick){
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = classe; b.textContent = testo;
+  b.addEventListener('click', onClick);
+  return b;
+}
+function gruppoScelta(cont, domanda, voci, valore, onScelta){
+  const blocco = document.createElement('div');
+  blocco.className = 'flow-blocco';
+  const h = document.createElement('p');
+  h.className = 'flow-domanda'; h.textContent = domanda;
+  blocco.appendChild(h);
+  const riga = document.createElement('div');
+  riga.className = 'chip-row';
+  voci.forEach(([val, testo]) => {
+    riga.appendChild(btn(testo, 'chip' + (val === valore ? ' on' : ''), () => onScelta(val)));
+  });
+  blocco.appendChild(riga);
+  cont.appendChild(blocco);
+}
+
+// ===== Primo avvio: le cose che non cambiano ogni sera =====
+function introFatta(){
+  try { return !!localStorage.getItem(CHIAVE_INTRO); } catch(e){ return true; }
+}
+function segnaIntro(){ try { localStorage.setItem(CHIAVE_INTRO, '1'); } catch(e){} }
+
+function disegnaIntro(){
+  const c = flowEl('intro');
+  c.innerHTML = '';
+  gruppoScelta(c, 'Mangi di tutto?', [
+    ['', 'di tutto'], ['vegetariano', 'vegetariano'], ['vegano', 'vegano']
+  ], stile, v => { stile = v; salvaFiltri(); disegnaIntro(); renderFiltri(); });
+
+  const bA = document.createElement('div');
+  bA.className = 'flow-blocco';
+  const hA = document.createElement('p');
+  hA.className = 'flow-domanda'; hA.textContent = 'C’è qualcosa che devi evitare?';
+  bA.appendChild(hA);
+  const rA = document.createElement('div');
+  rA.className = 'chip-row';
+  ALLERGENI.forEach(a => {
+    rA.appendChild(btn(a, 'chip allerg' + (esclusi.has(a) ? ' on' : ''), () => {
+      if (esclusi.has(a)) esclusi.delete(a); else esclusi.add(a);
+      salvaFiltri(); disegnaIntro(); renderFiltri();
+    }));
+  });
+  bA.appendChild(rA);
+  const nA = document.createElement('p');
+  nA.className = 'flow-nota';
+  nA.textContent = 'Le ricette che lo contengono spariscono per sempre, in tutta l’app.';
+  bA.appendChild(nA);
+  c.appendChild(bA);
+
+  const bR = document.createElement('div');
+  bR.className = 'flow-blocco';
+  const hR = document.createElement('p');
+  hR.className = 'flow-domanda'; hR.textContent = 'Di dove sei?';
+  bR.appendChild(hR);
+  const sel = document.createElement('select');
+  sel.innerHTML = '<option value="">non importa</option>';
+  Object.keys(REGIONI).forEach(n => {
+    const o = document.createElement('option'); o.value = n; o.textContent = n;
+    if (n === zona) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', () => {
+    zona = sel.value; salvaZona(); aggiornaZona();
+    zonaSelect.value = zona; renderRisultati(); renderRicettario();
+  });
+  bR.appendChild(sel);
+  const nR = document.createElement('p');
+  nR.className = 'flow-nota';
+  nR.textContent = 'Serve solo a far salire in cima i piatti della tua zona. Non esclude niente.';
+  bR.appendChild(nR);
+  c.appendChild(bR);
+
+  const az = document.createElement('div');
+  az.className = 'flow-azioni';
+  az.appendChild(btn('Fatto, andiamo', 'primary-btn', () => { segnaIntro(); flowHome(); }));
+  az.appendChild(btn('Salta', 'ghost-btn', () => { segnaIntro(); flowHome(); }));
+  c.appendChild(az);
+}
+
+// ===== Ramo A: so già cosa voglio =====
+function cercaPiatti(q){
+  const t = q.trim().toLowerCase();
+  if (t.length < 2) return [];
+  return RICETTE.filter(r => r.n.toLowerCase().indexOf(t) > -1).slice(0, 10);
+}
+function disegnaPiatto(){
+  const c = flowEl('piatto');
+  c.innerHTML = '';
+  const inp = document.createElement('input');
+  inp.type = 'text'; inp.id = 'flow-cerca-piatto';
+  inp.placeholder = 'Carbonara, parmigiana, risotto…';
+  c.appendChild(inp);
+
+  const sugg = document.createElement('div');
+  sugg.className = 'chip-row';
+  sugg.style.margin = '14px 0 18px';
+  ['Carbonara','Parmigiana di melanzane','Risotto ai funghi','Pasta e fagioli','Tiramisù']
+    .forEach(n => sugg.appendChild(btn(n, 'chip', () => { inp.value = n; mostra(); })));
+  c.appendChild(sugg);
+
+  const lista = document.createElement('div');
+  lista.className = 'flow-lista';
+  c.appendChild(lista);
+
+  function mostra(){
+    lista.innerHTML = '';
+    const q = inp.value;
+    const trovate = cercaPiatti(q);
+    if (q.trim().length >= 2 && !trovate.length){
+      const p = document.createElement('p');
+      p.className = 'flow-nota';
+      p.textContent = 'Nell’archivio non c’è. Prova con un nome più corto, oppure passa da Chiedi per cercare sul web.';
+      lista.appendChild(p);
+      const a = document.createElement('div');
+      a.className = 'flow-azioni';
+      a.appendChild(btn('Vai a Chiedi', 'ghost-btn', () => showTab('chiedi')));
+      lista.appendChild(a);
+      return;
+    }
+    trovate.forEach(r => {
+      const v = document.createElement('button');
+      v.type = 'button'; v.className = 'flow-voce';
+      v.innerHTML = `<span class="fv-n">${r.n}</span><span class="fv-m">${r.cat} · ${r.tempo} min</span>`;
+      v.addEventListener('click', () => {
+        flowPiatto = r;
+        flowAvanti('verifica', r.n, 'Segna quello che hai in casa. Il resto lo do per mancante.', disegnaVerifica);
+      });
+      lista.appendChild(v);
+    });
+  }
+  inp.addEventListener('input', mostra);
+  mostra();
+}
+
+function disegnaVerifica(){
+  const c = flowEl('verifica');
+  c.innerHTML = '';
+  const r = flowPiatto;
+  if (!r) return;
+
+  const chiavi = [];
+  r.ing.forEach(x => { if (chiavi.indexOf(x.k) === -1 && BASE.indexOf(x.k) === -1) chiavi.push(x.k); });
+
+  const p = document.createElement('p');
+  p.className = 'flow-conta';
+  p.textContent = chiavi.length + ' voci da controllare. Sale, olio, acqua e pepe li do per scontati.';
+  c.appendChild(p);
+
+  const riga = document.createElement('div');
+  riga.className = 'chip-row';
+  chiavi.forEach(k => {
+    const b = btn(k, 'chip' + (scelti.has(k) ? ' on' : ''), () => {
+      if (scelti.has(k)) scelti.delete(k); else scelti.add(k);
+      b.classList.toggle('on');
+      salvaDispensa(); renderDispensa(); renderRisultati(); renderRicettario();
+    });
+    riga.appendChild(b);
+  });
+  c.appendChild(riga);
+
+  const n = document.createElement('p');
+  n.className = 'flow-nota';
+  n.textContent = 'Quello che segni resta nella dispensa anche dopo, non serve rifarlo ogni volta.';
+  c.appendChild(n);
+
+  const az = document.createElement('div');
+  az.className = 'flow-azioni';
+  az.appendChild(btn('Allora, si fa?', 'primary-btn', () => {
+    flowAvanti('verdetto', r.n, '', disegnaVerdetto);
+  }));
+  c.appendChild(az);
+}
+
+// Ricette fattibili adesso che condividono ingredienti con quella chiesta
+function alternativeVicine(r){
+  const chiavi = new Set(r.ing.map(x => x.k));
+  ricalcolaDisponibili();
+  return RICETTE
+    .filter(x => x.id !== r.id && passaFiltri(x))
+    .map(x => {
+      const a = analizza(x);
+      const com = x.ing.filter(i => chiavi.has(i.k)).length;
+      return { x, a, com, stessa: x.cat === r.cat };
+    })
+    .filter(o => (o.a.stato === 'ok' || o.a.stato === 'sost') && o.com >= 2)
+    .sort((p, q) => (q.com - p.com) || (q.stessa - p.stessa) || (p.x.tempo - q.x.tempo))
+    .slice(0, 3);
+}
+
+function disegnaVerdetto(){
+  const c = flowEl('verdetto');
+  c.innerHTML = '';
+  const r = flowPiatto;
+  if (!r) return;
+  ricalcolaDisponibili();
+  const a = analizza(r);
+
+  const box = document.createElement('div');
+  box.className = 'verdetto ' + (a.stato === 'ok' ? 'si' : (a.stato === 'sost' ? 'si' :
+                                 (a.stato === 'quasi' ? 'forse' : 'no')));
+  let html = '';
+  if (a.stato === 'ok'){
+    html = `<h3>Sì, si fa.</h3><p>Hai tutto. ${r.tempo} minuti e sei a tavola.</p>`;
+  } else if (a.stato === 'sost'){
+    html = `<h3>Sì, con un cambio.</h3><p>` +
+      a.rimedi.map(x => `Al posto di <strong>${x.ing.n}</strong> usa <strong>${x.con}</strong>`).join('. ') +
+      `.</p><p>Non è la stessa cosa, ma regge benissimo.</p>`;
+  } else if (a.stato === 'quasi'){
+    html = `<h3>Ci manca una cosa sola.</h3>` +
+      `<p>Serve <strong>${a.mancano[0].n}</strong> e non ce l’hai.</p>` +
+      `<p class="battuta">Se sul pianerottolo abita qualcuno di simpatico, è il momento buono per scoprirlo.</p>`;
+  } else {
+    html = `<h3>Stasera no.</h3>` +
+      `<p>Mancano ${a.mancano.length} cose: ${a.mancano.map(x => x.n).join(', ')}. Troppe per improvvisare.</p>`;
+  }
+  box.innerHTML = html;
+  c.appendChild(box);
+
+  if (a.stato === 'ok' || a.stato === 'sost'){
+    const az = document.createElement('div');
+    az.className = 'flow-azioni';
+    az.appendChild(btn('Apri la ricetta', 'primary-btn', () => apriRicetta(r)));
+    az.appendChild(btn('Cambio idea', 'ghost-btn', flowHome));
+    c.appendChild(az);
+  } else {
+    const alt = alternativeVicine(r);
+    if (alt.length){
+      const h = document.createElement('p');
+      h.className = 'flow-domanda';
+      h.textContent = 'Però con quello che hai in casa viene questo:';
+      c.appendChild(h);
+      const lista = document.createElement('div');
+      lista.className = 'flow-lista';
+      alt.forEach(o => {
+        const v = document.createElement('button');
+        v.type = 'button'; v.className = 'flow-voce';
+        const nota = o.a.stato === 'sost' ? 'con una sostituzione' : 'hai tutto';
+        v.innerHTML = `<span class="fv-n">${o.x.n}</span><span class="fv-m">${o.x.tempo} min · ${nota}</span>`;
+        v.addEventListener('click', () => apriRicetta(o.x));
+        lista.appendChild(v);
+      });
+      c.appendChild(lista);
+    }
+    const az = document.createElement('div');
+    az.className = 'flow-azioni';
+    az.appendChild(btn('Torna a segnare la dispensa', 'ghost-btn',
+      () => flowAvanti('verifica', r.n, 'Segna quello che hai in casa.', disegnaVerifica)));
+    az.appendChild(btn('Guarda tu, allora', 'primary-btn', ramoGuardaTu));
+    c.appendChild(az);
+  }
+}
+
+// ===== Ramo B: guarda tu =====
+function disegnaConferma(){
+  const c = flowEl('conferma');
+  c.innerHTML = '';
+  const suoi = [...scelti].filter(n => BASE.indexOf(n) === -1).sort((a,b) => a.localeCompare(b,'it'));
+
+  const p = document.createElement('p');
+  p.className = 'flow-conta';
+  p.textContent = suoi.length
+    ? 'L’ultima volta avevi queste ' + suoi.length + ' voci. Togli quello che è finito.'
+    : 'La dispensa è vuota. Apri il frigorifero e segna quello che vedi.';
+  c.appendChild(p);
+
+  if (suoi.length){
+    const riga = document.createElement('div');
+    riga.className = 'chip-row';
+    suoi.forEach(n => {
+      const b = btn(n, 'chip on', () => {
+        scelti.delete(n);
+        salvaDispensa(); renderDispensa(); renderRisultati(); renderRicettario();
+        disegnaConferma();
+      });
+      riga.appendChild(b);
+    });
+    c.appendChild(riga);
+  }
+
+  const az = document.createElement('div');
+  az.className = 'flow-azioni';
+  az.appendChild(btn(suoi.length ? 'Va bene così' : 'Riempi la dispensa', 'primary-btn', () => {
+    if (!suoi.length){ showTab('dispensa'); return; }
+    flowAvanti('domande', 'Due domande', 'Poi ti mostro cosa viene fuori.', disegnaDomande);
+  }));
+  if (suoi.length) az.appendChild(btn('Aggiungi altro', 'ghost-btn', () => showTab('dispensa')));
+  c.appendChild(az);
+}
+
+function disegnaDomande(){
+  const c = flowEl('domande');
+  c.innerHTML = '';
+  gruppoScelta(c, 'Che cosa ti serve?', [
+    ['', 'tutto'], ['Primi', 'un primo'], ['Secondi', 'un secondo'],
+    ['__unico', 'un piatto unico'], ['Contorni', 'un contorno'],
+    ['Antipasti', 'un antipasto'], ['Dolci', 'un dolce']
+  ], portata, v => { portata = v; salvaFiltri(); renderFiltri(); renderRisultati(); disegnaDomande(); });
+
+  gruppoScelta(c, 'Quanto tempo hai?', [
+    [20, 'venti minuti'], [40, 'mezz’ora abbondante'], [90, 'un’ora'], [0, 'tutto quello che serve']
+  ], flowTempo, v => { flowTempo = v; disegnaDomande(); });
+
+  const az = document.createElement('div');
+  az.className = 'flow-azioni';
+  az.appendChild(btn('Mostrami cosa posso fare', 'primary-btn', () => {
+    flowAvanti('risultati', 'Ecco cosa viene fuori', '', disegnaRisultatiFlusso);
+  }));
+  c.appendChild(az);
+}
+
+function candidateFlusso(){
+  ricalcolaDisponibili();
+  const RANGO = { ok: 0, sost: 1, quasi: 2, no: 3 };
+  return RICETTE
+    .filter(passaFiltri)
+    .filter(r => !flowTempo || r.tempo <= flowTempo)
+    .filter(r => !flowSenzaForno || r.tags.indexOf('senza forno') > -1)
+    .map(r => ({ r, a: analizza(r) }))
+    .filter(o => o.a.stato !== 'no')
+    .sort((p, q) => (RANGO[p.a.stato] - RANGO[q.a.stato]) ||
+                    (eDellaZona(q.r) - eDellaZona(p.r)) ||
+                    (p.r.tempo - q.r.tempo));
+}
+
+function disegnaRisultatiFlusso(){
+  const c = flowEl('risultati');
+  c.innerHTML = '';
+  const cand = candidateFlusso();
+
+  const p = document.createElement('p');
+  p.className = 'flow-conta';
+  const subito = cand.filter(o => o.a.stato === 'ok').length;
+  p.textContent = cand.length
+    ? subito + (subito === 1 ? ' piatto lo fai subito' : ' piatti li fai subito') +
+      ', altri ' + (cand.length - subito) + ' con una sostituzione o un ingrediente in meno.'
+    : 'Con questi vincoli non esce niente. Allarga il tempo o togli la portata.';
+  c.appendChild(p);
+
+  const restringi = document.createElement('div');
+  restringi.className = 'flow-blocco';
+  const hr = document.createElement('p');
+  hr.className = 'flow-domanda'; hr.textContent = 'Restringi ancora, se vuoi';
+  restringi.appendChild(hr);
+  const rr = document.createElement('div');
+  rr.className = 'chip-row';
+  [['', 'nessun vincolo'], ['leggero', 'leggero'], ['minimo', 'pochi ingredienti'],
+   ['vegetariano', 'vegetariano']].forEach(([v, t]) => {
+    rr.appendChild(btn(t, 'chip' + (stile === v ? ' on' : ''), () => {
+      stile = v;
+      salvaFiltri(); renderFiltri(); renderRisultati(); disegnaRisultatiFlusso();
+    }));
+  });
+  rr.appendChild(btn('senza forno', 'chip' + (flowSenzaForno ? ' on' : ''), () => {
+    flowSenzaForno = !flowSenzaForno;
+    disegnaRisultatiFlusso();
+  }));
+  restringi.appendChild(rr);
+  c.appendChild(restringi);
+
+  const lista = document.createElement('div');
+  lista.className = 'flow-lista';
+  cand.slice(0, 24).forEach(o => lista.appendChild(schedaRicetta(o.r)));
+  c.appendChild(lista);
+
+  if (cand.length > 24){
+    const n = document.createElement('p');
+    n.className = 'flow-nota';
+    n.textContent = 'Ce ne sono altre ' + (cand.length - 24) + '. Nella Dispensa le trovi tutte.';
+    c.appendChild(n);
+  }
+  const az = document.createElement('div');
+  az.className = 'flow-azioni';
+  az.appendChild(btn('Apri la Dispensa completa', 'ghost-btn', () => showTab('dispensa')));
+  c.appendChild(az);
+}
+
+function ramoGuardaTu(){
+  flowPila = [];
+  flowAvanti('conferma', 'Cosa c’è in casa', 'Parto da quello che avevi segnato l’ultima volta.', disegnaConferma);
+}
+
+// ===== Ramo C: ho una cosa da finire =====
+function disegnaFinire(){
+  const c = flowEl('finire');
+  c.innerHTML = '';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = 'Melanzane, ricotta, pane raffermo…';
+  c.appendChild(inp);
+
+  const sugg = document.createElement('div');
+  sugg.className = 'chip-row';
+  sugg.style.margin = '14px 0 18px';
+  const suoi = [...scelti].filter(n => BASE.indexOf(n) === -1).slice(0, 10);
+  (suoi.length ? suoi : ['melanzane','ricotta','pane','zucchine','uova'])
+    .forEach(n => sugg.appendChild(btn(n, 'chip', () => { inp.value = n; mostra(); })));
+  c.appendChild(sugg);
+
+  const lista = document.createElement('div');
+  lista.className = 'flow-lista';
+  c.appendChild(lista);
+
+  function mostra(){
+    lista.innerHTML = '';
+    const t = inp.value.trim().toLowerCase();
+    if (t.length < 3) return;
+    ricalcolaDisponibili();
+    const RANGO = { ok: 0, sost: 1, quasi: 2, no: 3 };
+    const trovate = RICETTE
+      .filter(passaFiltri)
+      .map(r => {
+        const pos = r.ing.findIndex(x => x.k.indexOf(t) > -1 || x.n.toLowerCase().indexOf(t) > -1);
+        return { r, pos, a: analizza(r) };
+      })
+      .filter(o => o.pos > -1 && o.a.stato !== 'no')
+      .sort((p, q) => (RANGO[p.a.stato] - RANGO[q.a.stato]) || (p.pos - q.pos) ||
+                      (p.r.nvoci - q.r.nvoci))
+      .slice(0, 12);
+
+    if (!trovate.length){
+      const n = document.createElement('p');
+      n.className = 'flow-nota';
+      n.textContent = 'Niente di fattibile con questo, almeno con quello che hai adesso in dispensa.';
+      lista.appendChild(n);
+      return;
+    }
+    const n = document.createElement('p');
+    n.className = 'flow-conta';
+    n.textContent = 'Dove è protagonista, e che puoi fare stasera:';
+    lista.appendChild(n);
+    trovate.forEach(o => lista.appendChild(schedaRicetta(o.r)));
+  }
+  inp.addEventListener('input', mostra);
+}
+
+// ===== Avvio =====
+document.querySelectorAll('[data-ramo]').forEach(el => {
+  el.addEventListener('click', () => {
+    const r = el.dataset.ramo;
+    flowPila = [];
+    if (r === 'so')
+      flowAvanti('piatto', 'Cosa ti va?', 'Scrivi il nome del piatto che hai in testa.', disegnaPiatto);
+    else if (r === 'tu') ramoGuardaTu();
+    else flowAvanti('finire', 'Cosa devi finire?', 'Un ingrediente solo, quello che sta per andare.', disegnaFinire);
+  });
+});
+document.getElementById('flow-indietro').addEventListener('click', flowIndietro);
+document.getElementById('flow-ricomincia').addEventListener('click', flowHome);
+
+if (!introFatta()){
+  disegnaIntro();
+  flowVai('intro', 'Prima di cominciare', 'Tre cose che non cambiano ogni sera. Le chiedo una volta sola.');
+} else {
+  flowHome();
+}
 
 // ---------- Tabs ----------
 function showTab(name){
