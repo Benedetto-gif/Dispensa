@@ -1511,6 +1511,8 @@ footer.note{
     <div class="flow-step" id="passo-intro" hidden></div>
 
     <div class="flow-step" id="passo-scelta">
+      <p class="flow-nota" style="margin:0 0 20px;">Se l’app la conosci già, il menù qui sopra porta dove vuoi senza passare da qui.</p>
+      <div class="flow-blocco" id="flow-tavola"></div>
       <div class="flow-scelte">
         <button class="flow-card" type="button" data-ramo="so" style="--c:var(--c-agrumato)">
           <span class="fc-ic">🎯</span>
@@ -1528,7 +1530,6 @@ footer.note{
           <p>Le melanzane che stanno andando, mezza ricotta aperta, il pane di ieri. Parti da lì.</p>
         </button>
       </div>
-      <p class="flow-nota">Se l'app la conosci già, il menù qui sopra porta dove vuoi senza passare da qui.</p>
     </div>
 
     <div class="flow-step" id="passo-piatto" hidden></div>
@@ -1618,6 +1619,14 @@ footer.note{
         <em>ho una cosa da finire</em> parte da un ingrediente solo. Quando un piatto non si può fare,
         l'app propone sempre qualcosa di simile che invece si può. Il menù in alto resta lì per chi
         l'app la conosce già: le due vie portano agli stessi dati.</p>
+
+      <h3>Chi c'è a tavola</h3>
+      <p>Dieta, intolleranze e regione sono della persona, non della casa: la dispensa resta in comune,
+        le esclusioni no. Al primo avvio l'app chiede il tuo nome e le tue tre cose; poi, dalla schermata
+        Stasera, puoi aggiungere chi mangia con te e scegliere ogni sera chi c'è. Con più persone le
+        intolleranze si sommano e vale la dieta più stretta. La ✎ accanto a un nome riapre le sue scelte:
+        se un'intolleranza arriva, o se ne va, si cambia in dieci secondi e non si resta legati a quello
+        che hai risposto la prima volta.</p>
 
       <h3>Gli ingredienti base</h3>
       <p>Sale, acqua, olio extravergine e pepe nero sono considerati sempre presenti: sono la base di
@@ -3714,7 +3723,8 @@ function flowVai(passo, titolo, sotto){
   PASSI.forEach(p => { const el = flowEl(p); if (el) el.hidden = (p !== passo); });
   document.getElementById('flow-titolo').textContent = titolo;
   document.getElementById('flow-sub').textContent = sotto || '';
-  document.getElementById('flow-barra').hidden = (passo === 'scelta' || passo === 'intro');
+  document.getElementById('flow-barra').hidden =
+    (passo === 'scelta' || (passo === 'intro' && !introFatta()));
   document.getElementById('flow-kicker').textContent =
     passo === 'scelta' ? 'Si comincia da qui' : 'Stasera';
   window.scrollTo(0, 0);
@@ -3734,6 +3744,8 @@ function flowIndietro(){
 function flowHome(){
   flowPila = [];
   flowPiatto = null; flowIngrediente = '';
+  inModifica = null; bozzaProfilo = null;
+  disegnaTavola();
   flowVai('scelta', 'Che si fa stasera?', 'Tre strade. Prendi quella che ti somiglia di più adesso.');
 }
 
@@ -3758,18 +3770,141 @@ function gruppoScelta(cont, domanda, voci, valore, onScelta){
   cont.appendChild(blocco);
 }
 
-// ===== Primo avvio: le cose che non cambiano ogni sera =====
-function introFatta(){
-  try { return !!localStorage.getItem(CHIAVE_INTRO); } catch(e){ return true; }
+// ===== Chi c'è a tavola =====
+// Le intolleranze e la dieta sono della persona, non della casa:
+// la dispensa resta condivisa, le esclusioni no.
+const CHIAVE_PROFILI = 'dispensa_profili_v1';
+const CHIAVE_ATTIVI = 'dispensa_attivi_v1';
+let profili = [];
+let attivi = [];
+let inModifica = null;
+let bozzaProfilo = null;
+
+function caricaProfili(){
+  try {
+    const p = JSON.parse(localStorage.getItem(CHIAVE_PROFILI));
+    if (Array.isArray(p)) profili = p;
+    const a = JSON.parse(localStorage.getItem(CHIAVE_ATTIVI));
+    if (Array.isArray(a)) attivi = a;
+  } catch(e){}
+  // Chi usava l'app prima dei profili si ritrova il suo, già compilato.
+  if (!profili.length){
+    profili = [{ id: 1, nome: 'Io', stile: stile, esclusi: [...esclusi], zona: zona }];
+    attivi = [1];
+    salvaProfili();
+  }
+  attivi = attivi.filter(id => profili.some(p => p.id === id));
+  if (!attivi.length && profili.length) attivi = [profili[0].id];
 }
-function segnaIntro(){ try { localStorage.setItem(CHIAVE_INTRO, '1'); } catch(e){} }
+function salvaProfili(){
+  try {
+    localStorage.setItem(CHIAVE_PROFILI, JSON.stringify(profili));
+    localStorage.setItem(CHIAVE_ATTIVI, JSON.stringify(attivi));
+  } catch(e){}
+}
+function profiloDi(id){ return profili.find(p => p.id === id) || null; }
+
+// Con più persone a tavola: le esclusioni si sommano, la dieta prende la più stretta.
+function applicaProfili(){
+  const sel = profili.filter(p => attivi.indexOf(p.id) > -1);
+  if (!sel.length) return;
+  esclusi = new Set();
+  sel.forEach(p => (p.esclusi || []).forEach(a => esclusi.add(a)));
+  const peso = { '': 0, 'vegetariano': 1, 'vegano': 2 };
+  stile = sel.reduce((acc, p) => (peso[p.stile] || 0) > (peso[acc] || 0) ? p.stile : acc, '');
+  zona = sel[0].zona || '';
+  salvaFiltri(); salvaZona();
+  if (typeof zonaSelect !== 'undefined' && zonaSelect) zonaSelect.value = zona;
+  aggiornaZona(); renderFiltri(); renderRisultati(); renderRicettario();
+}
+
+// La dieta più stretta fra chi è a tavola (i filtri di comodo non sono diete)
+function dietaProfilo(){
+  const peso = { '': 0, 'vegetariano': 1, 'vegano': 2 };
+  return profili.filter(p => attivi.indexOf(p.id) > -1)
+                .reduce((acc, p) => (peso[p.stile] || 0) > (peso[acc] || 0) ? p.stile : acc, '');
+}
+
+function riassuntoProfilo(p){
+  const parti = [];
+  if (p.stile) parti.push(p.stile);
+  if ((p.esclusi || []).length) parti.push('niente ' + p.esclusi.join(', '));
+  return parti.length ? parti.join(' · ') : 'mangia di tutto';
+}
+
+function disegnaTavola(){
+  const c = document.getElementById('flow-tavola');
+  if (!c) return;
+  c.innerHTML = '';
+  const h = document.createElement('p');
+  h.className = 'flow-domanda';
+  h.textContent = profili.length > 1 ? 'Chi c’è a tavola?' : 'Stai cucinando per';
+  c.appendChild(h);
+
+  const riga = document.createElement('div');
+  riga.className = 'chip-row';
+  profili.forEach(p => {
+    const on = attivi.indexOf(p.id) > -1;
+    const b = btn(p.nome, 'chip' + (on ? ' on' : ''), () => {
+      if (on){
+        if (attivi.length === 1) return;   // qualcuno deve pur mangiare
+        attivi = attivi.filter(x => x !== p.id);
+      } else attivi.push(p.id);
+      salvaProfili(); applicaProfili(); disegnaTavola();
+    });
+    const x = document.createElement('span');
+    x.className = 'tolgo'; x.textContent = '✎'; x.title = 'Modifica';
+    x.addEventListener('click', (e) => { e.stopPropagation(); apriProfilo(p.id); });
+    b.appendChild(x);
+    riga.appendChild(b);
+  });
+  riga.appendChild(btn('＋ aggiungi qualcuno', 'chip', () => apriProfilo(null)));
+  c.appendChild(riga);
+
+  const n = document.createElement('p');
+  n.className = 'flow-nota';
+  const sel = profili.filter(p => attivi.indexOf(p.id) > -1);
+  if (sel.length > 1){
+    n.textContent = 'Cerco ricette che vanno bene per tutti: le intolleranze si sommano e vale la dieta più stretta. ' +
+                    'La ✎ accanto al nome cambia le sue scelte.';
+  } else {
+    n.textContent = sel.length ? sel[0].nome + ': ' + riassuntoProfilo(sel[0]) +
+      '. La ✎ cambia dieta, intolleranze e regione, quando vuoi.' : '';
+  }
+  c.appendChild(n);
+}
+
+function apriProfilo(id){
+  inModifica = id;
+  if (!id) bozzaProfilo = null;
+  flowPila = [];
+  flowAvanti('intro',
+    id ? 'Le scelte di ' + (profiloDi(id) || {}).nome : 'Chi altro mangia?',
+    'Si cambia quando vuoi: queste non sono scelte per sempre.',
+    disegnaIntro);
+}
 
 function disegnaIntro(){
   const c = flowEl('intro');
   c.innerHTML = '';
+  const p = inModifica ? profiloDi(inModifica)
+                       : (bozzaProfilo || (bozzaProfilo = { id: 0, nome: '', stile: '', esclusi: [], zona: zona }));
+  if (!p) { flowHome(); return; }
+
+  const bN = document.createElement('div');
+  bN.className = 'flow-blocco';
+  const hN = document.createElement('p');
+  hN.className = 'flow-domanda'; hN.textContent = 'Come ti chiami?';
+  bN.appendChild(hN);
+  const inp = document.createElement('input');
+  inp.type = 'text'; inp.value = p.nome; inp.placeholder = 'Il tuo nome, o un soprannome';
+  inp.addEventListener('input', () => { p.nome = inp.value; });
+  bN.appendChild(inp);
+  c.appendChild(bN);
+
   gruppoScelta(c, 'Mangi di tutto?', [
     ['', 'di tutto'], ['vegetariano', 'vegetariano'], ['vegano', 'vegano']
-  ], stile, v => { stile = v; salvaFiltri(); disegnaIntro(); renderFiltri(); });
+  ], p.stile, v => { p.stile = v; ridisegnaIntro(p); });
 
   const bA = document.createElement('div');
   bA.className = 'flow-blocco';
@@ -3779,15 +3914,17 @@ function disegnaIntro(){
   const rA = document.createElement('div');
   rA.className = 'chip-row';
   ALLERGENI.forEach(a => {
-    rA.appendChild(btn(a, 'chip allerg' + (esclusi.has(a) ? ' on' : ''), () => {
-      if (esclusi.has(a)) esclusi.delete(a); else esclusi.add(a);
-      salvaFiltri(); disegnaIntro(); renderFiltri();
+    const on = (p.esclusi || []).indexOf(a) > -1;
+    rA.appendChild(btn(a, 'chip allerg' + (on ? ' on' : ''), () => {
+      p.esclusi = on ? p.esclusi.filter(x => x !== a) : [...(p.esclusi || []), a];
+      ridisegnaIntro(p);
     }));
   });
   bA.appendChild(rA);
   const nA = document.createElement('p');
   nA.className = 'flow-nota';
-  nA.textContent = 'Le ricette che lo contengono spariscono per sempre, in tutta l’app.';
+  nA.textContent = 'Le ricette che lo contengono spariscono finché questa persona è a tavola. ' +
+                   'Se l’intolleranza passa, torni qui e la togli.';
   bA.appendChild(nA);
   c.appendChild(bA);
 
@@ -3800,13 +3937,10 @@ function disegnaIntro(){
   sel.innerHTML = '<option value="">non importa</option>';
   Object.keys(REGIONI).forEach(n => {
     const o = document.createElement('option'); o.value = n; o.textContent = n;
-    if (n === zona) o.selected = true;
+    if (n === p.zona) o.selected = true;
     sel.appendChild(o);
   });
-  sel.addEventListener('change', () => {
-    zona = sel.value; salvaZona(); aggiornaZona();
-    zonaSelect.value = zona; renderRisultati(); renderRicettario();
-  });
+  sel.addEventListener('change', () => { p.zona = sel.value; });
   bR.appendChild(sel);
   const nR = document.createElement('p');
   nR.className = 'flow-nota';
@@ -3816,10 +3950,44 @@ function disegnaIntro(){
 
   const az = document.createElement('div');
   az.className = 'flow-azioni';
-  az.appendChild(btn('Fatto, andiamo', 'primary-btn', () => { segnaIntro(); flowHome(); }));
-  az.appendChild(btn('Salta', 'ghost-btn', () => { segnaIntro(); flowHome(); }));
+  az.appendChild(btn('Fatto', 'primary-btn', () => salvaIntro(p)));
+  if (inModifica && profili.length > 1){
+    az.appendChild(btn('Togli ' + (p.nome || 'questa persona'), 'ghost-btn', () => {
+      profili = profili.filter(x => x.id !== p.id);
+      attivi = attivi.filter(x => x !== p.id);
+      if (!attivi.length) attivi = [profili[0].id];
+      salvaProfili(); applicaProfili(); segnaIntro(); flowHome();
+    }));
+  } else if (!inModifica){
+    az.appendChild(btn('Annulla', 'ghost-btn', () => { segnaIntro(); flowHome(); }));
+  }
   c.appendChild(az);
 }
+// Le scelte si vedono subito: ridisegno tenendo quello che ha già toccato
+function ridisegnaIntro(p){
+  if (inModifica){ const v = profiloDi(inModifica); if (v) Object.assign(v, p); }
+  else bozzaProfilo = p;
+  disegnaIntro();
+}
+
+function salvaIntro(p){
+  const nome = (p.nome || '').trim() || (profili.length ? 'Ospite' : 'Io');
+  if (inModifica){
+    const v = profiloDi(inModifica);
+    if (v) Object.assign(v, { nome: nome, stile: p.stile, esclusi: p.esclusi || [], zona: p.zona || '' });
+  } else {
+    const id = profili.reduce((m, x) => Math.max(m, x.id), 0) + 1;
+    profili.push({ id: id, nome: nome, stile: p.stile, esclusi: p.esclusi || [], zona: p.zona || '' });
+    attivi.push(id);
+  }
+  inModifica = null; bozzaProfilo = null;
+  salvaProfili(); applicaProfili(); segnaIntro(); flowHome();
+}
+
+function introFatta(){
+  try { return !!localStorage.getItem(CHIAVE_INTRO); } catch(e){ return true; }
+}
+function segnaIntro(){ try { localStorage.setItem(CHIAVE_INTRO, '1'); } catch(e){} }
 
 // ===== Ramo A: so già cosa voglio =====
 function cercaPiatti(q){
@@ -4087,18 +4255,31 @@ function disegnaRisultatiFlusso(){
   restringi.appendChild(hr);
   const rr = document.createElement('div');
   rr.className = 'chip-row';
-  [['', 'nessun vincolo'], ['leggero', 'leggero'], ['minimo', 'pochi ingredienti'],
-   ['vegetariano', 'vegetariano']].forEach(([v, t]) => {
+  // La dieta è di chi è a tavola: i filtri di comodo non devono cancellarla.
+  const dieta = dietaProfilo();
+  [['leggero', 'leggero'], ['minimo', 'pochi ingredienti']].forEach(([v, t]) => {
     rr.appendChild(btn(t, 'chip' + (stile === v ? ' on' : ''), () => {
-      stile = v;
+      stile = (stile === v) ? dieta : v;
       salvaFiltri(); renderFiltri(); renderRisultati(); disegnaRisultatiFlusso();
     }));
   });
+  if (!dieta){
+    rr.appendChild(btn('vegetariano', 'chip' + (stile === 'vegetariano' ? ' on' : ''), () => {
+      stile = (stile === 'vegetariano') ? '' : 'vegetariano';
+      salvaFiltri(); renderFiltri(); renderRisultati(); disegnaRisultatiFlusso();
+    }));
+  }
   rr.appendChild(btn('senza forno', 'chip' + (flowSenzaForno ? ' on' : ''), () => {
     flowSenzaForno = !flowSenzaForno;
     disegnaRisultatiFlusso();
   }));
   restringi.appendChild(rr);
+  if (dieta){
+    const nd = document.createElement('p');
+    nd.className = 'flow-nota';
+    nd.textContent = 'Sei già su ' + dieta + ': vale per chi hai messo a tavola e non lo tolgo da qui.';
+    restringi.appendChild(nd);
+  }
   c.appendChild(restringi);
 
   const lista = document.createElement('div');
@@ -4191,9 +4372,13 @@ document.querySelectorAll('[data-ramo]').forEach(el => {
 document.getElementById('flow-indietro').addEventListener('click', flowIndietro);
 document.getElementById('flow-ricomincia').addEventListener('click', flowHome);
 
+caricaProfili();
+applicaProfili();
 if (!introFatta()){
+  inModifica = profili[0] ? profili[0].id : null;
   disegnaIntro();
-  flowVai('intro', 'Prima di cominciare', 'Tre cose che non cambiano ogni sera. Le chiedo una volta sola.');
+  flowVai('intro', 'Prima di cominciare',
+          'Quattro cose sul tuo conto. Si cambiano quando vuoi, e più avanti puoi aggiungere chi mangia con te.');
 } else {
   flowHome();
 }
