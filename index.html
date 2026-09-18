@@ -335,7 +335,7 @@ const VUOTO = {
   profilo:{nome:"",regione:"",stile:"onnivoro",allergeni:[],evita:"",tempo:"999",fatto:false},
   ospitiSalvati:[], dispensa:[], baseSempre:true, dispensaData:null,
   preferite:[], cucinate:{}, spesa:[],
-  nascoste:[], mie:[], ingMiei:{}
+  nascoste:[], mie:[], ingMiei:{}, ingTolti:[], ingSpostati:{}
 };
 let S = carica();
 /* le ricette scritte da te e gli ingredienti che hai aggiunto entrano nell'archivio */
@@ -345,6 +345,15 @@ for(const [cat, lista] of Object.entries(S.ingMiei || {}))
     CAT_DISP[cat] = CAT_DISP[cat] || [];
     if(!CAT_DISP[cat].includes(k)) CAT_DISP[cat].push(k);
   });
+/* ingredienti spostati di reparto e ingredienti tolti dall'elenco */
+for(const [k, cat] of Object.entries(S.ingSpostati || {})){
+  for(const c in CAT_DISP) CAT_DISP[c] = CAT_DISP[c].filter(x=>x !== k);
+  CAT_DISP[cat] = CAT_DISP[cat] || [];
+  if(!CAT_DISP[cat].includes(k)) CAT_DISP[cat].push(k);
+}
+(S.ingTolti || []).forEach(k=>{
+  for(const c in CAT_DISP) CAT_DISP[c] = CAT_DISP[c].filter(x=>x !== k);
+});
 function archivio(){ return D.ricette.concat(S.mie || []); }
 function trovaRicetta(id){ return archivio().find(x=>x.id === id); }
 let sess = nuovaSessione();
@@ -609,6 +618,8 @@ function tappaDispensa(){
     <label class="campo" style="margin-top:8px"><span>Reparto</span>
       <select id="ingCat">${Object.keys(CAT_DISP).map(c=>`<option>${c}</option>`).join("")}</select></label>
     <p class="mini" id="ingEsito" aria-live="polite"></p>
+    <p class="mini">Tieni premuto un ingrediente per spostarlo di reparto o toglierlo dall'elenco.</p>
+    ${S.ingTolti.length?`<button class="btn ghost small" id="ingRip" style="margin-top:6px">Rimetti i ${S.ingTolti.length} ingredienti tolti</button>`:""}
     ${top.length?`<div class="mini" style="margin-top:14px">Scorciatoia</div>
       <button class="btn ghost small" id="topFill" style="margin-top:6px">Segna i 25 ingredienti più usati dall'archivio</button>`:""}
   </div>
@@ -629,6 +640,8 @@ function tappaDispensa(){
   document.getElementById("swBase").onclick=()=>{ S.baseSempre=!S.baseSempre; salva(); tappaDispensa(); };
   const ingN = document.getElementById("ingNuovo"), ingC = document.getElementById("ingCat");
   ingN.oninput = ()=>{ const g = indovinaCat(ingN.value); if(g) ingC.value = g; };
+  const rip = document.getElementById("ingRip");
+  if(rip) rip.onclick = ()=>{ rimettiTolti(); tappaDispensa(); };
   document.getElementById("ingAdd").onclick = ()=>{
     const nome = ingN.value.trim();
     if(!nome) return;
@@ -644,11 +657,30 @@ function tappaDispensa(){
   const tf = document.getElementById("topFill");
   if(tf) tf.onclick=()=>{ top.forEach(k=>{ if(!S.dispensa.includes(k)) S.dispensa.push(k); });
     S.dispensaData = new Date().toLocaleDateString("it-IT"); salva(); tappaDispensa(); };
-  app.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{
-    const v=b.dataset.i, i=S.dispensa.indexOf(v);
-    i<0?S.dispensa.push(v):S.dispensa.splice(i,1);
-    b.classList.toggle("on");
-    S.dispensaData = new Date().toLocaleDateString("it-IT"); salva();
+  /* tocco breve: segno o tolgo dalla dispensa. Tocco lungo: sposta o togli dall'elenco */
+  app.querySelectorAll("[data-i]").forEach(b=>{
+    let attesa = null, lungo = false;
+    const ferma = ()=>{ clearTimeout(attesa); attesa = null; };
+    const parti = ()=>{
+      lungo = false;
+      ferma();
+      attesa = setTimeout(()=>{
+        lungo = true;
+        try{ navigator.vibrate && navigator.vibrate(30); }catch(err){}
+        apriIngOpz(b.dataset.i);
+      }, 500);
+    };
+    b.addEventListener("touchstart", parti, {passive:true});
+    ["touchend","touchmove","touchcancel","mouseup","mouseleave"].forEach(ev=>b.addEventListener(ev, ferma));
+    b.addEventListener("mousedown", parti);
+    b.addEventListener("contextmenu", ev=>{ ev.preventDefault(); ferma(); apriIngOpz(b.dataset.i); });
+    b.onclick = ()=>{
+      if(lungo){ lungo = false; return; }
+      const v=b.dataset.i, i=S.dispensa.indexOf(v);
+      i<0?S.dispensa.push(v):S.dispensa.splice(i,1);
+      b.classList.toggle("on");
+      S.dispensaData = new Date().toLocaleDateString("it-IT"); salva();
+    };
   });
 
   pulsanti("Indietro", "La dispensa è a posto", ()=>vai(3), ()=>vai(1));
@@ -1241,6 +1273,70 @@ function aggiungiIngrediente(nome, cat){
   salva();
   return k;
 }
+
+function spostaIngrediente(k, cat){
+  const mio = Object.values(S.ingMiei || {}).some(l=>(l||[]).includes(k));
+  for(const c in CAT_DISP) CAT_DISP[c] = CAT_DISP[c].filter(x=>x !== k);
+  CAT_DISP[cat] = CAT_DISP[cat] || [];
+  CAT_DISP[cat].push(k);
+  S.ingSpostati[k] = cat;
+  if(mio){
+    for(const c in S.ingMiei) S.ingMiei[c] = (S.ingMiei[c]||[]).filter(x=>x !== k);
+    S.ingMiei[cat] = S.ingMiei[cat] || [];
+    S.ingMiei[cat].push(k);
+  }
+  salva();
+}
+function togliIngrediente(k){
+  for(const c in CAT_DISP) CAT_DISP[c] = CAT_DISP[c].filter(x=>x !== k);
+  for(const c in S.ingMiei) S.ingMiei[c] = (S.ingMiei[c]||[]).filter(x=>x !== k);
+  delete S.ingSpostati[k];
+  if(!S.ingTolti.includes(k)) S.ingTolti.push(k);
+  S.dispensa = S.dispensa.filter(x=>x !== k);
+  salva();
+}
+function rimettiTolti(){
+  (S.ingTolti || []).forEach(k=>{
+    const cat = S.ingSpostati[k] || indovinaCat(k);
+    CAT_DISP[cat] = CAT_DISP[cat] || [];
+    if(!CAT_DISP[cat].includes(k)) CAT_DISP[cat].push(k);
+    if(!D.dispensa[cat] || !D.dispensa[cat].includes(k)){
+      S.ingMiei[cat] = S.ingMiei[cat] || [];
+      if(!S.ingMiei[cat].includes(k)) S.ingMiei[cat].push(k);
+    }
+  });
+  S.ingTolti = [];
+  salva();
+}
+function apriIngOpz(k){
+  const attuale = categoriaDi(k);
+  apriVelo("ingopz", `
+    <div class="velo-top"><h2>${esc(k)}</h2>
+      <button class="chiudi" data-io="chiudi">Chiudi</button></div>
+    <p class="mini">Adesso sta in «${esc(attuale || "nessun reparto")}».</p>
+    <label class="campo"><span>Spostalo in</span>
+      <select id="ioCat">${Object.keys(CAT_DISP).map(c=>
+        `<option ${c===attuale?"selected":""}>${c}</option>`).join("")}</select></label>
+    <div class="azioni">
+      <button class="btn" data-io="sposta" data-k="${esc(k)}">Sposta qui</button>
+      <button class="btn ghost" data-io="del" data-k="${esc(k)}">Togli dall'elenco</button>
+    </div>
+    <p class="mini">Togliere un ingrediente riguarda solo il tuo elenco: le ricette che lo usano restano al loro posto, e puoi rimetterlo quando vuoi dalla tappa della dispensa.</p>`);
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-io]");
+  if(!b) return;
+  const a = b.dataset.io;
+  if(a === "chiudi"){ chiudiVelo(); return; }
+  const k = b.dataset.k;
+  if(a === "sposta") spostaIngrediente(k, document.getElementById("ioCat").value);
+  if(a === "del"){
+    if(!confirm("Tolgo «" + k + "» dall'elenco della dispensa?")) return;
+    togliIngrediente(k);
+  }
+  chiudiVelo();
+  if(passo === 2) tappaDispensa();
+});
 
 /* ===========================================================
    Leggere una ricetta scritta a mano o copiata dal web
