@@ -109,7 +109,8 @@ if(+t>=55)document.documentElement.setAttribute("data-scuro","");}catch(e){}})()
   background:linear-gradient(180deg,#2E5B43,#1C3A2B);transition:opacity .45s ease}
 #splash.via{opacity:0;pointer-events:none}
 #splash svg{width:min(44vw,180px);height:auto}
-#splash .nome{font-family:Newsreader,Georgia,serif;font-size:1.3rem;color:#F0DFB8;
+#splash .nome{font-family:Newsreader,Georgia,serif;font-size:clamp(1.7rem,7.5vw,2.4rem);
+  font-weight:600;letter-spacing:-.01em;line-height:1.1;text-align:center;color:#F0DFB8;
   opacity:0;animation:sp-nome .5s ease .75s forwards}
 #splash .pentola{opacity:0;animation:sp-pentola .5s ease .1s forwards}
 #splash .vapore{stroke-dasharray:300;stroke-dashoffset:300;
