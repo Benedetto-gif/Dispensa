@@ -358,7 +358,8 @@ function archivio(){ return D.ricette.concat(S.mie || []); }
 function trovaRicetta(id){ return archivio().find(x=>x.id === id); }
 let sess = nuovaSessione();
 let passo = 0, menuAperto = false, cercaDisp = "";
-let soloPref = false;            /* filtro "solo le preferite" */
+let soloPref = false;
+let cercaRec = "";               /* ricerca nella tappa "devo consumare" */            /* filtro "solo le preferite" */
 let dosiPer = 0;                 /* 0 = quante persone ci sono a tavola */
 const GIORNI_RIPOSO = 21;        /* per quanto una ricetta appena fatta resta in fondo */
 
@@ -708,9 +709,24 @@ function tappaVoglia(){
 
   <button class="tile ${sess.modo==="recupero"?"on":""}" data-m="recupero">
     <b>Devo consumare qualcosa</b><small>Fresco, frigo o surgelato: parto da lì e cerco ricette che lo usino</small></button>
-  ${sess.modo==="recupero"?`<div class="card"><div class="mini">Cosa va consumato</div>
-    ${dep.length?`<div class="chips" id="rec">${dep.map(k=>`<button class="chip ${sess.recupero.includes(k)?"on":""}" data-i="${esc(k)}">${k}</button>`).join("")}</div>`
-      :`<p class="mini">Nella dispensa non ci sono freschi, latticini, carne, pesce o surgelati. Torna indietro e segnali.</p>`}</div>`:""}
+  ${sess.modo==="recupero"?(()=>{
+    const scelti = sess.recupero.filter(k=>!dep.includes(k));
+    const q = normTesto(cercaRec);
+    const tutte = chiaviDispensa().map(([k])=>k);
+    const trovati = q ? tutte.filter(k=>normTesto(k).includes(q) && !dep.includes(k) && !scelti.includes(k)).slice(0,14) : [];
+    const gia = tutte.some(k=>normTesto(k) === q);
+    return `<div class="card">
+    <div class="mini">Cosa va consumato</div>
+    ${dep.length||scelti.length?`<div class="chips" id="rec">${dep.concat(scelti).map(k=>
+        `<button class="chip ${sess.recupero.includes(k)?"on":""}" data-i="${esc(k)}">${k}</button>`).join("")}</div>`
+      :`<p class="mini">Nella dispensa non hai segnato freschi, latticini, carne, pesce o surgelati. Cercalo qui sotto: vale qualsiasi cosa, anche un avanzo.</p>`}
+    <label class="campo" style="margin-top:12px"><span>Non è in elenco? Cercalo o aggiungilo</span>
+      <input type="text" id="recCerca" value="${esc(cercaRec)}" placeholder="Scrivi le prime lettere"></label>
+    ${trovati.length?`<div class="chips" id="recTrova">${trovati.map(k=>
+        `<button class="chip" data-i="${esc(k)}">${k}</button>`).join("")}</div>`:""}
+    ${q && !gia ? `<button class="btn ghost small" id="recAdd" style="margin-top:8px">Aggiungi «${esc(cercaRec.trim())}» e mettilo in dispensa</button>` : ""}
+    <p class="mini" style="margin-top:8px">Quello che scegli qui entra anche nella dispensa, così le ricette lo contano come disponibile.</p>
+  </div>`;})():""}
 
   <hr class="sep">
   <h3>Che portata</h3>
@@ -747,9 +763,42 @@ function tappaVoglia(){
   app.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{ sess.modo = sess.modo===b.dataset.m?null:b.dataset.m; tappaVoglia(); });
   const qi = document.getElementById("qIdea");
   if(qi){ qi.oninput = e=>{ sess.cerca = e.target.value; }; }
-  const rec = document.getElementById("rec");
-  if(rec) rec.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
-    const v=b.dataset.i, i=sess.recupero.indexOf(v); i<0?sess.recupero.push(v):sess.recupero.splice(i,1); b.classList.toggle("on"); });
+  const segnaRec = v=>{
+    const i = sess.recupero.indexOf(v);
+    if(i < 0){
+      sess.recupero.push(v);
+      if(!S.dispensa.includes(v)){
+        S.dispensa.push(v);
+        S.dispensaData = new Date().toLocaleDateString("it-IT");
+        salva();
+      }
+    }else sess.recupero.splice(i, 1);
+  };
+  ["rec","recTrova"].forEach(id=>{
+    const box = document.getElementById(id);
+    if(box) box.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+      segnaRec(b.dataset.i);
+      if(id === "recTrova"){ cercaRec = ""; tappaVoglia(); }
+      else b.classList.toggle("on");
+    });
+  });
+  const rc = document.getElementById("recCerca");
+  if(rc) rc.oninput = e=>{
+    cercaRec = e.target.value;
+    const pos = e.target.selectionStart;
+    tappaVoglia();
+    const n2 = document.getElementById("recCerca");
+    if(n2){ n2.focus(); n2.setSelectionRange(pos, pos); }
+  };
+  const ra = document.getElementById("recAdd");
+  if(ra) ra.onclick = ()=>{
+    const nome = cercaRec.trim();
+    if(!nome) return;
+    const k = aggiungiIngrediente(nome, indovinaCat(nome));
+    if(k) segnaRec(k);
+    cercaRec = "";
+    tappaVoglia();
+  };
   app.querySelectorAll("#port .chip[data-v]").forEach(b=>b.onclick=()=>{
     const v=b.dataset.v, i=sess.portate.indexOf(v); i<0?sess.portate.push(v):sess.portate.splice(i,1); b.classList.toggle("on"); });
   document.getElementById("swUnico").onclick=()=>{ sess.unico=!sess.unico; tappaVoglia(); };
