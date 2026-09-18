@@ -379,22 +379,43 @@ function diStagione(r){
 function chiEsclude(r){
   return tavolata().filter(c=> RANGO[r.stile] < RANGO[c.stile] || c.allergeni.some(a=>r.all.includes(a)));
 }
+/* ricerca: senza accenti, su nome, ingredienti, regione e tag */
+const normTesto = x => String(x||"").toLowerCase().normalize("NFD")
+  .replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim();
+function testoRicetta(r){
+  if(!r._txt) r._txt = normTesto(r.n + " " + r.ing.map(i=>i.n + " " + i.k).join(" ")
+                                 + " " + (r.luogo||"") + " " + (r.tags||[]).join(" "));
+  return r._txt;
+}
+function nomeRicetta(r){
+  if(!r._n) r._n = normTesto(r.n);
+  return r._n;
+}
+
 function filtra(){
   const evita = (S.profilo.evita||"").toLowerCase().split(",").map(x=>x.trim()).filter(Boolean);
   const alg = allergeniTavolo();
   const lim = +sess.tempo;
 
+  const parole = sess.modo === "idea" ? normTesto(sess.cerca).split(" ").filter(Boolean) : [];
+
   let out = D.ricette.filter(r=>{
     if(soloPref && !S.preferite.includes(r.id)) return false;
     if(alg.some(a=>r.all.includes(a))) return false;
     if(evita.some(v=>r.ing.some(i=>i.k.includes(v)))) return false;
-    if(sess.portate.length && !sess.portate.includes(r.cat)) return false;
-    if(sess.unico && !r.unico) return false;
-    if(r.tempo > lim) return false;
     if(sess.accordo === "unico" && RANGO[r.stile] < RANGO[sess.stile]) return false;
-    if(sess.modo === "idea" && sess.cerca.trim()){
-      const q = sess.cerca.toLowerCase();
-      if(!r.n.toLowerCase().includes(q) && !r.ing.some(i=>i.k.includes(q)) && !(r.luogo||"").toLowerCase().includes(q)) return false;
+
+    /* se hai scritto il nome del piatto, tempo e portata non te lo nascondono */
+    let perNome = false;
+    if(parole.length){
+      const t = testoRicetta(r);
+      if(!parole.every(w=>t.includes(w))) return false;
+      perNome = parole.every(w=>nomeRicetta(r).includes(w));
+    }
+    if(!perNome){
+      if(sess.portate.length && !sess.portate.includes(r.cat)) return false;
+      if(sess.unico && !r.unico) return false;
+      if(r.tempo > lim) return false;
     }
     if(sess.modo === "recupero" && sess.recupero.length){
       if(!sess.recupero.some(k=>r.ing.some(i=>i.k===k || (EQUIV[i.k]||[]).includes(k)))) return false;
@@ -675,6 +696,7 @@ function tappaRicette(){
       ${sess.modo==="recupero"&&sess.recupero.length?`<span>da consumare: ${esc(sess.recupero.join(", "))}</span>`:""}
       ${sess.modo==="idea"&&sess.cerca?`<span>“${esc(sess.cerca)}”</span>`:""}
     </div>
+    ${sess.modo==="idea"&&sess.cerca.trim()?`<p class="mini">Cerco fra nomi, ingredienti e regioni. Se il nome combacia te la mostro comunque, anche fuori dal tempo e dalla portata che hai scelto.</p>`:""}
     <div class="chips" style="margin-top:10px">
       <button class="chip ${soloPref?"":"on"}" id="fTutte">Tutte</button>
       <button class="chip ${soloPref?"on":""}" id="fPref">\u2605 Solo le preferite (${S.preferite.length})</button>
