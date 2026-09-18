@@ -300,14 +300,31 @@ const EQUIV = {};
 
 /* lo stile si ricalcola dagli ingredienti: i tag dell'archivio hanno qualche svista */
 const RANGO = {onnivoro:0, vegetariano:1, vegano:2};
-D.ricette.forEach(r=>{
+function preparaRicetta(r){
+  r.tags = r.tags || [];
   const k = r.ing.map(i=>i.k);
   const carne = k.some(x=>CARNE.has(x) || PESCE.has(x));
   const anim  = carne || k.some(x=>LATT.has(x)) || k.includes("miele");
   r.vgn = r.tags.includes("vegano") && !anim;
   r.vgt = (r.vgn || r.tags.includes("vegetariano")) && !carne;
   r.stile = r.vgn ? "vegano" : r.vgt ? "vegetariano" : "onnivoro";
-});
+  r._txt = null; r._n = null;
+  return r;
+}
+D.ricette.forEach(preparaRicetta);
+
+/* quali allergeni porta ogni ingrediente: lo deduco dall'archivio stesso */
+const ALL_DI = (()=>{
+  const tot = {}, con = {};
+  D.ricette.forEach(r=>r.ing.forEach(i=>{
+    tot[i.k] = (tot[i.k]||0) + 1;
+    con[i.k] = con[i.k] || {};
+    r.all.forEach(a=>{ con[i.k][a] = (con[i.k][a]||0) + 1; });
+  }));
+  const out = {};
+  for(const k in tot) out[k] = Object.keys(con[k]).filter(a=>con[k][a] / tot[k] > 0.85);
+  return out;
+})();
 
 const MESE = new Date().getMonth() + 1;
 
@@ -317,9 +334,19 @@ const MESE = new Date().getMonth() + 1;
 const VUOTO = {
   profilo:{nome:"",regione:"",stile:"onnivoro",allergeni:[],evita:"",tempo:"999",fatto:false},
   ospitiSalvati:[], dispensa:[], baseSempre:true, dispensaData:null,
-  preferite:[], cucinate:{}, spesa:[]
+  preferite:[], cucinate:{}, spesa:[],
+  nascoste:[], mie:[], ingMiei:{}
 };
 let S = carica();
+/* le ricette scritte da te e gli ingredienti che hai aggiunto entrano nell'archivio */
+(S.mie || []).forEach(preparaRicetta);
+for(const [cat, lista] of Object.entries(S.ingMiei || {}))
+  (lista || []).forEach(k=>{
+    CAT_DISP[cat] = CAT_DISP[cat] || [];
+    if(!CAT_DISP[cat].includes(k)) CAT_DISP[cat].push(k);
+  });
+function archivio(){ return D.ricette.concat(S.mie || []); }
+function trovaRicetta(id){ return archivio().find(x=>x.id === id); }
 let sess = nuovaSessione();
 let passo = 0, menuAperto = false, cercaDisp = "";
 let soloPref = false;            /* filtro "solo le preferite" */
@@ -399,7 +426,8 @@ function filtra(){
 
   const parole = sess.modo === "idea" ? normTesto(sess.cerca).split(" ").filter(Boolean) : [];
 
-  let out = D.ricette.filter(r=>{
+  let out = archivio().filter(r=>{
+    if(S.nascoste.includes(r.id)) return false;
     if(soloPref && !S.preferite.includes(r.id)) return false;
     if(alg.some(a=>r.all.includes(a))) return false;
     if(evita.some(v=>r.ing.some(i=>i.k.includes(v)))) return false;
@@ -573,6 +601,14 @@ function tappaDispensa(){
     <div class="riga" style="margin-top:12px">
       <div><b>Acqua, olio, sale e pepe</b><div class="mini">Li do per scontati in ogni ricetta</div></div>
       <button class="chip ${S.baseSempre?"on":""}" id="swBase">${S.baseSempre?"sempre in casa":"da segnare"}</button></div>
+    <div class="mini" style="margin-top:14px">Non lo trovi?</div>
+    <div class="riga-add" style="margin-top:6px">
+      <input type="text" id="ingNuovo" placeholder="Scrivi l'ingrediente">
+      <button class="btn small" id="ingAdd">Aggiungi</button>
+    </div>
+    <label class="campo" style="margin-top:8px"><span>Reparto</span>
+      <select id="ingCat">${Object.keys(CAT_DISP).map(c=>`<option>${c}</option>`).join("")}</select></label>
+    <p class="mini" id="ingEsito" aria-live="polite"></p>
     ${top.length?`<div class="mini" style="margin-top:14px">Scorciatoia</div>
       <button class="btn ghost small" id="topFill" style="margin-top:6px">Segna i 25 ingredienti più usati dall'archivio</button>`:""}
   </div>
@@ -591,6 +627,20 @@ function tappaDispensa(){
   c.oninput = e=>{ cercaDisp = e.target.value; const pos=e.target.selectionStart;
     tappaDispensa(); const n2=document.getElementById("cerca"); n2.focus(); n2.setSelectionRange(pos,pos); };
   document.getElementById("swBase").onclick=()=>{ S.baseSempre=!S.baseSempre; salva(); tappaDispensa(); };
+  const ingN = document.getElementById("ingNuovo"), ingC = document.getElementById("ingCat");
+  ingN.oninput = ()=>{ const g = indovinaCat(ingN.value); if(g) ingC.value = g; };
+  document.getElementById("ingAdd").onclick = ()=>{
+    const nome = ingN.value.trim();
+    if(!nome) return;
+    const k = aggiungiIngrediente(nome, ingC.value);
+    if(k && !S.dispensa.includes(k)) S.dispensa.push(k);
+    S.dispensaData = new Date().toLocaleDateString("it-IT");
+    salva();
+    cercaDisp = "";
+    tappaDispensa();
+    const es = document.getElementById("ingEsito");
+    if(es) es.textContent = "Aggiunto «" + k + "» e già segnato in dispensa.";
+  };
   const tf = document.getElementById("topFill");
   if(tf) tf.onclick=()=>{ top.forEach(k=>{ if(!S.dispensa.includes(k)) S.dispensa.push(k); });
     S.dispensaData = new Date().toLocaleDateString("it-IT"); salva(); tappaDispensa(); };
@@ -730,7 +780,7 @@ function scheda(o){
         : o.sostituibili.length ? `Ci siamo, con ${o.sostituibili.length===1?"una sostituzione":"qualche sostituzione"}`
         : "Hai tutto il necessario"}</div>
       ${o.usa?.length?`<div class="mini" style="margin-top:4px">Consuma: ${esc(o.usa.join(", "))}</div>`:""}
-      <div>${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag?`<span class="tag stag">di stagione</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
+      <div>${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag?`<span class="tag stag">di stagione</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
       ${esclusi.length?`<div class="avviso">Non va bene per ${esclusi.map(c=>esc(c.nome)).join(" e ")}</div>`:""}
     </summary>
     <div class="dett">
@@ -753,6 +803,10 @@ function scheda(o){
         ${o.mancanti.length?`<button class="btn ghost small" data-azione="spesa" data-id="${r.id}">Aggiungi alla spesa</button>`:""}
         <button class="btn ghost small" data-azione="fatta" data-id="${r.id}">L\u2019ho cucinata</button>
         <button class="btn ghost small" data-azione="pref" data-id="${r.id}">${o.pref?"\u2605":"\u2606"} Preferita</button>
+        ${r.id<0
+          ? `<button class="btn ghost small" data-azione="modifica" data-id="${r.id}">Modifica</button>
+             <button class="btn ghost small" data-azione="elimina" data-id="${r.id}">Elimina</button>`
+          : `<button class="btn ghost small" data-azione="nascondi" data-id="${r.id}">Non propormela più</button>`}
       </div>
       <a class="cerca-web" target="_blank" rel="noopener"
          href="https://www.google.com/search?q=${encodeURIComponent("ricetta "+r.n)}">Cerca questa ricetta sul web</a>
@@ -981,7 +1035,7 @@ document.addEventListener("click", e=>{
   const b = e.target.closest("[data-fine]");
   if(!b) return;
   if(b.dataset.fine === "annulla"){ chiudiVelo(); cucina = null; return; }
-  const r = D.ricette.find(x=>x.id === +b.dataset.id);
+  const r = trovaRicetta(+b.dataset.id);
   if(!r) return;
   S.cucinate[r.id] = Date.now();
   const inSpesa = document.getElementById("fineSpesa");
@@ -1107,7 +1161,7 @@ document.addEventListener("click", e=>{
   if(b){ dosiPer = Math.max(1, dosiAttuali() + (+b.dataset.dosi)); aggiornaDosi(); return; }
   const t = e.target.closest("[data-azione]");
   if(!t) return;
-  const r = D.ricette.find(x=>x.id === +t.dataset.id);
+  const r = trovaRicetta(+t.dataset.id);
   if(!r) return;
   switch(t.dataset.azione){
     case "cucina": apriCucina(r); break;
@@ -1116,7 +1170,340 @@ document.addEventListener("click", e=>{
     case "pref":   togglePref(r.id);
                    t.textContent = (S.preferite.includes(r.id) ? "\u2605" : "\u2606") + " Preferita";
                    break;
+    case "nascondi": if(!S.nascoste.includes(r.id)) S.nascoste.push(r.id);
+                     salva(); tappaRicette(); break;
+    case "modifica": apriEditor(r); break;
+    case "elimina":  if(confirm("Elimino «" + r.n + "» dalle tue ricette?")){
+                       S.mie = S.mie.filter(x=>x.id !== r.id); salva(); tappaRicette();
+                     } break;
   }
+});
+
+/* ===========================================================
+   Ingredienti: le chiavi della dispensa e come indovinarle
+   =========================================================== */
+function chiaviDispensa(){
+  return Object.entries(CAT_DISP).flatMap(([c,l])=>(l||[]).map(k=>[k,c]));
+}
+/* come l'archivio chiama le cose: "maccheroni" e "trofie" sono entrambi "pasta" */
+const NOMI_K = (()=>{
+  const m = {};
+  D.ricette.forEach(r=>r.ing.forEach(i=>{ const n = normTesto(i.n); if(!m[n]) m[n] = i.k; }));
+  return m;
+})();
+function chiaveDi(nome){
+  const n = normTesto(nome);
+  if(!n) return "";
+  const tutte = chiaviDispensa().map(([k])=>k).concat(Array.from(BASE));
+  const esatta = tutte.find(k=>normTesto(k) === n);
+  if(esatta) return esatta;
+  if(NOMI_K[n]) return NOMI_K[n];
+  /* la chiave più lunga contenuta nel nome scritto: "passata di pomodoro" batte "pomodoro" */
+  let best = "", lung = 0;
+  tutte.forEach(k=>{
+    const x = normTesto(k);
+    if((n.includes(x) || x.includes(n)) && x.length > lung){ best = k; lung = x.length; }
+  });
+  if(best) return best;
+  Object.keys(NOMI_K).forEach(x=>{
+    if(x.length > 3 && n.includes(x) && x.length > lung){ best = NOMI_K[x]; lung = x.length; }
+  });
+  return best;
+}
+function categoriaDi(k){
+  const t = chiaviDispensa().find(([x])=>x === k);
+  return t ? t[1] : "";
+}
+const INDIZI = [
+  [/(pesce|tonno|salmone|gamber|cozz|vongol|alic|sard|polp|calamar|merluzz|spigol|orat|seppi|baccal|stocc|spada)/, "Pesce"],
+  [/(manzo|vitell|pollo|maial|agnell|salsicc|prosciutt|salam|pancett|guancial|speck|lard|tacchin|coniglio|bresaol|mortadell|carne)/, "Carne e salumi"],
+  [/(latte|formagg|ricott|mozzarell|burro|yogurt|uov|panna|pecorin|parmigian|scamorz|provol|fontin|gorgonzol|stracchin|mascarpon|feta)/, "Latticini e uova"],
+  [/(surgelat|congelat|gelat)/, "Surgelati e congelati"],
+  [/(scatol|barattol|pelati|passata|conserv|sott.olio|sottaceto|tonno in|legumi in)/, "Scatolette e conserve"],
+  [/(origan|basilic|prezzemol|rosmarin|timo|salvi|allor|menta|cannell|pepe|paprica|curry|cumin|zafferan|noce moscat|spezi|erba|semi di)/, "Erbe e spezie"],
+  [/(insalat|pomodor|zucchin|melanzan|peperon|carot|cipoll|agli|patat|spinac|broccol|cavol|finocchi|carciof|funghi|zucca|sedano|porro|rap|bietol|cicori|radicchi|fagiolini|verdur|frutt|mel[ae]|pera|limon|aranc|banan)/, "Verdure e ortaggi"]
+];
+function indovinaCat(nome){
+  const k = chiaveDi(nome);
+  if(k) return categoriaDi(k);
+  const n = normTesto(nome);
+  const t = INDIZI.find(([re])=>re.test(n));
+  return t ? t[1] : "Dispensa";
+}
+function aggiungiIngrediente(nome, cat){
+  const k = nome.trim().toLowerCase();
+  if(!k) return "";
+  if(chiaviDispensa().some(([x])=>x === k)) return k;
+  CAT_DISP[cat] = CAT_DISP[cat] || [];
+  CAT_DISP[cat].push(k);
+  S.ingMiei[cat] = S.ingMiei[cat] || [];
+  S.ingMiei[cat].push(k);
+  salva();
+  return k;
+}
+
+/* ===========================================================
+   Leggere una ricetta scritta a mano o copiata dal web
+   =========================================================== */
+const UNITA = "cucchiaini|cucchiaino|cucchiaio|cucchiai|bicchieri|bicchiere|pizzichi|pizzico|spicchio|spicchi|bustine|bustina|rametti|rametto|filetti|filetto|foglie|foglia|ciuffi|ciuffo|rotoli|rotolo|coste|costa|fette|fetta|tazze|tazza|kg|gr|ml|cl|g|l";
+function leggiIng(riga){
+  let t = riga.replace(/^[\s\-\u2022*\u00b7]+/, "").replace(/^\d{1,2}[.)]\s+/, "").trim();
+  if(!t) return null;
+  let q = "", n = t;
+  if(/\bq\.?\s*b\.?\s*$/i.test(t)){ q = "q.b."; t = t.replace(/\bq\.?\s*b\.?\s*$/i, "").replace(/[:,\-\s]+$/, "").trim(); n = t; }
+  let m = t.match(new RegExp("^((?:\\d+\\s*/\\s*\\d+|\\d+[.,]?\\d*)\\s*(?:" + UNITA + ")?)\\s*(?:di\\s+|d\u2019|d')?(.+)$", "i"));
+  if(m){ q = m[1].trim(); n = m[2].trim(); }
+  else{
+    m = t.match(new RegExp("^(.+?)[\\s,:]+((?:\\d+[.,]?\\d*)\\s*(?:" + UNITA + "))$", "i"));
+    if(m){ n = m[1].trim(); q = m[2].trim(); }
+  }
+  n = n.replace(/\s*\(.*?\)\s*/g, " ").replace(/[.;:,]+$/, "").trim();
+  if(!n) return null;
+  return {n: n.toLowerCase(), q: q || "q.b.", k: chiaveDi(n)};
+}
+function leggiTesto(testo){
+  const righe = testo.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  let nome = "", ing = [], proc = [], zona = "";
+  const isIng   = x=>/^ingredient/i.test(x);
+  const isProc  = x=>/^(procedimento|preparazione|esecuzione|come si prepara|istruzioni|metodo)/i.test(x);
+  righe.forEach((x, i)=>{
+    if(isIng(x)){ zona = "i"; return; }
+    if(isProc(x)){ zona = "p"; return; }
+    if(!nome && zona === "" && x.length < 70 && !/^\d/.test(x)){ nome = x; return; }
+    if(zona === "i"){ const g = leggiIng(x); if(g) ing.push(g); return; }
+    if(zona === "p"){ proc.push(x.replace(/^\d+[.)]\s*/, "")); return; }
+    /* nessuna intestazione: decido riga per riga */
+    if(/^[\s\-\u2022*]*\d/.test(x) || x.length < 45){ const g = leggiIng(x); if(g) ing.push(g); }
+    else proc.push(x.replace(/^\d+[.)]\s*/, ""));
+  });
+  return {nome, ing, proc};
+}
+async function scaricaDaWeb(url, dove){
+  dove.textContent = "Provo a scaricare la pagina\u2026";
+  try{
+    const r = await fetch("https://r.jina.ai/" + url);
+    if(!r.ok) throw new Error("no");
+    const t = await r.text();
+    document.getElementById("impTesto").value = t.slice(0, 20000);
+    dove.textContent = "Scaricata. Controlla il testo qui sotto e premi \u201cPrepara la ricetta\u201d.";
+  }catch(e){
+    dove.textContent = "Non sono riuscito a leggere quel sito. Apri la pagina, copia il testo della ricetta e incollalo qui sotto.";
+  }
+}
+
+/* ===========================================================
+   Le mie ricette: elenco, editor, abbinamento ingredienti
+   =========================================================== */
+function apriMie(){
+  apriVelo("mie", `
+    <div class="velo-top"><h2>Le mie ricette</h2>
+      <button class="chiudi" data-mia="chiudi">Chiudi</button></div>
+    <div class="azioni">
+      <button class="btn small" data-mia="nuova">Scrivi una ricetta</button>
+      <button class="btn ghost small" data-mia="web">Incolla una ricetta dal web</button>
+    </div>
+    ${S.mie.length ? `<ul class="spesa-l">${S.mie.map(r=>
+      `<li><span>${esc(r.n)} <span class="mini">${esc(r.cat)} \u00b7 ${r.tempo} min</span></span>
+        <button class="chiudi" data-mia="mod" data-id="${r.id}">Modifica</button>
+        <button class="chiudi" data-mia="del" data-id="${r.id}">Elimina</button></li>`).join("")}</ul>`
+      : `<div class="vuoto"><p>Non hai ancora ricette tue.</p>
+         <p class="mini">Scrivile a mano oppure incolla il testo di una ricetta trovata sul web: la riscrivo io nel formato dell'app.</p></div>`}`);
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-mia]");
+  if(!b) return;
+  const a = b.dataset.mia;
+  if(a === "chiudi"){ chiudiVelo(); return; }
+  if(a === "nuova"){ apriEditor(null); return; }
+  if(a === "web"){ apriImport(); return; }
+  const r = trovaRicetta(+b.dataset.id);
+  if(!r) return;
+  if(a === "mod") apriEditor(r);
+  if(a === "del" && confirm("Elimino \u00ab" + r.n + "\u00bb?")){
+    S.mie = S.mie.filter(x=>x.id !== r.id); salva(); apriMie();
+  }
+});
+
+function apriImport(){
+  apriVelo("import", `
+    <div class="velo-top"><h2>Ricetta dal web</h2>
+      <button class="chiudi" data-imp="chiudi">Chiudi</button></div>
+    <p class="mini">Il modo sicuro è aprire la pagina, selezionare la ricetta, copiarla e incollarla qui. Con il link posso provare a scaricarla io, ma molti siti non lo permettono.</p>
+    <label class="campo"><span>Link della pagina</span>
+      <input type="text" id="impUrl" placeholder="https://\u2026"></label>
+    <div class="azioni"><button class="btn ghost small" data-imp="scarica">Prova a scaricare</button></div>
+    <p class="mini" id="impEsito" aria-live="polite"></p>
+    <label class="campo" style="margin-top:10px"><span>Oppure incolla qui il testo</span>
+      <textarea id="impTesto" rows="10" placeholder="Nome del piatto&#10;Ingredienti&#10;320 gr di pasta&#10;2 melanzane&#10;Procedimento&#10;Taglia le melanzane\u2026"></textarea></label>
+    <div class="azioni"><button class="btn" data-imp="leggi">Prepara la ricetta</button></div>`);
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-imp]");
+  if(!b) return;
+  const a = b.dataset.imp;
+  if(a === "chiudi"){ chiudiVelo(); return; }
+  if(a === "scarica"){
+    const u = document.getElementById("impUrl").value.trim();
+    if(u) scaricaDaWeb(u, document.getElementById("impEsito"));
+    return;
+  }
+  if(a === "leggi"){
+    const t = document.getElementById("impTesto").value;
+    if(!t.trim()){ document.getElementById("impEsito").textContent = "Incolla prima il testo della ricetta."; return; }
+    const g = leggiTesto(t);
+    apriEditor({
+      id: 0, n: g.nome, cat: "Primi", tempo: 40, diff: "facile", tags: [],
+      ing: g.ing, proc: g.proc, nota: "", luogo: "", estero: false,
+      all: [], unico: false, nvoci: g.ing.length, minimo: false, leggero: false, att: [], att_opz: []
+    });
+  }
+});
+
+function apriEditor(r){
+  const nuovo = !r || !r.id;
+  const v = r || {n:"", cat:"Primi", tempo:40, diff:"facile", tags:[], ing:[], proc:[],
+                  nota:"", luogo:"", all:[], unico:false};
+  const allSugg = new Set(v.all || []);
+  (v.ing || []).forEach(i=>(ALL_DI[i.k] || []).forEach(a=>allSugg.add(a)));
+  apriVelo("editor", `
+    <div class="velo-top"><h2>${nuovo ? "Nuova ricetta" : "Modifica ricetta"}</h2>
+      <button class="chiudi" data-ed="chiudi">Chiudi</button></div>
+    <label class="campo"><span>Nome del piatto</span>
+      <input type="text" id="eNome" value="${esc(v.n)}"></label>
+    <div class="riga" style="gap:10px">
+      <label class="campo" style="flex:1"><span>Portata</span><select id="eCat">
+        ${PORTATE.map(c=>`<option ${v.cat===c?"selected":""}>${c}</option>`).join("")}</select></label>
+      <label class="campo" style="flex:1"><span>Minuti</span>
+        <input type="number" id="eTempo" min="5" max="600" step="5" value="${v.tempo}"></label>
+    </div>
+    <div class="riga" style="gap:10px">
+      <label class="campo" style="flex:1"><span>Difficoltà</span><select id="eDiff">
+        ${["facile","media","difficile"].map(d=>`<option ${v.diff===d?"selected":""}>${d}</option>`).join("")}</select></label>
+      <label class="campo" style="flex:1"><span>Regione o paese</span><select id="eLuogo">
+        <option value="">non saprei</option>
+        ${REGIONI.map(x=>`<option ${v.luogo===x?"selected":""}>${x}</option>`).join("")}
+        <option ${v.luogo==="Estero"?"selected":""}>Estero</option></select></label>
+    </div>
+    <div class="chips" style="margin:6px 0 12px">
+      <button class="chip ${v.tags.includes("vegetariano")?"on":""}" data-tag="vegetariano">vegetariano</button>
+      <button class="chip ${v.tags.includes("vegano")?"on":""}" data-tag="vegano">vegano</button>
+      <button class="chip ${v.unico?"on":""}" data-tag="unico">piatto unico</button>
+    </div>
+    <div class="mini">Allergeni (li ho già spuntati in base agli ingredienti)</div>
+    <div class="chips" style="margin:6px 0 12px">
+      ${ALLERGENI.map(a=>`<button class="chip ${allSugg.has(a)?"on":""}" data-all="${esc(a)}">${a}</button>`).join("")}
+    </div>
+    <label class="campo"><span>Ingredienti, uno per riga</span>
+      <textarea id="eIng" rows="7">${esc((v.ing||[]).map(i=>(i.q && i.q!=="q.b." ? i.q + " " : "") + i.n).join("\n"))}</textarea></label>
+    <p class="mini">Scrivi come parli: «320 gr di pasta», «2 melanzane». Le dosi sono per quattro persone.</p>
+    <label class="campo"><span>Procedimento, un passaggio per riga</span>
+      <textarea id="eProc" rows="8">${esc((v.proc||[]).join("\n"))}</textarea></label>
+    <label class="campo"><span>Nota (facoltativa)</span>
+      <textarea id="eNota" rows="2">${esc(v.nota||"")}</textarea></label>
+    <div class="azioni">
+      <button class="btn" data-ed="salva" data-id="${r && r.id ? r.id : 0}">Salva la ricetta</button>
+      <button class="btn ghost" data-ed="chiudi">Annulla</button>
+    </div>`);
+  velo.querySelectorAll("[data-tag],[data-all]").forEach(b=>b.onclick = ()=>b.classList.toggle("on"));
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-ed]");
+  if(!b) return;
+  if(b.dataset.ed === "chiudi"){ chiudiVelo(); return; }
+
+  const nome = document.getElementById("eNome").value.trim();
+  if(!nome){ alert("Manca il nome del piatto."); return; }
+  const ing = document.getElementById("eIng").value.split(/\r?\n/)
+                .map(leggiIng).filter(Boolean);
+  if(!ing.length){ alert("Serve almeno un ingrediente."); return; }
+  const bozza = {
+    id: +b.dataset.id || -Date.now(),
+    n: nome,
+    cat: document.getElementById("eCat").value,
+    tempo: +document.getElementById("eTempo").value || 40,
+    diff: document.getElementById("eDiff").value,
+    luogo: document.getElementById("eLuogo").value === "Estero" ? "" : document.getElementById("eLuogo").value,
+    estero: document.getElementById("eLuogo").value === "Estero",
+    tags: [...velo.querySelectorAll("[data-tag].on")].map(x=>x.dataset.tag).filter(x=>x!=="unico"),
+    unico: !!velo.querySelector('[data-tag="unico"].on'),
+    all: [...velo.querySelectorAll("[data-all].on")].map(x=>x.dataset.all),
+    ing,
+    proc: document.getElementById("eProc").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),
+    nota: document.getElementById("eNota").value.trim(),
+    nvoci: ing.length, minimo:false, leggero:false, att:[], att_opz:[]
+  };
+  const orfani = ing.filter(i=>!i.k);
+  orfani.length ? apriAbbina(bozza, orfani) : salvaMia(bozza);
+});
+
+function apriAbbina(bozza, orfani){
+  const opzioni = chiaviDispensa().map(([k])=>k).sort();
+  apriVelo("abbina", `
+    <div class="velo-top"><h2>Due parole da tradurre</h2>
+      <button class="chiudi" data-ab="annulla">Chiudi</button></div>
+    <p class="mini">Questi ingredienti non li ho riconosciuti. Dimmi a cosa corrispondono in dispensa, oppure lasciali come nuovi: li aggiungo io nel reparto che indichi.</p>
+    ${orfani.map((i, n)=>`
+      <div class="card">
+        <b>${esc(i.n)}</b>
+        <label class="campo" style="margin-top:8px"><span>Corrisponde a</span>
+          <select data-ab-k="${n}">
+            <option value="">— è un ingrediente nuovo —</option>
+            ${opzioni.map(k=>`<option value="${esc(k)}">${k}</option>`).join("")}
+          </select></label>
+        <label class="campo"><span>Se è nuovo, in che reparto</span>
+          <select data-ab-c="${n}">
+            ${Object.keys(CAT_DISP).map(c=>`<option ${c===indovinaCat(i.n)?"selected":""}>${c}</option>`).join("")}
+          </select></label>
+      </div>`).join("")}
+    <div class="azioni">
+      <button class="btn" data-ab="ok">Va bene, salva</button>
+      <button class="btn ghost" data-ab="annulla">Annulla</button>
+    </div>`);
+  velo._bozza = bozza; velo._orfani = orfani;
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-ab]");
+  if(!b) return;
+  if(b.dataset.ab === "annulla"){ chiudiVelo(); return; }
+  const bozza = velo._bozza, orfani = velo._orfani;
+  orfani.forEach((i, n)=>{
+    const scelta = velo.querySelector(`[data-ab-k="${n}"]`).value;
+    const cat = velo.querySelector(`[data-ab-c="${n}"]`).value;
+    i.k = scelta || aggiungiIngrediente(i.n, cat);
+  });
+  salvaMia(bozza);
+});
+
+function salvaMia(r){
+  preparaRicetta(r);
+  S.mie = (S.mie || []).filter(x=>x.id !== r.id);
+  S.mie.push(r);
+  salva();
+  chiudiVelo();
+  passo === 4 ? tappaRicette() : apriMie();
+}
+
+/* ===========================================================
+   Ricette nascoste
+   =========================================================== */
+function apriNascoste(){
+  const l = S.nascoste.map(trovaRicetta).filter(Boolean);
+  apriVelo("nascoste", `
+    <div class="velo-top"><h2>Ricette nascoste</h2>
+      <button class="chiudi" data-nas="chiudi">Chiudi</button></div>
+    ${l.length ? `<p class="mini">Non te le propongo più. Puoi rimetterle in circolo quando vuoi.</p>
+      <ul class="spesa-l">${l.map(r=>
+        `<li><span>${esc(r.n)}</span>
+         <button class="chiudi" data-nas="su" data-id="${r.id}">Rimetti</button></li>`).join("")}</ul>`
+      : `<div class="vuoto"><p>Non hai nascosto nessuna ricetta.</p>
+         <p class="mini">Il tasto «Non propormela più» lo trovi dentro ogni ricetta.</p></div>`}`);
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-nas]");
+  if(!b) return;
+  if(b.dataset.nas === "chiudi"){ chiudiVelo(); return; }
+  S.nascoste = S.nascoste.filter(x=>x !== +b.dataset.id);
+  salva(); apriNascoste();
 });
 
 /* --- menu --- */
@@ -1140,6 +1527,8 @@ function disegnaMenu(){
     <button data-go="3">Cosa cucinare</button>
     <div class="sez">Strumenti</div>
     <button id="mSpesa">Lista della spesa${S.spesa.filter(x=>!x.presa).length?` (${S.spesa.filter(x=>!x.presa).length})`:""}</button>
+    <button id="mMie">Le mie ricette${S.mie.length?` (${S.mie.length})`:""}</button>
+    <button id="mNasc">Ricette nascoste${S.nascoste.length?` (${S.nascoste.length})`:""}</button>
     <button id="mSalva">Salva i miei dati in un file</button>
     <button id="mCarica">Reimporta da un file</button>
     <div class="sez">Altro</div>
@@ -1149,6 +1538,8 @@ function disegnaMenu(){
   if(pronta) document.getElementById("mSalta").onclick=()=>{
     sess = nuovaSessione(); sess.modo="app"; menuAperto=false; disegnaMenu(); vai(4); };
   document.getElementById("mSpesa").onclick=()=>{ menuAperto=false; disegnaMenu(); apriSpesa(); };
+  document.getElementById("mMie").onclick=()=>{ menuAperto=false; disegnaMenu(); apriMie(); };
+  document.getElementById("mNasc").onclick=()=>{ menuAperto=false; disegnaMenu(); apriNascoste(); };
   document.getElementById("mSalva").onclick=()=>{ menuAperto=false; disegnaMenu(); esportaDati(); };
   document.getElementById("mCarica").onclick=()=>{ menuAperto=false; disegnaMenu(); importaDati(); };
   document.getElementById("mNuova").onclick=()=>{ sess = nuovaSessione(); menuAperto=false; disegnaMenu(); vai(0); };
