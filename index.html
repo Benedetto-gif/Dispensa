@@ -41,6 +41,37 @@ if(+t>=55)document.documentElement.setAttribute("data-scuro","");}catch(e){}})()
 :root[data-scuro]{ color-scheme:dark; }
 *{box-sizing:border-box}
 
+/* ===== HOME BENTO ===== */
+.home{padding:6px 0 calc(80px + env(safe-area-inset-bottom));max-width:620px;margin:0 auto}
+.home-saluto{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin:6px 0 16px;padding:0 2px}
+.home-saluto small{display:block;font-size:.85rem;font-weight:400;color:var(--inchiostro-soft);margin-top:2px}
+.bento{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bento .avvia{grid-column:1/-1}
+.bcella{border-radius:18px;padding:16px 16px 14px;cursor:pointer;
+  border:1.5px solid transparent;
+  transition:transform .15s,box-shadow .15s;
+  -webkit-tap-highlight-color:transparent;
+  position:relative;overflow:hidden}
+.bcella:active{transform:scale(.97)}
+.bcella.c-verde{background:var(--verde);color:var(--carta)}
+.bcella.c-menta{background:var(--verde-chiaro);color:var(--verde)}
+.bcella.c-crema{background:var(--superficie2);color:var(--inchiostro)}
+.bcella.c-senape{background:color-mix(in srgb,var(--senape) 14%,var(--superficie2));color:var(--inchiostro)}
+.bcella.c-mattone{background:color-mix(in srgb,var(--mattone) 12%,var(--superficie2));color:var(--inchiostro)}
+.bcella.c-bordeaux{background:color-mix(in srgb,#7a3e52 11%,var(--superficie2));color:var(--inchiostro)}
+.bcella svg{width:36px;height:36px;margin-bottom:10px;display:block;opacity:.9}
+.bcella.avvia svg{width:48px;height:48px;margin-bottom:12px}
+.bcella b{display:block;font-size:1rem;font-weight:700;line-height:1.2}
+.bcella.avvia b{font-size:1.3rem}
+.bcella small{display:block;font-size:.78rem;opacity:.75;margin-top:4px;line-height:1.35}
+.bcella .badge{position:absolute;top:12px;right:14px;
+  background:rgba(0,0,0,.18);color:inherit;
+  border-radius:999px;font-size:.72rem;font-weight:700;padding:2px 8px;
+  line-height:1.6}
+.bcella.tre{grid-column:auto}
+.bento-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+@media(max-width:340px){.bento-3{grid-template-columns:1fr 1fr}}
+
 /* cursore chiaro/scuro */
 .tono{display:flex;align-items:center;gap:5px;flex:none;
   padding:3px 7px;border-radius:999px;background:var(--superficie);border:1px solid var(--linea)}
@@ -255,7 +286,7 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 </div>
 <header class="top">
   <div class="top-in">
-    <div class="marchio">Che cucino<span>?</span></div>
+    <div class="marchio" id="logoHome" style="cursor:pointer" title="Torna alla home">Che cucino<span>?</span></div>
     <div class="tono">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.4 4.4l1.8 1.8M17.8 17.8l1.8 1.8M19.6 4.4l-1.8 1.8M6.2 17.8l-1.8 1.8"/></g></svg>
       <input type="range" id="tono" min="0" max="100" step="10" value="15" aria-label="Luminosità dell'app">
@@ -491,9 +522,13 @@ const pulito = s => esc(String(s).replace(/<[^>]*>/g,""));
 
 function vai(n){ passo = n; window.scrollTo({top:0}); disegna(); }
 function disegna(){
-  rail.innerHTML = TAPPE.map((t,i)=>`<div data-p="${i}" class="${i<passo?"fatto":""}${i===passo?"ora":""}"><i></i>${t}</div>`).join("");
-  rail.querySelectorAll("[data-p]").forEach(d=>d.onclick=()=>vai(+d.dataset.p));
-  [tappaProfilo, tappaOspiti, tappaDispensa, tappaVoglia, tappaRicette][passo]();
+  const home = passo === 5;
+  document.getElementById("rail").style.display = home ? "none" : "";
+  if(!home){
+    rail.innerHTML = TAPPE.map((t,i)=>`<div data-p="${i}" class="${i<passo?"fatto":""}${i===passo?"ora":""}"><i></i>${t}</div>`).join("");
+    rail.querySelectorAll("[data-p]").forEach(d=>d.onclick=()=>vai(+d.dataset.p));
+  }else{ rail.innerHTML=""; }
+  [tappaProfilo, tappaOspiti, tappaDispensa, tappaVoglia, tappaRicette, tappaHome][passo]();
 }
 function pulsanti(indietro, avanti, fnAvanti, fnIndietro){
   barra.innerHTML = "";
@@ -644,6 +679,7 @@ function tappaDispensa(){
   ingN.oninput = ()=>{ const g = indovinaCat(ingN.value); if(g) ingC.value = g; };
   const rip = document.getElementById("ingRip");
   if(rip) rip.onclick = ()=>{ rimettiTolti(); tappaDispensa(); };
+  document.getElementById("logoHome").onclick = ()=>{ if(S.profilo.fatto) vai(5); };
   document.getElementById("ingAdd").onclick = ()=>{
     const nome = ingN.value.trim();
     if(!nome) return;
@@ -841,7 +877,7 @@ function tappaRicette(){
 
   document.getElementById("fTutte").onclick = ()=>{ soloPref = false; tappaRicette(); };
   document.getElementById("fPref").onclick  = ()=>{ soloPref = true;  tappaRicette(); };
-  pulsanti("Cambia scelta", "Ricomincia", ()=>{ sess = nuovaSessione(); vai(0); }, ()=>vai(3));
+  pulsanti("Cambia scelta", "Home", ()=>vai(5), ()=>{ sess.modo="app"; tappaVoglia(); });
 }
 
 function scheda(o){
@@ -1132,7 +1168,7 @@ document.addEventListener("click", e=>{
   }
   salva();
   chiudiVelo(); cucina = null;
-  if(passo === 4) tappaRicette();
+  if(passo === 4 || passo === 5) tappaRicette();
 });
 
 /* ===========================================================
@@ -1652,6 +1688,93 @@ document.addEventListener("click", e=>{
   salva(); apriNascoste();
 });
 
+
+/* ===== HOME BENTO ===== */
+function tappaHome(){
+  const p = S.profilo, disp = S.dispensa.length;
+  const ora = new Date().getHours();
+  const sal = ora < 12 ? "Buongiorno" : ora < 18 ? "Buon pomeriggio" : "Buonasera";
+  const nome = p.nome ? ", " + p.nome : "";
+  const comm = tavolata().length;
+
+  app.innerHTML = `<div class="home">
+    <div class="home-saluto">${sal}${nome}<small>Cosa cuciniamo?</small></div>
+    <div class="bento">
+      <div class="bcella c-verde avvia" id="hAvvia">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="22" cy="22" r="20" fill="white" opacity=".18"/>
+  <path d="M12 28c0-4 3-7 6-9l2-6 2 6c3 2 6 5 6 9H12z" fill="currentColor" opacity=".9"/>
+  <path d="M22 13v-3M16 15l-2-2M28 15l2-2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  <rect x="14" y="28" width="16" height="3" rx="1.5" fill="currentColor"/>
+</svg>
+        <b>Inizia</b>
+        <small>Scegli cosa cucinare in base a quello che hai</small>
+      </div>
+      <div class="bcella c-menta" id="hDisp">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8" y="7" width="28" height="34" rx="4" stroke="currentColor" stroke-width="2.2"/>
+  <line x1="8" y1="22" x2="36" y2="22" stroke="currentColor" stroke-width="2.2"/>
+  <circle cx="22" cy="15" r="2.5" fill="currentColor"/>
+  <path d="M17 30h4M23 30h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M14 27h3v6h-3z" rx="1" fill="currentColor" opacity=".6"/>
+  <path d="M27 26h3v4h-3z" rx="1" fill="currentColor" opacity=".6"/>
+</svg>
+        ${disp?`<span class="badge">${disp}</span>`:""}
+        <b>Dispensa</b>
+        <small>${disp?"Hai "+disp+" ingredienti":"Cosa hai in casa?"}</small>
+      </div>
+      <div class="bcella c-crema" id="hOsp">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="16" cy="14" r="5" stroke="currentColor" stroke-width="2.2"/>
+  <path d="M7 35c0-6 4-9 9-9s9 3 9 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="30" cy="15" r="4" stroke="currentColor" stroke-width="2"/>
+  <path d="M26 35c0-5 3-8 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+</svg>
+        ${comm>1?`<span class="badge">${comm}</span>`:""}
+        <b>A tavola</b>
+        <small>${comm>1?"Siete in "+comm:"Cucini per te"}</small>
+      </div>
+    </div>
+    <div class="bento-3">
+      <div class="bcella c-senape" id="hIdea">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="22" cy="19" r="9" stroke="currentColor" stroke-width="2.2"/>
+  <path d="M18 28h8M19 31h6M20 34h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M22 14v2M17 16l1.4 1.4M27 16l-1.4 1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+</svg>
+        <b>Ho in mente un piatto</b>
+        <small>Cerca per nome, ingrediente o regione</small>
+      </div>
+      <div class="bcella c-crema" id="hAuto">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M22 9l3.1 9.5H35l-7.9 5.7 3 9.3L22 28.2l-8.1 5.3 3-9.3L9 18.5h9.9z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+</svg>
+        <b>Scegli tu</b>
+        <small>Guarda cosa ho e proponi</small>
+      </div>
+      <div class="bcella c-mattone" id="hSmalt">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="10" y="16" width="24" height="20" rx="3" stroke="currentColor" stroke-width="2.2"/>
+  <path d="M8 16h28" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M17 16v-3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M22 22v8M18 24l4-2 4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+        <b>Devo consumare qualcosa</b>
+        <small>Fresco, frigo o avanzo</small>
+      </div>
+    </div>
+  </div>`;
+
+  barra.innerHTML = "";
+
+  document.getElementById("hAvvia").onclick = ()=>vai(3);
+  document.getElementById("hDisp").onclick  = ()=>vai(2);
+  document.getElementById("hOsp").onclick   = ()=>vai(1);
+  document.getElementById("hIdea").onclick  = ()=>{ sess.modo="idea"; vai(3); };
+  document.getElementById("hAuto").onclick  = ()=>{ sess.modo="app";  tappaRicette(); };
+  document.getElementById("hSmalt").onclick = ()=>{ sess.modo="recupero"; vai(3); };
+}
+
 /* --- menu --- */
 const menuPan = document.getElementById("menuPan");
 const menuBtn = document.getElementById("menuBtn");
@@ -1688,7 +1811,7 @@ function disegnaMenu(){
   document.getElementById("mNasc").onclick=()=>{ menuAperto=false; disegnaMenu(); apriNascoste(); };
   document.getElementById("mSalva").onclick=()=>{ menuAperto=false; disegnaMenu(); esportaDati(); };
   document.getElementById("mCarica").onclick=()=>{ menuAperto=false; disegnaMenu(); importaDati(); };
-  document.getElementById("mNuova").onclick=()=>{ sess = nuovaSessione(); menuAperto=false; disegnaMenu(); vai(0); };
+  document.getElementById("mNuova").onclick=()=>{ sess = nuovaSessione(); menuAperto=false; disegnaMenu(); vai(S.profilo.fatto ? 5 : 0); };
   document.getElementById("mReset").onclick=()=>{
     if(confirm("Cancello profilo, ospiti e dispensa. Sicuro?")){
       S = JSON.parse(JSON.stringify(VUOTO)); sess = nuovaSessione(); salva(); menuAperto=false; disegnaMenu(); vai(0); }
@@ -1866,7 +1989,7 @@ function trovaRegione(btn, esito){
 })();
 
 /* --- avvio --- */
-vai(S.profilo.fatto && S.dispensa.length ? 3 : 0);
+vai(S.profilo.fatto ? 5 : 0);
 
 /* ===========================================================
    Schermata d'apertura e service worker
