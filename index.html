@@ -53,13 +53,22 @@ if(+t>=55)document.documentElement.setAttribute("data-scuro","");}catch(e){}})()
   -webkit-tap-highlight-color:transparent;
   position:relative;overflow:hidden}
 .bcella:active{transform:scale(.97)}
-.bcella.c-verde{background:var(--verde);color:var(--carta)}
-.bcella.c-menta{background:var(--verde-chiaro);color:var(--verde)}
-.bcella.c-crema{background:var(--superficie2);color:var(--inchiostro)}
-.bcella.c-senape{background:color-mix(in srgb,var(--senape) 14%,var(--superficie2));color:var(--inchiostro)}
-.bcella.c-mattone{background:color-mix(in srgb,var(--mattone) 12%,var(--superficie2));color:var(--inchiostro)}
-.bcella.c-bordeaux{background:color-mix(in srgb,#7a3e52 11%,var(--superficie2));color:var(--inchiostro)}
-.bcella svg{width:36px;height:36px;margin-bottom:10px;display:block;opacity:.9}
+/* colori bento: vividi, cibo-ispirati, testo sempre bianco */
+.bcella.c-verde  {background:#C0392B;color:#fff}   /* rosso pomodoro        */
+.bcella.c-menta  {background:#1A78C2;color:#fff}   /* blu cielo             */
+.bcella.c-crema  {background:#E09B00;color:#fff}   /* oro zafferano         */
+.bcella.c-senape {background:#6D3FA0;color:#fff}   /* viola melanzana       */
+.bcella.c-auto   {background:#1A8C6E;color:#fff}   /* verde basilico        */
+.bcella.c-mattone{background:#D45D1A;color:#fff}   /* arancio peperone      */
+/* adatta leggermente in modalita scura */
+:root[data-scuro] .bcella.c-verde  {background:#E04B38}
+:root[data-scuro] .bcella.c-menta  {background:#2486D0}
+:root[data-scuro] .bcella.c-crema  {background:#E8AB10}
+:root[data-scuro] .bcella.c-senape {background:#7E50B5}
+:root[data-scuro] .bcella.c-auto   {background:#1F9E7E}
+:root[data-scuro] .bcella.c-mattone{background:#E06B28}
+.bcella.c-bordeaux{background:#8B3A52;color:#fff}
+.bcella svg{width:36px;height:36px;margin-bottom:10px;display:block;opacity:1}
 .bcella.avvia svg{width:48px;height:48px;margin-bottom:12px}
 .bcella b{display:block;font-size:1rem;font-weight:700;line-height:1.2}
 .bcella.avvia b{font-size:1.3rem}
@@ -1745,7 +1754,7 @@ function tappaHome(){
         <b>Ho in mente un piatto</b>
         <small>Cerca per nome, ingrediente o regione</small>
       </div>
-      <div class="bcella c-crema" id="hAuto">
+      <div class="bcella c-auto" id="hAuto">
         <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M22 9l3.1 9.5H35l-7.9 5.7 3 9.3L22 28.2l-8.1 5.3 3-9.3L9 18.5h9.9z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
 </svg>
