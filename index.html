@@ -76,20 +76,27 @@ if(+t>=55)document.documentElement.setAttribute("data-scuro","");}catch(e){}})()
   position:relative;overflow:hidden}
 .bcella:active{transform:scale(.97)}
 /* colori bento: vividi, cibo-ispirati, testo sempre bianco */
-.bcella.c-verde  {background:#C0392B;color:#fff}   /* rosso pomodoro        */
-.bcella.c-menta  {background:#1A78C2;color:#fff}   /* blu cielo             */
-.bcella.c-crema  {background:#E09B00;color:#fff}   /* oro zafferano         */
-.bcella.c-senape {background:#6D3FA0;color:#fff}   /* viola melanzana       */
-.bcella.c-auto   {background:#1A8C6E;color:#fff}   /* verde basilico        */
-.bcella.c-mattone{background:#D45D1A;color:#fff}   /* arancio peperone      */
+.bcella.c-verde,  .pcella.c-verde  {background:#C0392B;color:#fff}   /* rosso pomodoro        */
+.bcella.c-menta,  .pcella.c-menta  {background:#1A78C2;color:#fff}   /* blu cielo             */
+.bcella.c-crema,  .pcella.c-crema  {background:#E09B00;color:#fff}   /* oro zafferano         */
+.bcella.c-senape, .pcella.c-senape {background:#6D3FA0;color:#fff}   /* viola melanzana       */
+.bcella.c-auto,   .pcella.c-auto   {background:#1A8C6E;color:#fff}   /* verde basilico        */
+.bcella.c-mattone,.pcella.c-mattone{background:#D45D1A;color:#fff}   /* arancio peperone      */
 /* adatta leggermente in modalita scura */
-:root[data-scuro] .bcella.c-verde  {background:#E04B38}
-:root[data-scuro] .bcella.c-menta  {background:#2486D0}
-:root[data-scuro] .bcella.c-crema  {background:#E8AB10}
-:root[data-scuro] .bcella.c-senape {background:#7E50B5}
-:root[data-scuro] .bcella.c-auto   {background:#1F9E7E}
-:root[data-scuro] .bcella.c-mattone{background:#E06B28}
-.bcella.c-bordeaux{background:#8B3A52;color:#fff}
+:root[data-scuro] .bcella.c-verde,  :root[data-scuro] .pcella.c-verde  {background:#E04B38}
+:root[data-scuro] .bcella.c-menta,  :root[data-scuro] .pcella.c-menta  {background:#2486D0}
+:root[data-scuro] .bcella.c-crema,  :root[data-scuro] .pcella.c-crema  {background:#E8AB10}
+:root[data-scuro] .bcella.c-senape, :root[data-scuro] .pcella.c-senape {background:#7E50B5}
+:root[data-scuro] .bcella.c-auto,   :root[data-scuro] .pcella.c-auto   {background:#1F9E7E}
+:root[data-scuro] .bcella.c-mattone,:root[data-scuro] .pcella.c-mattone{background:#E06B28}
+.bcella.c-bordeaux, .pcella.c-bordeaux{background:#8B3A52;color:#fff}
+:root[data-scuro] .pcella.c-bordeaux{background:#9E4A62}
+/* pcella colorata: testo e icona leggibili sopra il colore pieno */
+.pcella[class*="c-"]{border-color:transparent}
+.pcella[class*="c-"] small{color:#fff;opacity:.85}
+.pcella[class*="c-"] svg{opacity:1}
+.pcella[class*="c-"].sel{outline:3px solid rgba(255,255,255,.9);outline-offset:-3px}
+.pcella[class*="c-"] input[type=text],.pcella[class*="c-"] select{color:var(--inchiostro)}
 .bcella svg{width:36px;height:36px;margin-bottom:10px;display:block;opacity:1}
 .bcella.avvia svg{width:48px;height:48px;margin-bottom:12px}
 .bcella b{display:block;font-size:1rem;font-weight:700;line-height:1.2}
@@ -227,7 +234,7 @@ input[type=text],select{width:100%;padding:11px 12px;border:1px solid var(--line
 input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);outline-offset:1px}
 
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.chip{background:var(--carta);border:1px solid var(--linea);border-radius:999px;padding:7px 13px;font-size:.87rem;cursor:pointer;user-select:none}
+.chip{background:var(--carta);color:var(--inchiostro);border:1px solid var(--linea);border-radius:999px;padding:7px 13px;font-size:.87rem;cursor:pointer;user-select:none}
 .chip.on{background:var(--verde-chiaro);border-color:var(--verde);color:var(--verde);font-weight:700}
 .chip.rossa.on{background:color-mix(in srgb,var(--mattone) 14%,transparent);border-color:var(--mattone);color:var(--mattone)}
 
@@ -436,7 +443,7 @@ function carica(){
 function salva(){ try{ localStorage.setItem("checucino.v3", JSON.stringify(S)); }catch(e){} }
 function nuovaSessione(){
   return {ospiti:[], modo:null, cerca:"", recupero:[], portate:[], unico:false,
-          stile:S.profilo.stile, accordo:"unico", tempo:S.profilo.tempo};
+          stile:S.profilo.stile, accordo:"unico", tempo:S.profilo.tempo, modalitaTavola:null};
 }
 
 /* ===========================================================
@@ -575,29 +582,29 @@ function tappaProfilo(){
   app.innerHTML = `<div class="pag">
   <div class="pag-intro"><h2>Chi cucina?</h2><p>Si compila una volta sola.</p></div>
   <div class="pgrid">
-    <div class="pcella full" style="cursor:default;background:var(--superficie)">
+    <div class="pcella full c-verde" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5" stroke="currentColor" stroke-width="2"/><path d="M5 26c0-7 4-10 9-10s9 3 9 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <b>Come ti chiami</b>
-      <input type="text" id="pNome" value="${esc(p.nome)}" placeholder="Il tuo nome" style="margin-top:8px;width:100%;padding:9px;border-radius:9px;border:1.5px solid var(--linea);background:var(--carta);color:inherit;font-size:.97rem">
+      <input type="text" id="pNome" value="${esc(p.nome)}" placeholder="Il tuo nome" style="margin-top:8px;width:100%;padding:9px;border-radius:9px;border:1.5px solid var(--linea);background:var(--carta);color:var(--inchiostro);font-size:.97rem">
     </div>
-    <div class="pcella" style="cursor:default;background:var(--superficie)">
+    <div class="pcella c-menta" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><path d="M14 4a10 10 0 1 0 0 20A10 10 0 0 0 14 4z" stroke="currentColor" stroke-width="2"/><path d="M14 9v6l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <b>Regione</b>
-      <select id="pReg" style="margin-top:8px;width:100%;padding:8px 4px;border-radius:9px;border:1.5px solid var(--linea);background:var(--carta);color:inherit;font-size:.86rem">
+      <select id="pReg" style="margin-top:8px;width:100%;padding:8px 4px;border-radius:9px;border:1.5px solid var(--linea);background:var(--carta);color:var(--inchiostro);font-size:.86rem">
         <option value="">Qualsiasi</option>
         ${REGIONI.map(r=>`<option ${p.regione===r?"selected":""}>${r}</option>`).join("")}
       </select>
       <button type="button" class="btn ghost small" id="pGeo" style="margin-top:8px;width:100%">📍 GPS</button>
       <p class="mini" id="pGeoEsito" aria-live="polite"></p>
     </div>
-    <div class="pcella" style="cursor:default;background:var(--superficie)">
+    <div class="pcella c-crema" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><path d="M6 20 Q14 8 22 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="20" r="2" fill="currentColor"/></svg>
       <b>Come mangi</b>
       <div class="chips" id="pStile" style="margin-top:8px">
         ${["onnivoro","vegetariano","vegano"].map(v=>`<button class="chip ${p.stile===v?"on":""}" data-v="${v}" style="font-size:.78rem">${v}</button>`).join("")}
       </div>
     </div>
-    <div class="pcella full" style="cursor:default;background:var(--superficie)">
+    <div class="pcella full c-bordeaux" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><path d="M14 4l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
       <b>Allergeni da escludere sempre</b>
       <div class="chips" id="pAll" style="margin-top:8px">
@@ -624,6 +631,32 @@ function tappaProfilo(){
 
 /* --- 2. commensali --- */
 function tappaOspiti(){
+  if(sess.modalitaTavola !== "altri"){
+    app.innerHTML = `
+    <div class="intro"><h2>Chi altro c'è a tavola?</h2>
+      <p>Prepariamo solo per te o anche per qualcun altro?</p></div>
+    <div class="pgrid">
+      <div class="pcella c-menta ${sess.modalitaTavola==="solo"?"sel":""}" data-mt="solo">
+        <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="10" r="5" stroke="currentColor" stroke-width="2"/><path d="M5 26c0-7 4-10 9-10s9 3 9 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <b>Mangio da solo</b><small>Ricette pensate solo per te</small>
+      </div>
+      <div class="pcella c-crema ${sess.modalitaTavola==="altri"?"sel":""}" data-mt="altri">
+        <svg viewBox="0 0 28 28" fill="none"><circle cx="10" cy="9" r="3.4" stroke="currentColor" stroke-width="2"/><path d="M3 22c0-4.4 3-6.6 7-6.6s7 2.2 7 6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="10" r="2.8" stroke="currentColor" stroke-width="1.8"/><path d="M17 22c0-3.6 2.2-5.6 6-5.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <b>Ho altri commensali</b><small>Aggiungi chi mangia con te</small>
+      </div>
+    </div>`;
+    barra.innerHTML = "";
+    const bInd = document.createElement("button");
+    bInd.className = "btn ghost"; bInd.textContent = "Indietro"; bInd.onclick = ()=>vai(0);
+    barra.append(bInd);
+    app.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{
+      sess.modalitaTavola = b.dataset.mt;
+      if(sess.modalitaTavola === "solo"){ sess.ospiti = []; vai(2); }
+      else{ tappaOspiti(); }
+    });
+    return;
+  }
+
   const liberi = S.ospitiSalvati.filter(o=>!sess.ospiti.some(x=>x.nome===o.nome));
   app.innerHTML = `
   <div class="intro"><h2>Chi altro c'è a tavola?</h2>
@@ -675,7 +708,7 @@ function tappaOspiti(){
     tappaOspiti();
   };
 
-  pulsanti("Indietro", sess.ospiti.length?"Avanti":"Cucino solo per me", ()=>vai(2), ()=>vai(0));
+  pulsanti("Indietro", sess.ospiti.length?"Avanti":"Cucino solo per me", ()=>vai(2), ()=>{ sess.modalitaTavola=null; tappaOspiti(); });
 }
 
 /* --- 3. dispensa --- */
@@ -783,15 +816,15 @@ function tappaVoglia(){
     <div class="riep">${t.map(c=>`<span>${esc(c.nome)} · ${c.stile}${c.allergeni.length?" · no "+c.allergeni.join("/"):""}</span>`).join("")}</div></div>
 
   <div class="pgrid3">
-    <div class="pcella ${sess.modo==="idea"?"sel":""}" data-m="idea">
+    <div class="pcella c-senape ${sess.modo==="idea"?"sel":""}" data-m="idea">
       <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="12" r="7" stroke="currentColor" stroke-width="2"/><path d="M11 19h6M12 22h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <b>Ho in mente un piatto</b><small>Cerca per nome, ingrediente o regione</small>
     </div>
-    <div class="pcella ${sess.modo==="app"?"sel":""}" data-m="app">
+    <div class="pcella c-auto ${sess.modo==="app"?"sel":""}" data-m="app">
       <svg viewBox="0 0 28 28" fill="none"><path d="M14 4l2.5 8H24l-6.5 4.5 2.5 8L14 20l-6 4.5 2.5-8L4 12h7.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
       <b>Scegli tu</b><small>Ordino l'archivio per fattibilità</small>
     </div>
-    <div class="pcella ${sess.modo==="recupero"?"sel":""}" data-m="recupero">
+    <div class="pcella c-mattone ${sess.modo==="recupero"?"sel":""}" data-m="recupero">
       <svg viewBox="0 0 28 28" fill="none"><rect x="7" y="10" width="14" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 10h18M11 10V7a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 14v5M12 16l2-2 2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       <b>Devo consumare</b><small>Parto dal fresco o dall'avanzo</small>
     </div>
@@ -818,7 +851,7 @@ function tappaVoglia(){
   </div>`;})():""}
 
   <div class="pgrid" style="margin-top:0">
-    <div class="pcella" style="cursor:default;background:var(--superficie)">
+    <div class="pcella c-crema" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="10" stroke="currentColor" stroke-width="2"/><path d="M9 14l3 3 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <b>Portata</b>
       <div class="chips" id="port" style="margin-top:8px">
@@ -826,7 +859,7 @@ function tappaVoglia(){
         <button class="chip ${sess.unico?"on":""}" id="swUnico" style="font-size:.78rem">unico</button>
       </div>
     </div>
-    <div class="pcella" style="cursor:default;background:var(--superficie)">
+    <div class="pcella c-menta" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="10" stroke="currentColor" stroke-width="2"/><path d="M14 9v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <b>Tempo</b>
       <div class="chips" id="tempo" style="margin-top:8px">
@@ -834,7 +867,7 @@ function tappaVoglia(){
           .map(([v,t2])=>`<button class="chip ${sess.tempo===v?"on":""}" data-v="${v}" style="font-size:.78rem">${t2}</button>`).join("")}
       </div>
     </div>
-    <div class="pcella full" style="cursor:default;background:var(--superficie)">
+    <div class="pcella full c-verde" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="14" rx="8" ry="10" stroke="currentColor" stroke-width="2"/><path d="M6 14h16" stroke="currentColor" stroke-width="2"/></svg>
       <b>Come la prepariamo</b>
       <div class="chips" id="stile" style="margin-top:8px">
@@ -1767,8 +1800,8 @@ function tappaHome(){
   <path d="M22 13v-3M16 15l-2-2M28 15l2-2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
   <rect x="14" y="28" width="16" height="3" rx="1.5" fill="currentColor"/>
 </svg>
-        <b>Inizia</b>
-        <small>Scegli cosa cucinare in base a quello che hai</small>
+        <b>Conosciamoci</b>
+        <small>Rivedi o aggiorna il tuo profilo</small>
       </div>
       <div class="bcella c-menta" id="hDisp">
         <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1827,7 +1860,7 @@ function tappaHome(){
 
   barra.innerHTML = "";
 
-  document.getElementById("hAvvia").onclick = ()=>vai(3);
+  document.getElementById("hAvvia").onclick = ()=>vai(0);
   document.getElementById("hDisp").onclick  = ()=>vai(2);
   document.getElementById("hOsp").onclick   = ()=>vai(1);
   document.getElementById("hIdea").onclick  = ()=>{ sess.modo="idea"; vai(3); };
