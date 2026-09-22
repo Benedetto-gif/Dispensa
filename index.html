@@ -14,31 +14,58 @@
 <script>
 /* la luminosita scelta va applicata prima del primo disegno, o si vede lo sfarfallio */
 (function(){try{var t=localStorage.getItem("checucino.tono");
-if(t===null)t=window.matchMedia("(prefers-color-scheme: dark)").matches?"80":"15";
+if(t===null)t=window.matchMedia("(prefers-color-scheme: dark)").matches?"100":"0";
 document.documentElement.style.setProperty("--tono",t);
-if(+t>=55)document.documentElement.setAttribute("data-scuro","");}catch(e){}})();
+if(+t>=55)document.documentElement.setAttribute("data-scuro","");
+var tc=localStorage.getItem("checucino.chiaro"); if(tc)document.documentElement.setAttribute("data-chiaro",tc);
+var ts=localStorage.getItem("checucino.scuroTema"); if(ts)document.documentElement.setAttribute("data-scuro-t",ts);
+}catch(e){}})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --tono:15;                                   /* 0 = luce piena, 100 = notte */
+  --tono:15;
   color-scheme:light;
-  --carta:          hsl(80 19% calc(94% - var(--tono) * 0.87%));
-  --superficie:     hsl(100 12% calc(100% - var(--tono) * 0.88%));
-  --superficie2:    hsl(90 17% calc(90% - var(--tono) * 0.74%));
-  --inchiostro:     hsl(120 19% calc(13% + var(--tono) * 0.79%));
-  --inchiostro-soft:hsl(120 7% calc(36% + var(--tono) * 0.29%));
-  --linea:          hsl(95 16% calc(81% - var(--tono) * 0.59%));
-  --verde:          hsl(134 27% calc(33% + var(--tono) * 0.33%));
-  --verde-chiaro:   hsl(128 20% calc(91% - var(--tono) * 0.75%));
-  --senape:         hsl(33 63% calc(44% + var(--tono) * 0.17%));
-  --mattone:        hsl(9 60% calc(40% + var(--tono) * 0.26%));
-  --ombra:0 1px 0 hsl(150 17% 13% / calc(0.06 - var(--tono) * 0.0006));
+  --carta:          #F2F4EE;
+  --superficie:     #FFFFFF;
+  --superficie2:    #E7EBDE;
+  --inchiostro:     #1C2A18;
+  --inchiostro-soft:#51604C;
+  --linea:          #D3D9C4;
+  --verde:          #3F7A4E;
+  --verde-chiaro:   #DCE9DC;
+  --senape:         #B97A1E;
+  --mattone:        #A0472E;
+  --ombra:0 1px 0 hsl(150 17% 13% / 0.06);
   --r:14px;
 }
-:root[data-scuro]{ color-scheme:dark; }
+/* scuro di base: blu profondo Pantone 295 */
+:root[data-scuro]{
+  color-scheme:dark;
+  --carta:#0A1E45; --superficie:#0E244F; --superficie2:#163266;
+  --inchiostro:#EEF2FA; --inchiostro-soft:#B6C3DE; --linea:#26407A;
+  --verde:#5FA875; --verde-chiaro:#1E4430; --senape:#E0A73E; --mattone:#D97A55;
+  --ombra:0 1px 0 hsl(150 17% 13% / 0.3);
+}
+/* --- 4 temi chiari a scelta (Impostazioni) --- */
+:root[data-chiaro="2"]{ --carta:#F6F1E7; --superficie:#FFFDF8; --superficie2:#ECE3D0; --inchiostro:#2B2013; --inchiostro-soft:#5C4E37; --linea:#DCCFAF; }
+:root[data-chiaro="3"]{ --carta:#EEF3F5; --superficie:#FFFFFF; --superficie2:#DCE6EA; --inchiostro:#132225; --inchiostro-soft:#48595D; --linea:#C4D3D8; }
+:root[data-chiaro="4"]{ --carta:#FBEFEF; --superficie:#FFFFFF; --superficie2:#F3DCDC; --inchiostro:#2A1414; --inchiostro-soft:#5E3D3D; --linea:#E0BEBE; }
+/* --- 4 temi scuri a scelta (il primo, senza attributo, è il blu Pantone 295) --- */
+:root[data-scuro][data-scuro-t="2"]{ --carta:#151515; --superficie:#1E1E1E; --superficie2:#292929; --inchiostro:#F1F1F1; --inchiostro-soft:#C6C6C6; --linea:#393939; }
+:root[data-scuro][data-scuro-t="3"]{ --carta:#17281A; --superficie:#1D321F; --superficie2:#28402A; --inchiostro:#ECF3EC; --inchiostro-soft:#B6C8B6; --linea:#375038; }
+:root[data-scuro][data-scuro-t="4"]{ --carta:#2A1520; --superficie:#341A28; --superficie2:#432235; --inchiostro:#F5ECF1; --inchiostro-soft:#D3B9C7; --linea:#5A2E48; }
+/* filigrana facoltativa: ortaggi, frutta, uova come sfondo tenue */
+body[data-filigrana="1"]::before{
+  content:"";
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  opacity:.07;
+  background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180"><text x="6" y="42" font-size="36">%F0%9F%A5%95</text><text x="96" y="96" font-size="36">%F0%9F%8D%85</text><text x="20" y="150" font-size="36">%F0%9F%A5%9A</text><text x="112" y="34" font-size="36">%F0%9F%8D%87</text></svg>');
+  background-repeat:repeat;
+}
+#app,.top,#menuPan,#radioPan,#velo{position:relative;z-index:1}
 *{box-sizing:border-box}
 
 /* ===== INNER PAGES BENTO ===== */
@@ -329,7 +356,7 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
     <div class="marchio" id="logoHome" style="cursor:pointer" title="Torna alla home">Che cucino<span>?</span></div>
     <div class="tono">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.4 4.4l1.8 1.8M17.8 17.8l1.8 1.8M19.6 4.4l-1.8 1.8M6.2 17.8l-1.8 1.8"/></g></svg>
-      <input type="range" id="tono" min="0" max="100" step="10" value="15" aria-label="Luminosità dell'app">
+      <input type="range" id="tono" min="0" max="100" step="100" value="0" aria-label="Passa da chiaro a scuro">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
     </div>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Menu</button>
@@ -356,6 +383,21 @@ const ALLERGENI  = D.allergeni;
 const PORTATE    = ["Antipasti","Primi","Secondi","Contorni","Dolci"];
 const SING = {Antipasti:"antipasto",Primi:"primo",Secondi:"secondo",Contorni:"contorno",Dolci:"dolce"};
 const REGIONI    = Object.keys(D.regioni);
+
+try{ if(localStorage.getItem("checucino.filigrana")==="1") document.body.setAttribute("data-filigrana","1"); }catch(e){}
+
+/* icona del tipo di piatto e bandiera del luogo, per le schede ricetta */
+const ICONA_PORTATA = {Antipasti:"\u{1F957}",Primi:"\u{1F35D}",Secondi:"\u{1F356}",Contorni:"\u{1F955}",Dolci:"\u{1F370}"};
+const BANDIERA_PAESE = {
+  "Francia":"\u{1F1EB}\u{1F1F7}","Spagna":"\u{1F1EA}\u{1F1F8}","Grecia":"\u{1F1EC}\u{1F1F7}","Turchia":"\u{1F1F9}\u{1F1F7}",
+  "Portogallo":"\u{1F1F5}\u{1F1F9}","Regno Unito":"\u{1F1EC}\u{1F1E7}","Cina":"\u{1F1E8}\u{1F1F3}","Giappone":"\u{1F1EF}\u{1F1F5}",
+  "Thailandia":"\u{1F1F9}\u{1F1ED}","India":"\u{1F1EE}\u{1F1F3}","Messico":"\u{1F1F2}\u{1F1FD}","Ungheria":"\u{1F1ED}\u{1F1FA}",
+  "Marocco":"\u{1F1F2}\u{1F1E6}","Per\u00f9":"\u{1F1F5}\u{1F1EA}","Argentina":"\u{1F1E6}\u{1F1F7}","Brasile":"\u{1F1E7}\u{1F1F7}"
+};
+function bandieraRicetta(r){
+  if(!r.estero) return "\u{1F1EE}\u{1F1F9}";
+  return BANDIERA_PAESE[r.luogo] || "\u{1F30D}";
+}
 
 const CARNE = new Set(CAT_DISP["Carne e salumi"] || []);
 const PESCE = new Set(CAT_DISP["Pesce"] || []);
@@ -610,8 +652,13 @@ function tappaProfilo(){
       <div class="chips" id="pAll" style="margin-top:8px">
         ${ALLERGENI.map(a=>`<button class="chip rossa ${p.allergeni.includes(a)?"on":""}" data-v="${a}" style="font-size:.78rem">${a}</button>`).join("")}
       </div>
-      <label class="campo" style="margin-top:10px"><span>Non mi piace</span>
-        <input type="text" id="pEvita" value="${esc(p.evita)}" placeholder="es. cipolla, sedano"></label>
+    </div>
+    <div class="pcella full" style="cursor:default;background:var(--superficie);border:1.5px solid var(--linea)">
+      <svg viewBox="0 0 28 28" fill="none"><path d="M6 20 Q14 8 22 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="9" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <b style="font-size:1.05rem">Ingredienti che non ti piacciono</b>
+      <p class="mini" style="margin:4px 0 8px">Le ricette che li contengono non ti verranno proposte.</p>
+      <input type="text" id="pEvita" value="${esc(p.evita)}" placeholder="es. cipolla, sedano"
+        style="width:100%;padding:12px;border-radius:10px;border:1.5px solid var(--linea);background:var(--carta);color:var(--inchiostro);font-size:1.05rem">
     </div>
   </div></div>`;
 
@@ -626,7 +673,31 @@ function tappaProfilo(){
   document.getElementById("pGeo").onclick = ()=> trovaRegione(
     document.getElementById("pGeo"), document.getElementById("pGeoEsito"));
 
+  salutoVocale(p.nome);
+
   pulsanti(null, "Avanti", ()=>{ S.profilo.fatto=true; sess.stile=S.profilo.stile; salva(); vai(1); });
+}
+
+/* saluto vocale femminile nella pagina Conosciamoci */
+let ultimoSaluto = "";
+function salutoVocale(nome){
+  if(!nome || !("speechSynthesis" in window)) return;
+  if(ultimoSaluto === nome) return;
+  ultimoSaluto = nome;
+  try{
+    const dire = ()=>{
+      const voci = speechSynthesis.getVoices();
+      const voceF = voci.find(v=>/it/i.test(v.lang) && /female|donna|femmin|alice|elsa|paola/i.test(v.name))
+                 || voci.find(v=>/it/i.test(v.lang));
+      const u = new SpeechSynthesisUtterance("Ciao " + nome);
+      u.lang = "it-IT";
+      if(voceF) u.voice = voceF;
+      speechSynthesis.cancel();
+      speechSynthesis.speak(u);
+    };
+    if(speechSynthesis.getVoices().length) dire();
+    else speechSynthesis.onvoiceschanged = dire;
+  }catch(e){}
 }
 
 /* --- 2. commensali --- */
@@ -981,7 +1052,7 @@ function scheda(o){
   return `<details class="ric ${liv}">
     <summary>
       <div class="ric-top">
-        <div><div class="ric-nome">${esc(r.n)}</div>
+        <div><div class="ric-nome"><span aria-hidden="true">${ICONA_PORTATA[r.cat]||""} ${bandieraRicetta(r)}</span> ${esc(r.n)}</div>
           <div class="meta">${SING[r.cat]} · ${r.tempo} min · ${r.diff}${r.luogo?" · "+esc(r.luogo):""}${r.stile!=="onnivoro"?" · "+r.stile:""}</div></div>
         <div class="pct">${o.pct}%</div>
       </div>
@@ -1021,6 +1092,8 @@ function scheda(o){
       </div>
       <a class="cerca-web" target="_blank" rel="noopener"
          href="https://www.google.com/search?q=${encodeURIComponent("ricetta "+r.n)}">Cerca questa ricetta sul web</a>
+      <a class="cerca-web" target="_blank" rel="noopener"
+         href="https://www.google.com/search?q=${encodeURIComponent(r.n+" impiattamento elegante professionale")}&tbm=isch">\u{1F4F8} Foto di impiattamento elegante</a>
     </div></details>`;
 }
 
@@ -1759,6 +1832,53 @@ function salvaMia(r){
 }
 
 /* ===========================================================
+   Impostazioni: colori chiaro/scuro e filigrana
+   =========================================================== */
+const TEMI_CHIARI = [{v:"1",n:"Verde salvia"},{v:"2",n:"Crema"},{v:"3",n:"Azzurro"},{v:"4",n:"Rosa antico"}];
+const TEMI_SCURI  = [{v:"1",n:"Blu profondo"},{v:"2",n:"Antracite"},{v:"3",n:"Verde scuro"},{v:"4",n:"Bordeaux scuro"}];
+function apriImpostazioni(){
+  const chiaro = localStorage.getItem("checucino.chiaro") || "1";
+  const scuroT = localStorage.getItem("checucino.scuroTema") || "1";
+  const filigrana = localStorage.getItem("checucino.filigrana") === "1";
+  apriVelo("impostazioni", `
+    <div class="velo-top"><h2>Impostazioni</h2>
+      <button class="chiudi" data-imp="chiudi">Chiudi</button></div>
+    <p class="mini">Scegli il colore di sfondo per la modalità chiara e per quella scura. Passi dall'una all'altra con l'interruttore in alto.</p>
+    <div class="sez">Sfondo chiaro</div>
+    <div class="chips" id="impChiaro">
+      ${TEMI_CHIARI.map(t=>`<button class="chip ${chiaro===t.v?"on":""}" data-v="${t.v}">${t.n}</button>`).join("")}
+    </div>
+    <div class="sez">Sfondo scuro</div>
+    <div class="chips" id="impScuro">
+      ${TEMI_SCURI.map(t=>`<button class="chip ${scuroT===t.v?"on":""}" data-v="${t.v}">${t.n}</button>`).join("")}
+    </div>
+    <div class="sez">Filigrana di sfondo</div>
+    <label class="campo" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="impFiligrana" ${filigrana?"checked":""}>
+      <span>Mostra ortaggi, frutta e uova come sfondo leggero</span>
+    </label>`);
+  document.querySelectorAll("#impChiaro .chip").forEach(b=>b.onclick=()=>{
+    localStorage.setItem("checucino.chiaro", b.dataset.v);
+    document.documentElement.setAttribute("data-chiaro", b.dataset.v);
+    apriImpostazioni();
+  });
+  document.querySelectorAll("#impScuro .chip").forEach(b=>b.onclick=()=>{
+    localStorage.setItem("checucino.scuroTema", b.dataset.v);
+    document.documentElement.setAttribute("data-scuro-t", b.dataset.v);
+    apriImpostazioni();
+  });
+  document.getElementById("impFiligrana").onchange = e=>{
+    if(e.target.checked){ localStorage.setItem("checucino.filigrana","1"); document.body.setAttribute("data-filigrana","1"); }
+    else{ localStorage.removeItem("checucino.filigrana"); document.body.removeAttribute("data-filigrana"); }
+  };
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-imp]");
+  if(!b) return;
+  if(b.dataset.imp === "chiudi") chiudiVelo();
+});
+
+/* ===========================================================
    Ricette nascoste
    =========================================================== */
 function apriNascoste(){
@@ -1891,6 +2011,7 @@ function disegnaMenu(){
     <button id="mSpesa">Lista della spesa${S.spesa.filter(x=>!x.presa).length?` (${S.spesa.filter(x=>!x.presa).length})`:""}</button>
     <button id="mMie">Le mie ricette${S.mie.length?` (${S.mie.length})`:""}</button>
     <button id="mNasc">Ricette nascoste${S.nascoste.length?` (${S.nascoste.length})`:""}</button>
+    <button id="mImpostazioni">Impostazioni</button>
     <button id="mSalva">Salva i miei dati in un file</button>
     <button id="mCarica">Reimporta da un file</button>
     <div class="sez">Altro</div>
@@ -1902,6 +2023,7 @@ function disegnaMenu(){
   document.getElementById("mSpesa").onclick=()=>{ menuAperto=false; disegnaMenu(); apriSpesa(); };
   document.getElementById("mMie").onclick=()=>{ menuAperto=false; disegnaMenu(); apriMie(); };
   document.getElementById("mNasc").onclick=()=>{ menuAperto=false; disegnaMenu(); apriNascoste(); };
+  document.getElementById("mImpostazioni").onclick=()=>{ menuAperto=false; disegnaMenu(); apriImpostazioni(); };
   document.getElementById("mSalva").onclick=()=>{ menuAperto=false; disegnaMenu(); esportaDati(); };
   document.getElementById("mCarica").onclick=()=>{ menuAperto=false; disegnaMenu(); importaDati(); };
   document.getElementById("mNuova").onclick=()=>{ sess = nuovaSessione(); menuAperto=false; disegnaMenu(); vai(S.profilo.fatto ? 5 : 0); };
