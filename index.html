@@ -281,8 +281,11 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .chip{background:var(--carta);color:var(--inchiostro);border:1px solid var(--linea);border-radius:999px;padding:7px 13px;font-size:.87rem;cursor:pointer;user-select:none}
-.chip.on{background:var(--verde-chiaro);border-color:var(--verde);color:var(--verde);font-weight:700}
-.chip.rossa.on{background:color-mix(in srgb,var(--mattone) 14%,transparent);border-color:var(--mattone);color:var(--mattone)}
+.chip.on{background:var(--verde);border-color:var(--verde);color:#fff;font-weight:700}
+.chip.on::before{content:"\2713 ";font-weight:700}
+.pcella[class*="c-"] .chip.on{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.chip.rossa.on{background:var(--mattone);border-color:var(--mattone);color:#fff}
+.pcella[class*="c-"] .chip.rossa.on{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
 
 .tile{display:block;width:100%;text-align:left;background:var(--superficie2);border:2px solid transparent;
   border-left:4px solid var(--linea);border-radius:12px;padding:14px;margin:10px 0;cursor:pointer}
