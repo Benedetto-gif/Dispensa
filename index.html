@@ -65,7 +65,15 @@ body[data-filigrana="1"]::before{
   background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180"><text x="6" y="42" font-size="36">%F0%9F%A5%95</text><text x="96" y="96" font-size="36">%F0%9F%8D%85</text><text x="20" y="150" font-size="36">%F0%9F%A5%9A</text><text x="112" y="34" font-size="36">%F0%9F%8D%87</text></svg>');
   background-repeat:repeat;
 }
-#app,.top,#menuPan,#radioPan,#velo{position:relative;z-index:1}
+#app,.top,#menuPan,#radioPan{position:relative;z-index:1}
+.pcella.cat-gruppo{padding:0}
+.pcella.cat-gruppo > summary{padding:14px;cursor:pointer;font-weight:700;display:flex;justify-content:space-between;gap:10px;list-style:none}
+.pcella.cat-gruppo > summary::-webkit-details-marker{display:none}
+.pcella.cat-gruppo > summary em{font-style:normal;font-weight:400;opacity:.85;font-size:.83rem}
+.pcella.cat-gruppo .corpo{padding:0 14px 14px}
+#cerca.ing-ok{border-color:var(--verde);background:color-mix(in srgb,var(--verde) 10%,var(--superficie))}
+.ing-esito-ok{color:var(--verde);font-weight:700}
+.pcella[class*="c-"] .ing-esito-ok{color:#EAFFEA;opacity:1}
 *{box-sizing:border-box}
 
 /* ===== INNER PAGES BENTO ===== */
@@ -124,6 +132,17 @@ body[data-filigrana="1"]::before{
 .pcella[class*="c-"] svg{opacity:1}
 .pcella[class*="c-"].sel{outline:3px solid rgba(255,255,255,.9);outline-offset:-3px}
 .pcella[class*="c-"] input[type=text],.pcella[class*="c-"] select{color:var(--inchiostro)}
+.pcella[class*="c-"] .campo>span{color:#fff;opacity:.85}
+.pcella[class*="c-"] .mini{color:#fff;opacity:.85}
+.pcella[class*="c-"] .btn.ghost{color:#fff;border-color:rgba(255,255,255,.55)}
+.mic-btn{flex:none;width:44px;height:44px;border-radius:11px;border:1px solid var(--linea);
+  background:var(--carta);color:var(--inchiostro);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mic-btn svg{width:20px;height:20px}
+.mic-btn.in-ascolto{background:var(--mattone);border-color:var(--mattone);color:#fff;
+  animation:mic-pulsa 1s ease-in-out infinite}
+@keyframes mic-pulsa{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--mattone) 45%,transparent)}
+  50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--mattone) 0%,transparent)}}
 .bcella svg{width:36px;height:36px;margin-bottom:10px;display:block;opacity:1}
 .bcella.avvia svg{width:48px;height:48px;margin-bottom:12px}
 .bcella b{display:block;font-size:1rem;font-weight:700;line-height:1.2}
@@ -378,11 +397,14 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 const D = JSON.parse(document.getElementById("payload-data").textContent);
 
 const CAT_DISP   = D.dispensa;                       // 8 categorie di dispensa
-const BASE       = new Set(D.base);                  // acqua, olio, pepe, sale
+const BASE_ESTESA = ["zucchero","farina","aceto","bicarbonato","lievito per dolci","lievito di birra"];
+const BASE       = new Set([...D.base, ...BASE_ESTESA]);      // acqua, olio, pepe, sale + zucchero, farina, aceto, bicarbonato, lieviti
 const ALLERGENI  = D.allergeni;
 const PORTATE    = ["Antipasti","Primi","Secondi","Contorni","Dolci"];
 const SING = {Antipasti:"antipasto",Primi:"primo",Secondi:"secondo",Contorni:"contorno",Dolci:"dolce"};
 const REGIONI    = Object.keys(D.regioni);
+/* ingredienti che diamo per sempre presenti in dispensa, oltre ai 4 di base */
+const TUTTI_ING  = Object.values(CAT_DISP).flat();
 
 try{ if(localStorage.getItem("checucino.filigrana")==="1") document.body.setAttribute("data-filigrana","1"); }catch(e){}
 
@@ -784,64 +806,89 @@ function tappaOspiti(){
 
 /* --- 3. dispensa --- */
 function tappaDispensa(){
-  const n = S.dispensa.length, q = cercaDisp.toLowerCase();
+  const n = S.dispensa.length, q = cercaDisp.trim().toLowerCase();
   const top = Object.entries(D.conteggi).sort((a,b)=>b[1]-a[1]).slice(0,25).map(x=>x[0])
-                .filter(k=>!S.dispensa.includes(k));
+                .filter(k=>!S.dispensa.includes(k) && !BASE.has(k));
+  const matchEsatto = q ? TUTTI_ING.find(i=>i.toLowerCase()===q) : null;
+  const trovato = !!matchEsatto || (q && !BASE.has(q) && TUTTI_ING.some(i=>i.toLowerCase().includes(q)));
+  const COLORI_CAT = ["c-verde","c-menta","c-crema","c-senape","c-auto","c-mattone","c-bordeaux","c-verde"];
   app.innerHTML = `
   <div class="intro"><h2>La dispensa</h2>
     <p>${n ? `Hai ${n} ingredienti segnati${S.dispensaData?`, aggiornati il ${S.dispensaData}`:""}. Se non è cambiato nulla, vai avanti.`
           : "Segna quello che hai in casa. Resta memorizzato: la prossima volta correggi solo quello che cambia."}</p></div>
-  <div class="card">
-    <label class="campo"><span>Cerca un ingrediente</span>
-      <input type="text" id="cerca" value="${esc(cercaDisp)}" placeholder="Scrivi le prime lettere"></label>
-    <div class="riga" style="margin-top:12px">
-      <div><b>Acqua, olio, sale e pepe</b><div class="mini">Li do per scontati in ogni ricetta</div></div>
-      <button class="chip ${S.baseSempre?"on":""}" id="swBase">${S.baseSempre?"sempre in casa":"da segnare"}</button></div>
-    <div class="mini" style="margin-top:14px">Non lo trovi?</div>
-    <div class="riga-add" style="margin-top:6px">
-      <input type="text" id="ingNuovo" placeholder="Scrivi l'ingrediente">
-      <button class="btn small" id="ingAdd">Aggiungi</button>
+  <div class="pgrid">
+    <div class="pcella full c-verde" style="cursor:default">
+      <svg viewBox="0 0 28 28" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2"/><line x1="17" y1="17" x2="23" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <b>Cerca o aggiungi un ingrediente</b>
+      <label class="campo" style="margin-top:10px"><span>Nome ingrediente</span>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="cerca" list="ingDatalist" autocomplete="off" value="${esc(cercaDisp)}"
+            placeholder="Scrivi le prime lettere, o detta con il microfono" style="flex:1"
+            class="${q?(trovato?"ing-ok":"ing-no"):""}">
+          <button type="button" id="micCerca" class="mic-btn" aria-label="Detta l'ingrediente a voce" title="Detta l'ingrediente a voce">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="2"/><path d="M6 11v1a6 6 0 0 0 12 0v-1M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div></label>
+      <datalist id="ingDatalist">${TUTTI_ING.map(i=>`<option value="${esc(i)}">`).join("")}</datalist>
+      ${q && trovato ? `<p class="mini ing-esito-ok" id="ingEsitoOk">\u2713 C'è già in elenco, lo trovi qui sotto.</p>` : ""}
+      ${q && !trovato ? `
+        <div class="riga-add" style="margin-top:8px">
+          <button class="btn small" id="ingAdd">Aggiungi «${esc(cercaDisp.trim())}»</button>
+          <select id="ingCat">${Object.keys(CAT_DISP).map(c=>`<option>${c}</option>`).join("")}</select>
+        </div>
+        <p class="mini" id="ingEsito" aria-live="polite"></p>` : ""}
+      <p class="mini" style="margin-top:10px;opacity:.85">Tieni premuto un ingrediente qui sotto per spostarlo di reparto o toglierlo dall'elenco.</p>
     </div>
-    <label class="campo" style="margin-top:8px"><span>Reparto</span>
-      <select id="ingCat">${Object.keys(CAT_DISP).map(c=>`<option>${c}</option>`).join("")}</select></label>
-    <p class="mini" id="ingEsito" aria-live="polite"></p>
-    <p class="mini">Tieni premuto un ingrediente per spostarlo di reparto o toglierlo dall'elenco.</p>
-    ${S.ingTolti.length?`<button class="btn ghost small" id="ingRip" style="margin-top:6px">Rimetti i ${S.ingTolti.length} ingredienti tolti</button>`:""}
-    ${top.length?`<div class="mini" style="margin-top:14px">Scorciatoia</div>
-      <button class="btn ghost small" id="topFill" style="margin-top:6px">Segna i 25 ingredienti più usati dall'archivio</button>`:""}
+    <div class="pcella full c-crema" style="cursor:default">
+      <svg viewBox="0 0 28 28" fill="none"><rect x="6" y="9" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M10 9V6a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2"/></svg>
+      <b>Ingredienti di base</b>
+      <small>Acqua, olio, sale, pepe, zucchero, farina, aceto, bicarbonato e lieviti: li do per scontati in ogni ricetta e non te li mostro qui sotto</small>
+      <button class="chip ${S.baseSempre?"on":""}" id="swBase" style="margin-top:10px">${S.baseSempre?"sempre in casa":"da segnare"}</button>
+    </div>
+    ${(S.ingTolti.length || top.length) ? `<div class="pcella full c-mattone" style="cursor:default">
+      <svg viewBox="0 0 28 28" fill="none"><path d="M14 5v18M5 14h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <b>Scorciatoie</b>
+      ${S.ingTolti.length?`<button class="btn ghost small" id="ingRip" style="margin-top:8px">Rimetti i ${S.ingTolti.length} ingredienti tolti</button>`:""}
+      ${top.length?`<button class="btn ghost small" id="topFill" style="margin-top:8px">Segna i 25 ingredienti più usati dall'archivio</button>`:""}
+    </div>` : ""}
   </div>
-  ${Object.entries(CAT_DISP).map(([tit,lista])=>{
-    const vis = lista.filter(i=>!q || i.includes(q));
+  <div class="pgrid" style="margin-top:2px">
+  ${Object.entries(CAT_DISP).map(([tit,listaCompleta],idx)=>{
+    const lista = listaCompleta.filter(i=>!BASE.has(i));
+    const vis = lista.filter(i=>!q || i.toLowerCase().includes(q));
     if(!vis.length) return "";
     const presi = lista.filter(i=>S.dispensa.includes(i)).length;
-    return `<details class="gruppo" ${q||presi?"open":""}>
+    return `<details class="pcella full cat-gruppo ${COLORI_CAT[idx%COLORI_CAT.length]}" ${q||presi?"open":""}>
       <summary>${tit} <em>${presi?presi+" segnati":lista.length+" voci"}</em></summary>
       <div class="corpo"><div class="chips">
         ${vis.map(i=>`<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}</button>`).join("")}
       </div></div></details>`;
-  }).join("")}`;
+  }).join("")}
+  </div>`;
 
   const c = document.getElementById("cerca");
   c.oninput = e=>{ cercaDisp = e.target.value; const pos=e.target.selectionStart;
     tappaDispensa(); const n2=document.getElementById("cerca"); n2.focus(); n2.setSelectionRange(pos,pos); };
+  const mic = document.getElementById("micCerca");
+  if(mic) mic.onclick = ()=> dettaIngrediente(mic, testo=>{ cercaDisp = testo; tappaDispensa(); });
   document.getElementById("swBase").onclick=()=>{ S.baseSempre=!S.baseSempre; salva(); tappaDispensa(); };
-  const ingN = document.getElementById("ingNuovo"), ingC = document.getElementById("ingCat");
-  ingN.oninput = ()=>{ const g = indovinaCat(ingN.value); if(g) ingC.value = g; };
+  const ingAddBtn = document.getElementById("ingAdd"), ingC = document.getElementById("ingCat");
+  if(ingAddBtn){
+    const g = indovinaCat(cercaDisp); if(g) ingC.value = g;
+    ingAddBtn.onclick = ()=>{
+      const nome = cercaDisp.trim();
+      if(!nome) return;
+      const k = aggiungiIngrediente(nome, ingC.value);
+      if(k && !S.dispensa.includes(k)) S.dispensa.push(k);
+      S.dispensaData = new Date().toLocaleDateString("it-IT");
+      salva();
+      cercaDisp = "";
+      tappaDispensa();
+    };
+  }
   const rip = document.getElementById("ingRip");
   if(rip) rip.onclick = ()=>{ rimettiTolti(); tappaDispensa(); };
   document.getElementById("logoHome").onclick = ()=>{ if(S.profilo.fatto) vai(5); };
-  document.getElementById("ingAdd").onclick = ()=>{
-    const nome = ingN.value.trim();
-    if(!nome) return;
-    const k = aggiungiIngrediente(nome, ingC.value);
-    if(k && !S.dispensa.includes(k)) S.dispensa.push(k);
-    S.dispensaData = new Date().toLocaleDateString("it-IT");
-    salva();
-    cercaDisp = "";
-    tappaDispensa();
-    const es = document.getElementById("ingEsito");
-    if(es) es.textContent = "Aggiunto «" + k + "» e già segnato in dispensa.";
-  };
   const tf = document.getElementById("topFill");
   if(tf) tf.onclick=()=>{ top.forEach(k=>{ if(!S.dispensa.includes(k)) S.dispensa.push(k); });
     S.dispensaData = new Date().toLocaleDateString("it-IT"); salva(); tappaDispensa(); };
@@ -1159,6 +1206,10 @@ function chiudiVelo(){
   veloAperto = ""; velo.innerHTML = ""; document.body.style.overflow = "";
   fermaTimer(); rilasciaSchermo();
 }
+window.chiudiVelo = chiudiVelo;
+/* vie di uscita extra, valide per qualunque pannello: tocco sullo sfondo fuori dal contenuto, tasto Esc */
+velo.addEventListener("click", e=>{ if(e.target === e.currentTarget || e.target.classList.contains("velo")) chiudiVelo(); });
+document.addEventListener("keydown", e=>{ if(e.key === "Escape" && veloAperto) chiudiVelo(); });
 
 /* ===========================================================
    Modalita cucina: un passo per volta, timer, schermo acceso
@@ -1832,6 +1883,32 @@ function salvaMia(r){
 }
 
 /* ===========================================================
+   Dettatura vocale: parla invece di scrivere
+   =========================================================== */
+let riconoscimentoAttivo = null;
+function dettaIngrediente(bottone, onTesto){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    alert("La dettatura vocale non è disponibile su questo browser. Prova con Chrome o con l'app.");
+    return;
+  }
+  if(riconoscimentoAttivo){ riconoscimentoAttivo.stop(); return; }
+  const r = new SR();
+  r.lang = "it-IT";
+  r.interimResults = false;
+  r.maxAlternatives = 1;
+  bottone.classList.add("in-ascolto");
+  riconoscimentoAttivo = r;
+  r.onresult = e=>{
+    const testo = e.results[0][0].transcript.trim();
+    if(testo) onTesto(testo);
+  };
+  r.onerror = ()=>{};
+  r.onend = ()=>{ riconoscimentoAttivo = null; bottone.classList.remove("in-ascolto"); };
+  try{ r.start(); }catch(e){ riconoscimentoAttivo = null; bottone.classList.remove("in-ascolto"); }
+}
+
+/* ===========================================================
    Impostazioni: colori chiaro/scuro e filigrana
    =========================================================== */
 const TEMI_CHIARI = [{v:"1",n:"Verde salvia"},{v:"2",n:"Crema"},{v:"3",n:"Azzurro"},{v:"4",n:"Rosa antico"}];
@@ -1841,9 +1918,8 @@ function apriImpostazioni(){
   const scuroT = localStorage.getItem("checucino.scuroTema") || "1";
   const filigrana = localStorage.getItem("checucino.filigrana") === "1";
   apriVelo("impostazioni", `
-    <div class="velo-top"><h2>Impostazioni</h2>
-      <button class="chiudi" data-imp="chiudi">Chiudi</button></div>
-    <p class="mini">Scegli il colore di sfondo per la modalità chiara e per quella scura. Passi dall'una all'altra con l'interruttore in alto.</p>
+    <div class="velo-top"><h2>Strumenti</h2>
+      <button class="chiudi" data-imp="chiudi" onclick="chiudiVelo()">Chiudi</button></div> Passi dall'una all'altra con l'interruttore in alto.</p>
     <div class="sez">Sfondo chiaro</div>
     <div class="chips" id="impChiaro">
       ${TEMI_CHIARI.map(t=>`<button class="chip ${chiaro===t.v?"on":""}" data-v="${t.v}">${t.n}</button>`).join("")}
@@ -2011,7 +2087,7 @@ function disegnaMenu(){
     <button id="mSpesa">Lista della spesa${S.spesa.filter(x=>!x.presa).length?` (${S.spesa.filter(x=>!x.presa).length})`:""}</button>
     <button id="mMie">Le mie ricette${S.mie.length?` (${S.mie.length})`:""}</button>
     <button id="mNasc">Ricette nascoste${S.nascoste.length?` (${S.nascoste.length})`:""}</button>
-    <button id="mImpostazioni">Impostazioni</button>
+    <button id="mImpostazioni">Strumenti</button>
     <button id="mSalva">Salva i miei dati in un file</button>
     <button id="mCarica">Reimporta da un file</button>
     <div class="sez">Altro</div>
