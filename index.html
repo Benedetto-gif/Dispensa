@@ -65,7 +65,7 @@ body[data-filigrana="1"]::before{
   background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180"><text x="6" y="42" font-size="36">%F0%9F%A5%95</text><text x="96" y="96" font-size="36">%F0%9F%8D%85</text><text x="20" y="150" font-size="36">%F0%9F%A5%9A</text><text x="112" y="34" font-size="36">%F0%9F%8D%87</text></svg>');
   background-repeat:repeat;
 }
-#app,.top,#menuPan,#radioPan{position:relative;z-index:1}
+#app{position:relative;z-index:1}
 .pcella.cat-gruppo{padding:0}
 .pcella.cat-gruppo > summary{padding:14px;cursor:pointer;font-weight:700;display:flex;justify-content:space-between;gap:10px;list-style:none}
 .pcella.cat-gruppo > summary::-webkit-details-marker{display:none}
@@ -1919,7 +1919,8 @@ function apriImpostazioni(){
   const filigrana = localStorage.getItem("checucino.filigrana") === "1";
   apriVelo("impostazioni", `
     <div class="velo-top"><h2>Strumenti</h2>
-      <button class="chiudi" data-imp="chiudi" onclick="chiudiVelo()">Chiudi</button></div> Passi dall'una all'altra con l'interruttore in alto.</p>
+      <button class="chiudi" data-imp="chiudi" onclick="chiudiVelo()">Chiudi</button></div>
+    <p class="mini">Scegli il colore di sfondo per la modalità chiara e per quella scura. Passi dall'una all'altra con l'interruttore in alto.</p>
     <div class="sez">Sfondo chiaro</div>
     <div class="chips" id="impChiaro">
       ${TEMI_CHIARI.map(t=>`<button class="chip ${chiaro===t.v?"on":""}" data-v="${t.v}">${t.n}</button>`).join("")}
