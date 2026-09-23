@@ -378,7 +378,7 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
       <input type="range" id="tono" min="0" max="100" step="100" value="0" aria-label="Passa da chiaro a scuro">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
     </div>
-    <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Menu</button>
+    <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Strumenti</button>
   </div>
   <div class="rail" id="rail"></div>
 </header>
@@ -1918,7 +1918,7 @@ function apriImpostazioni(){
   const scuroT = localStorage.getItem("checucino.scuroTema") || "1";
   const filigrana = localStorage.getItem("checucino.filigrana") === "1";
   apriVelo("impostazioni", `
-    <div class="velo-top"><h2>Strumenti</h2>
+    <div class="velo-top"><h2>Aspetto</h2>
       <button class="chiudi" data-imp="chiudi" onclick="chiudiVelo()">Chiudi</button></div>
     <p class="mini">Scegli il colore di sfondo per la modalità chiara e per quella scura. Passi dall'una all'altra con l'interruttore in alto.</p>
     <div class="sez">Sfondo chiaro</div>
@@ -2084,11 +2084,11 @@ function disegnaMenu(){
     <button data-go="1">Chi c'è a tavola</button>
     <button data-go="2">La dispensa</button>
     <button data-go="3">Cosa cucinare</button>
-    <div class="sez">Strumenti</div>
+    <div class="sez">Extra</div>
     <button id="mSpesa">Lista della spesa${S.spesa.filter(x=>!x.presa).length?` (${S.spesa.filter(x=>!x.presa).length})`:""}</button>
     <button id="mMie">Le mie ricette${S.mie.length?` (${S.mie.length})`:""}</button>
     <button id="mNasc">Ricette nascoste${S.nascoste.length?` (${S.nascoste.length})`:""}</button>
-    <button id="mImpostazioni">Strumenti</button>
+    <button id="mImpostazioni">Aspetto</button>
     <button id="mSalva">Salva i miei dati in un file</button>
     <button id="mCarica">Reimporta da un file</button>
     <div class="sez">Altro</div>
