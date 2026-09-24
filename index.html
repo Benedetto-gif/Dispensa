@@ -157,15 +157,15 @@ body[data-filigrana="1"]::before{
 @media(max-width:340px){.bento-3{grid-template-columns:1fr 1fr}}
 
 /* cursore chiaro/scuro */
-.tono{display:flex;align-items:center;gap:5px;flex:none;
-  padding:3px 7px;border-radius:999px;background:var(--superficie);border:1px solid var(--linea)}
-.tono svg{width:15px;height:15px;flex:none;color:var(--inchiostro-soft)}
-.tono input[type=range]{-webkit-appearance:none;appearance:none;width:64px;height:6px;margin:0;
+.tono{display:flex;align-items:center;gap:4px;flex:none;
+  padding:3px 6px;border-radius:999px;background:var(--superficie);border:1px solid var(--linea)}
+.tono svg{width:12px;height:12px;flex:none;color:var(--inchiostro-soft)}
+.tono input[type=range]{-webkit-appearance:none;appearance:none;width:38px;height:5px;margin:0;
   border-radius:999px;border:1px solid var(--linea);
   background:linear-gradient(90deg,hsl(80 19% 94%),hsl(80 19% 7%))}
-.tono input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;
+.tono input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
   border-radius:50%;background:var(--senape);border:2px solid var(--superficie);cursor:pointer}
-.tono input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;
+.tono input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
   background:var(--senape);border:2px solid var(--superficie);cursor:pointer}
 .tono input[type=range]:focus-visible{outline:2px solid var(--verde);outline-offset:3px}
 
@@ -258,7 +258,7 @@ a{color:var(--verde)}
 
 header.top{position:sticky;top:0;z-index:30;background:var(--carta);border-bottom:1px solid var(--linea);padding:10px 16px 8px}
 .top-in{max-width:620px;margin:0 auto;display:flex;align-items:center;gap:10px}
-.marchio{font-family:Newsreader,serif;font-size:1.25rem;font-weight:600;letter-spacing:-.015em;flex:1;min-width:0;white-space:nowrap}
+.marchio{font-family:Newsreader,serif;font-size:1.25rem;font-weight:600;letter-spacing:-.015em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .marchio span{color:var(--verde)}
 .menu-btn{background:var(--superficie);border:1px solid var(--linea);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:.88rem;font-weight:500}
 .menu-pan{position:absolute;right:16px;top:52px;z-index:40;width:min(300px,calc(100vw - 32px));
