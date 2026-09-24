@@ -208,14 +208,20 @@ body[data-filigrana="1"]::before{
 .radio-pan{position:fixed;right:16px;bottom:calc(146px + env(safe-area-inset-bottom));z-index:27;
   width:min(250px,calc(100vw - 32px));background:var(--superficie);border:1px solid var(--linea);
   border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.2);overflow:hidden}
-.radio-pan .sez{padding:9px 14px 5px;font-size:.72rem;color:var(--inchiostro-soft);
-  border-bottom:1px solid var(--linea)}
-.radio-pan button{display:block;width:100%;text-align:left;background:none;border:0;color:inherit;
-  padding:11px 14px;border-bottom:1px solid var(--linea);font-size:.93rem;cursor:pointer}
-.radio-pan button:last-child{border-bottom:0}
-.radio-pan button:hover{background:var(--superficie2)}
-.radio-pan button.on{background:var(--verde-chiaro);color:var(--verde);font-weight:700}
-.radio-pan button.spegni{color:var(--mattone)}
+.radio-pan .sez{padding:9px 14px 5px;font-size:.72rem;color:var(--inchiostro-soft)}
+.radio-pan .chips{display:flex;flex-wrap:wrap;gap:7px;padding:6px 12px 10px}
+.radio-pan .chips button{flex:none;border:0;border-radius:999px;padding:8px 14px;font-size:.87rem;
+  font-weight:700;color:#fff;cursor:pointer}
+.radio-pan .chips button.on{outline:3px solid rgba(255,255,255,.85);outline-offset:-5px}
+.radio-pan .rc0{background:#C0392B}.radio-pan .rc1{background:#1A78C2}.radio-pan .rc2{background:#E09B00}
+.radio-pan .rc3{background:#6D3FA0}.radio-pan .rc4{background:#1A8C6E}.radio-pan .rc5{background:#D45D1A}
+.radio-pan .rc6{background:#8B3A52}
+:root[data-scuro] .radio-pan .rc0{background:#E04B38}:root[data-scuro] .radio-pan .rc1{background:#2486D0}
+:root[data-scuro] .radio-pan .rc2{background:#E8AB10}:root[data-scuro] .radio-pan .rc3{background:#7E50B5}
+:root[data-scuro] .radio-pan .rc4{background:#1F9E7E}:root[data-scuro] .radio-pan .rc5{background:#E06B28}
+:root[data-scuro] .radio-pan .rc6{background:#9E4A62}
+.radio-pan button.spegni{display:block;width:100%;text-align:left;background:none;border:0;color:var(--mattone);
+  padding:11px 14px;border-top:1px solid var(--linea);font-size:.93rem;font-weight:700;cursor:pointer}
 .radio-pan .stato{padding:10px 14px;font-size:.78rem;color:var(--inchiostro-soft);
   border-bottom:1px solid var(--linea)}
 
@@ -256,13 +262,26 @@ header.top{position:sticky;top:0;z-index:30;background:var(--carta);border-botto
 .marchio span{color:var(--verde)}
 .menu-btn{background:var(--superficie);border:1px solid var(--linea);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:.88rem;font-weight:500}
 .menu-pan{position:absolute;right:16px;top:52px;z-index:40;width:min(300px,calc(100vw - 32px));
-  background:var(--superficie);border:1px solid var(--linea);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.16);overflow:hidden}
-.menu-pan button{display:block;width:100%;text-align:left;background:none;border:0;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--linea);font-size:.93rem}
-.menu-pan button:last-child{border-bottom:0}
-.menu-pan button:hover{background:var(--superficie2)}
-.menu-pan button[disabled]{opacity:.45;cursor:default}
-.menu-pan .sez{padding:9px 14px 5px;font-size:.72rem;color:var(--inchiostro-soft);border-bottom:1px solid var(--linea)}
-.menu-pan .rischio{color:var(--mattone)}
+  background:var(--superficie);border:1px solid var(--linea);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.16);
+  overflow-y:auto;max-height:calc(100vh - 72px);padding:10px}
+.menu-box{border-radius:12px;padding:9px 10px 8px;margin:0 0 8px}
+.menu-box:last-child{margin-bottom:0}
+.menu-box .sez{padding:2px 2px 7px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
+  border-bottom:0;color:inherit;opacity:.85}
+.menu-box button{display:block;width:100%;text-align:left;background:rgba(255,255,255,.16);color:inherit;
+  border:0;border-radius:8px;border-bottom:0;padding:11px 11px;margin:0 0 6px;font-size:.89rem;cursor:pointer}
+.menu-box button:last-child{margin-bottom:0}
+.menu-box button:hover{background:rgba(255,255,255,.27)}
+.menu-box button[disabled]{opacity:.5;cursor:default}
+.menu-box button.rischio{color:#fff;font-weight:700}
+.menu-box.mb-teal{background:#1A8C6E;color:#fff}
+.menu-box.mb-blu{background:#1A78C2;color:#fff}
+.menu-box.mb-oro{background:#E09B00;color:#fff}
+.menu-box.mb-bordeaux{background:#8B3A52;color:#fff}
+:root[data-scuro] .menu-box.mb-teal{background:#1F9E7E}
+:root[data-scuro] .menu-box.mb-blu{background:#2486D0}
+:root[data-scuro] .menu-box.mb-oro{background:#E8AB10}
+:root[data-scuro] .menu-box.mb-bordeaux{background:#9E4A62}
 
 .rail{display:flex;gap:4px;max-width:620px;margin:8px auto 0}
 .rail div{flex:1;text-align:center;font-size:.66rem;color:var(--inchiostro-soft);line-height:1.25;cursor:pointer}
@@ -323,6 +342,8 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 .tag{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:999px;background:var(--superficie2);margin:6px 5px 0 0}
 .tag.zona{background:var(--verde-chiaro);color:var(--verde);font-weight:700}
 .tag.stag{background:color-mix(in srgb,var(--senape) 16%,transparent);color:var(--senape);font-weight:700}
+.ing-stag{font-size:.82em;opacity:.9}
+.ing-stag-no{opacity:.28;filter:grayscale(1)}
 .fatt{height:6px;border-radius:3px;background:var(--superficie2);margin:10px 0 8px;overflow:hidden;display:flex}
 .fatt i{display:block;height:100%}
 .fatt i.pieno{background:var(--verde)}
@@ -345,6 +366,9 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
   padding:10px 12px;border-radius:0 8px 8px 0;font-size:.88rem;margin:12px 0 0}
 .avviso{border-left:3px solid var(--mattone);background:color-mix(in srgb,var(--mattone) 9%,transparent);
   padding:9px 12px;border-radius:0 8px 8px 0;font-size:.86rem;margin:10px 0 0}
+.bevanda{border-left:3px solid var(--verde);background:color-mix(in srgb,var(--verde) 8%,transparent);
+  padding:10px 12px;border-radius:0 8px 8px 0;font-size:.88rem;margin:12px 0 0}
+.bevanda .cerca-web{margin-top:8px}
 .vuoto{text-align:center;padding:34px 12px;color:var(--inchiostro-soft)}
 .riep{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px}
 .riep span{font-size:.75rem;background:var(--superficie2);border-radius:999px;padding:4px 10px}
@@ -381,6 +405,7 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
       <input type="range" id="tono" min="0" max="100" step="100" value="0" aria-label="Passa da chiaro a scuro">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
     </div>
+    <button class="menu-btn" id="infoBtn" aria-label="Perch\u00e9 questa app" title="Perch\u00e9 questa app" style="width:38px;padding:0;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif">i</button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Strumenti</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -550,7 +575,7 @@ function valuta(r){
 }
 function diStagione(r){
   const st = r.ing.map(i=>D.stagioni[i.k]).filter(Boolean);
-  return st.length >= 2 && st.every(m=>m.includes(MESE));
+  return {tot: st.length, in: st.filter(m=>m.includes(MESE)).length};
 }
 function chiEsclude(r){
   return tavolata().filter(c=> RANGO[r.stile] < RANGO[c.stile] || c.allergeni.some(a=>r.all.includes(a)));
@@ -611,8 +636,8 @@ function filtra(){
   });
 
   /* quelle cucinate da poco scendono in fondo: e' cosi che l'archivio non si riduce a otto piatti */
-  out.sort((a,b)=> (a.fatta?1:0)-(b.fatta?1:0) || b.pct - a.pct || (b.zona?1:0)-(a.zona?1:0)
-                   || (b.stag?1:0)-(a.stag?1:0) || a.r.tempo - b.r.tempo);
+  out.sort((a,b)=> (a.fatta?1:0)-(b.fatta?1:0) || b.pct - a.pct || (b.stag.in-a.stag.in) || (b.zona?1:0)-(a.zona?1:0)
+                   || a.r.tempo - b.r.tempo);
   return out;
 }
 
@@ -864,7 +889,9 @@ function tappaDispensa(){
     return `<details class="pcella full cat-gruppo ${COLORI_CAT[idx%COLORI_CAT.length]}" ${q||presi?"open":""}>
       <summary>${tit} <em>${presi?presi+" segnati":lista.length+" voci"}</em></summary>
       <div class="corpo"><div class="chips">
-        ${vis.map(i=>`<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}</button>`).join("")}
+        ${vis.map(i=>{ const mesi = D.stagioni[i];
+          const stag = mesi ? (mesi.includes(MESE)?` <span class="ing-stag" title="Di stagione ora">\u{1F331}</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F331}</span>`) : "";
+          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}${stag}</button>`; }).join("")}
       </div></div></details>`;
   }).join("")}
   </div>`;
@@ -1094,16 +1121,117 @@ function tappaRicette(){
   pulsanti("Cambia scelta", "Home", ()=>vai(5), ()=>{ sess.modo="app"; tappaVoglia(); });
 }
 
+/* ===========================================================
+   Da bere: abbinamento consigliato in base al piatto
+   =========================================================== */
+function contiene(chiavi, elenco){ return chiavi.some(k=>elenco.some(x=>k.includes(x))); }
+const PESCE_CHIAVI = ["pesce","tonno","salmone","gamber","cozz","vongol","calamar","polpo","seppi","baccal","merluzzo","acciug","sarde","spigola","orata","branzino","nasello","sgombro","trota","aragosta","scampi","granchio","ostric","alici","astice","moscardini","stoccafisso","anguilla","palombo","lumache"];
+function eDiPesce(r){ return contiene(r.ing.map(i=>i.k.toLowerCase()), PESCE_CHIAVI); }
+const KCAL_100G={"acciughe sotto sale":210,"acciughe sott’olio":210,"aceto":20,"aceto balsamico":90,"acqua":0,"acqua di fiori d’arancio":0,"acqua frizzante":0,"aglio":150,"agnello":230,"alga nori":35,"alga wakame":45,"alici":130,"alici fresche":130,"alloro":313,"amarene":60,"amaretti":460,"amido di mais":360,"ananas":50,"anatra":220,"aneto":43,"anguilla":240,"anguria":30,"animelle":120,"arachidi":570,"arance":47,"arancia":47,"asparagi":22,"astice":90,"avocado":160,"baccala":80,"baccalà dissalato":80,"bagnet verd":150,"base pronta per pinsa":270,"base pronta per pizza":270,"basilico":23,"besciamella":150,"bicarbonato":0,"bietole":19,"birra":42,"bistecca di chianina":250,"brandy":250,"branzino":97,"brioche":410,"broccoli":34,"brodo di pecora":15,"brodo vegetale":10,"brovada":25,"budella di agnello":150,"budello naturale":150,"bulgur":340,"burro":720,"burro chiarificato":870,"burro di cacao":900,"cacao":230,"cacao amaro":230,"caciocavallo":380,"caciocavallo silano":380,"caffe":2,"caffè":2,"calamari":80,"cannella":250,"capocollo":330,"capperi":25,"capretto":150,"carciofi":22,"cardi":17,"carne di camoscio":110,"carne di capra":120,"carne di cavallo":130,"carne di maiale":250,"carne di pecora":200,"carne macinata":220,"carne mista":220,"carne salada":150,"carota":35,"casera":330,"casizolu":300,"castagne":200,"cavolfiore":25,"cavolo cappuccio":25,"cavolo nero":30,"ceci":160,"ceci secchi":320,"cereali misti":370,"cetriolini sottaceto":12,"cetriolo":12,"chiodi di garofano":270,"chorizo":460,"ciauscolo":420,"ciccioli di maiale":550,"cicoria":13,"cime di rapa":22,"cinghiale":110,"cioccolato al latte":535,"cioccolato fondente":545,"cipolla":40,"cipolla rossa":40,"cipollotto":32,"coda di bue":220,"coloranti alimentari":0,"concentrato di pomodoro":80,"confettini colorati":390,"coniglio":130,"coratella":150,"cordula":150,"coriandolo fresco":23,"costine di maiale":290,"costine di maiale affumicate":320,"cotechino":330,"cotenna di maiale":460,"cous cous":112,"cozze":85,"crauti":19,"creste di gallo":120,"cumino":375,"cunza":300,"curatella":150,"curry":325,"erba cipollina":30,"erbette":20,"fagioli":127,"fagioli cannellini":127,"fagioli secchi":330,"fagiolina del Trasimeno":330,"fagiolini":24,"faraona":160,"farina":340,"farina 00 per dolci":340,"farina di castagne":345,"farina di ceci":360,"farina di grano saraceno":335,"farina di mais":360,"farina di segale":320,"farina di semola":345,"farina forte":340,"farro":340,"fassona":180,"fave":80,"fave secche":340,"fecola":360,"fegatini di pollo":135,"fegato di vitello":140,"fichi secchi":250,"filetto di pesce bianco":90,"finocchi":9,"finocchietto selvatico":30,"finocchio selvatico":30,"fiori di zucca":15,"formaggio casolet":320,"formaggio feta":260,"formaggio fontina":330,"formaggio fresco":250,"formaggio grana":390,"formaggio grigio":320,"formaggio gruviera":410,"formaggio montasio":360,"formaggio pecorino fresco":300,"formaggio toma":320,"formaggio tuma":300,"frattaglie di vitello":140,"fregola":350,"fregula":350,"friarielli":30,"friselle":330,"funghi champignon":22,"funghi porcini":30,"funghi porcini secchi":260,"gallette del marinaio":330,"gallina":220,"gamberetti":90,"gamberi":90,"gelatina":330,"gelato al cioccolato":230,"gelato alla nocciola":230,"gelsomino":0,"germogli di soia":30,"ghiaccio":0,"ginepro":50,"gnocchi di patate":130,"gorgonzola":330,"grano cotto":130,"grano saraceno":340,"grappa":250,"guanciale":580,"interiora di agnello":150,"involtini di carne":220,"lampredotto":150,"lardo":770,"lardo di Arnad":770,"lardo di Colonnata":770,"latte":45,"latte di cocco":200,"lattuga":15,"lattuga romana":15,"legumi misti":120,"lenticchie":115,"lepre":135,"lievito di birra":105,"lievito madre":220,"lievito per dolci":280,"lime":30,"limone":29,"lingua di vitello":200,"lonza di maiale":150,"luganega":330,"lumache":90,"maggiorana":270,"maiale":250,"maialino da latte":260,"mais":90,"mandorle":580,"manzo":250,"marmellata":250,"marsala":150,"mascarpone":450,"melanzane":25,"mele":52,"mele cotogne":45,"melone":34,"menta":45,"mentuccia":45,"miele":305,"milza":120,"mirto":250,"miso":200,"missoltini":260,"moeche":90,"mortadella":310,"moscardini":80,"moscato":90,"mostarda mantovana":150,"mozzarella":280,"muset":300,"nduja":450,"nervetti":150,"nocciole":630,"noce moscata":525,"noci":650,"noodles di grano":140,"noodles di riso":110,"olio di semi":900,"olio extravergine":900,"olive":140,"olive ascolane":250,"olive taggiasche":140,"orata":100,"origano":265,"orzo perlato":350,"ossobuco di vitello":150,"ostie":380,"pajata":180,"palomba":170,"palombo":100,"pan di spagna":300,"pancetta":460,"pane":270,"pane carasau":380,"pane di Matera":270,"pangrattato":350,"panna":340,"paprica":280,"paprica dolce":280,"parmigiano":390,"passata di pomodoro":25,"pasta":350,"pasta brisée":450,"pasta sfoglia":410,"patate":80,"pecorino fresco":300,"pecorino romano":390,"pepe nero":255,"pepe verde":255,"peperoncino":40,"peperoncino fresco":40,"peperoncino in polvere":280,"peperoncino secco":280,"peperone verde":20,"peperoni":20,"peperoni cruschi":300,"peperoni secchi":300,"pere":47,"pesce di lago":100,"pesce misto":100,"pesce spada":110,"pinoli":670,"piselli":80,"pitina":300,"pitta":270,"polenta":70,"pollo":165,"polmone":110,"polmone di manzo":110,"polpo":60,"pomodori":18,"pomodori pelati":18,"pomodori secchi":260,"pomodorini":18,"pomodoro":18,"porri":30,"prezzemolo":36,"prosciutto cotto":145,"prosciutto crudo":270,"prosciutto di San Daniele":270,"provola":300,"provola affumicata":300,"provolone":350,"puntarelle":17,"radicchio":13,"rafano":50,"ricotta":150,"ricotta affumicata":200,"ricotta salata":300,"riso":330,"rosmarino":130,"rucola":25,"rum":250,"salame":400,"salame a cubetti":400,"sale":0,"sale grosso":0,"salmone":180,"salsa di ostriche":50,"salsa di pesce":50,"salsa di soia":60,"salsa verde":150,"salsiccia":330,"salsiccia pezzente":330,"salsiccia sarda":330,"salvia":315,"sarde":170,"savoiardi":380,"scamorza":330,"scampi":90,"scarola":17,"sciroppo di frutta":260,"scorza di limone":47,"scorza d’arancia candita":320,"sedano":16,"semi di anice":340,"semi di finocchio":345,"semola":345,"semolino":360,"senape":100,"senape in polvere":460,"seppie":72,"sgombro":205,"soppressata":430,"sopressa":400,"speck":290,"spezie miste":280,"spinaci":23,"squacquerone":260,"stigghiola":250,"stoccafisso":80,"stracchino":300,"stracotto di manzo":220,"strutto":890,"susine":46,"tahina":595,"tartufo nero":130,"tenerumi":20,"timo":100,"tofu":76,"tomini":280,"tonno fresco":140,"tonno sott’olio":190,"torrone":440,"trippa":100,"uova":143,"uva":67,"uvetta":300,"vaniglia":290,"ventricina":450,"verdure amare":20,"verdure miste":25,"verza":27,"vin santo":150,"vincotto":280,"vino bianco":80,"vino cotto":250,"vino rosso":85,"visciole":60,"vitello":170,"vongole":72,"yogurt":60,"yogurt greco":95,"zafferano":310,"zampone":300,"zenzero":80,"zucca":20,"zucchero":390,"zucchero a velo":390,"zucchero a velo colorato":390,"zucchine":17,"albicocche":48,"alchermes":250};
+
+/* peso stimato (grammi) per unita' vaghe usate nelle quantita' */
+const UNITA_G = {
+  "cucchiaio":15,"cucchiai":15,"cucchiaino":5,"cucchiaini":5,"spicchio":3,"spicchi":3,
+  "foglia":1,"foglie":1,"ciuffo":5,"ciuffi":5,"pizzico":1,"pizzichi":1,
+  "bicchiere":200,"bicchieri":200,"tazza":200,"tazze":200,"fetta":30,"fette":30,
+  "rametto":2,"rametti":2,"manciata":30,"manciate":30,"noce":20,"noci di burro":20,
+  "presa":1,"filo":5,"scatola":80,"scatoletta":80,"scatolette":80,"barattolo":300,
+  "confezione":250,"bustina":10,"bustine":10,"spruzzata":5,"goccio":10,"vasetto":125
+};
+/* peso stimato (grammi) di un pezzo, quando la quantita' e' solo un numero (es. "2") */
+const PEZZO_G = {
+  "uova":60,"limone":90,"lime":50,"arancia":150,"arance":150,"mele":150,"pere":150,
+  "pomodori":120,"pomodorini":18,"peperoncino secco":2,"peperoncino fresco":10,
+  "cipolla":100,"cipollotto":30,"patate":150,"carota":60,"zucchine":150,
+  "melanzane":250,"peperoni":150,"banane":120
+};
+function stimaGrammi(qTxt, chiave){
+  const t = String(qTxt||"").toLowerCase().trim();
+  if(!t || t.includes("q.b") || t.includes("qb")) return 0;
+  const num = (t.match(/[\d.,]+/)||[])[0];
+  const n = num ? parseFloat(num.replace(",",".")) : null;
+  if(/kg\b/.test(t)) return n*1000;
+  if(/\bl\b|litro|litri/.test(t)) return n*1000;
+  if(/ml\b/.test(t)) return n;
+  if(/g\b|gr\b|grammi/.test(t)) return n;
+  for(const u in UNITA_G){ if(t.includes(u)) return (n||1) * UNITA_G[u]; }
+  if(n!=null && /^[\d.,\s]+$/.test(t)){
+    const peso = PEZZO_G[chiave] != null ? PEZZO_G[chiave] : 50;
+    return n * peso;
+  }
+  return 0;
+}
+/* calorie stimate a porzione: e' una stima approssimativa, non un dato nutrizionale certificato */
+function calorieRicetta(r){
+  let tot = 0;
+  r.ing.forEach(i=>{
+    const kcal100 = KCAL_100G[i.k];
+    if(kcal100 == null) return;
+    const g = stimaGrammi(i.q, i.k);
+    tot += kcal100 * g / 100;
+  });
+  const porzioni = r.nvoci || 4;
+  return Math.round(tot / porzioni / 10) * 10;
+}
+
+
+function abbinamentoBevanda(r){
+  const chiavi = r.ing.map(i=>i.k.toLowerCase());
+  const nome = r.n.toLowerCase();
+  const testoProc = (r.proc||[]).join(" ").toLowerCase().replace(/soffri\w*/g,"");
+  const fritto = /frigg|fritt/.test(testoProc) || /fritt/.test(nome);
+  const piccante = contiene(chiavi, ["peperoncino","nduja","harissa"]);
+  const pesce = eDiPesce(r);
+  const carneRossa = contiene(chiavi, ["manzo","vitello","agnello","maiale","cinghiale","salsiccia","guanciale","pancetta","brasato","stracotto","tartare","bistecca","filetto","macinat","polpette","salame","bresaola","ossobuco","cacciagione","anatra"]);
+  const carneBianca = contiene(chiavi, ["pollo","tacchino","coniglio","faraona"]);
+  const formaggioStag = contiene(chiavi, ["parmigiano","pecorino","grana","gorgonzola","taleggio","provolone","stravecchio","stagionat"]);
+  const funghiTartufo = contiene(chiavi, ["fungh","tartufo","porcini"]);
+  const pizza = nome.includes("pizza");
+  const bibita = it=>({tipo:it.tipo, car:it.car, alt:it.alt});
+
+  if(r.cat==="Dolci")
+    return bibita({tipo:"Vino dolce o passito", car:"morbido, aromatico, con note di miele, frutta secca o frutta candita",
+      alt:"In alternativa: una birra scura e dolce (stout), oppure un tè freddo poco zuccherato o una spuma nera per restare analcolici."});
+  if(pizza)
+    return bibita({tipo:"Birra chiara, tipo lager o pilsner", car:"fresca, ben frizzante, leggermente amara",
+      alt:"In alternativa: un vino rosso giovane e frizzante (es. Lambrusco), o un'acqua molto fredda e frizzante."});
+  if(pesce)
+    return bibita({tipo:fritto?"Vino bianco frizzante o spumante Brut":"Vino bianco secco",
+      car:fritto?"bollicine fini, acidità decisa, utili a sgrassare il fritto":
+          piccante?"aromatico e sapido, per bilanciare la nota piccante (es. Vermentino, Falanghina)":
+          "fresco, minerale, con note floreali e agrumate (es. Vermentino, Falanghina, Verdicchio)",
+      alt:"In alternativa: una birra chiara leggera, o acqua frizzante con una fetta di limone."});
+  if(carneRossa)
+    return bibita({tipo:"Vino rosso"+(r.leggero?" di medio corpo":" corposo"),
+      car:r.leggero?"morbido, fruttato, tannini non troppo marcati (es. Chianti giovane, Montepulciano)":
+                     "strutturato, tannico, adatto a un piatto sostanzioso (es. Nero d'Avola, Chianti Classico, Montepulciano d'Abruzzo)",
+      alt:"In alternativa: una birra ambrata o doppio malto, dal corpo pieno."});
+  if(carneBianca)
+    return bibita({tipo:"Vino rosso leggero o bianco strutturato",
+      car:"poco tannico, fruttato se rosso; morbido e con un breve affinamento se bianco (es. Vermentino strutturato, Chardonnay)",
+      alt:"In alternativa: una birra chiara artigianale dal profilo morbido."});
+  if(formaggioStag)
+    return bibita({tipo:"Vino rosso robusto o, per i più stagionati, un passito",
+      car:"sapido e strutturato, capace di reggere il gusto deciso del formaggio",
+      alt:"In alternativa: una birra ambrata o un vino bianco molto strutturato."});
+  if(funghiTartufo)
+    return bibita({tipo:"Vino rosso elegante", car:"terroso, delicato, non troppo tannico (es. Nebbiolo, Barbera)",
+      alt:"In alternativa: un bianco strutturato e maturo."});
+  return bibita({tipo:"Vino bianco leggero o rosato", car:"fresco, snello, facile da abbinare a un piatto delicato di verdure o legumi",
+    alt:"In alternativa: una birra chiara leggera, o acqua frizzante con erbe aromatiche."});
+}
+
 function scheda(o){
   const r = o.r, tot = o.pieno + o.sost;
   const liv = tot===100 ? "v-alta" : tot>=70 ? "v-media" : "v-bassa";
   const esclusi = chiEsclude(r);
   const attrezzi = (r.att||[]).filter(a=>D.attrezzi[a]);
+  if(r._kcal == null) r._kcal = calorieRicetta(r);
   return `<details class="ric ${liv}">
     <summary>
       <div class="ric-top">
-        <div><div class="ric-nome"><span aria-hidden="true">${ICONA_PORTATA[r.cat]||""} ${bandieraRicetta(r)}</span> ${esc(r.n)}</div>
-          <div class="meta">${SING[r.cat]} · ${r.tempo} min · ${r.diff}${r.luogo?" · "+esc(r.luogo):""}${r.stile!=="onnivoro"?" · "+r.stile:""}</div></div>
+        <div><div class="ric-nome"><span aria-hidden="true">${eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"")} ${bandieraRicetta(r)}</span> ${esc(r.n)}</div>
+          <div class="meta">${SING[r.cat]} · ${r.tempo} min · ${r.diff}${r._kcal?` · ~${r._kcal} kcal/porzione`:""}${r.luogo?" · "+esc(r.luogo):""}${r.stile!=="onnivoro"?" · "+r.stile:""}</div></div>
         <div class="pct">${o.pct}%</div>
       </div>
       <div class="fatt"><i class="pieno" style="width:${o.pieno}%"></i><i class="sost" style="width:${o.sost}%"></i></div>
@@ -1112,24 +1240,35 @@ function scheda(o){
         : o.sostituibili.length ? `Ci siamo, con ${o.sostituibili.length===1?"una sostituzione":"qualche sostituzione"}`
         : "Hai tutto il necessario"}</div>
       ${o.usa?.length?`<div class="mini" style="margin-top:4px">Consuma: ${esc(o.usa.join(", "))}</div>`:""}
-      <div>${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag?`<span class="tag stag">di stagione</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
+      <div>${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag.in?`<span class="tag stag">\u{1F331} ${o.stag.in} ${o.stag.in===1?"ingrediente":"ingredienti"} di stagione</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
       ${esclusi.length?`<div class="avviso">Non va bene per ${esclusi.map(c=>esc(c.nome)).join(" e ")}</div>`:""}
     </summary>
     <div class="dett">
       ${rigaDosi()}
       <ul class="ing-l">${r.ing.map(i=>{
         const q = `<em data-q="${esc(i.q)}">${esc(scalaQ(i.q, fattoreDosi()))}</em>`;
-        if(possiedo(i.k)) return `<li><span>${esc(i.n)}</span>${q}</li>`;
+        const mesi = D.stagioni[i.k];
+        const stag = mesi ? (mesi.includes(MESE) ? ` <span class="ing-stag" title="Di stagione ora">\u{1F331}</span>` : ` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F331}</span>`) : "";
+        if(possiedo(i.k)) return `<li><span>${esc(i.n)}${stag}</span>${q}</li>`;
         const alt = sostituto(i.k);
-        if(alt) return `<li class="sub"><span>${esc(i.n)} — puoi usare ${esc(alt)}</span>${q}</li>`;
+        if(alt) return `<li class="sub"><span>${esc(i.n)}${stag} — puoi usare ${esc(alt)}</span>${q}</li>`;
         const cons = D.sostituzioni[i.k];
-        return `<li class="no"><span>${esc(i.n)}${cons?" — "+esc(cons):" — da comprare"}</span>${q}</li>`;
+        return `<li class="no"><span>${esc(i.n)}${stag}${cons?" — "+esc(cons):" — da comprare"}</span>${q}</li>`;
       }).join("")}</ul>
+      ${r._kcal?`<p class="mini" style="margin-top:4px;opacity:.75">Calorie stimate in base agli ingredienti: valore indicativo, non un dato nutrizionale certificato.</p>`:""}
       <ol class="passi">${r.proc.map(p=>`<li>${pulito(p)}</li>`).join("")}</ol>
       ${r.nota?`<div class="nota">${pulito(r.nota)}</div>`:""}
       ${attrezzi.length?`<div class="mini" style="margin-top:12px">Ti serve: ${attrezzi.map(a=>
           `<b>${esc(a)}</b> — ${esc(D.attrezzi[a].alt)}`).join(" · ")}</div>`:""}
       ${r.all.length?`<div class="mini" style="margin-top:8px">Allergeni: ${r.all.join(", ")}</div>`:""}
+      ${(()=>{ const b = abbinamentoBevanda(r); return `
+      <div class="bevanda">
+        <b>\u{1F377} Da bere: ${esc(b.tipo)}</b>
+        <p class="mini" style="margin-top:4px">${esc(b.car)}</p>
+        <p class="mini" style="margin-top:4px;opacity:.85">${esc(b.alt)}</p>
+        <a class="cerca-web" target="_blank" rel="noopener"
+           href="https://www.google.com/search?q=${encodeURIComponent(b.tipo+" "+b.car+" etichetta consigliata")}">Cerca un'etichetta con queste caratteristiche</a>
+      </div>`; })()}
       <div class="azioni">
         <button class="btn small" data-azione="cucina" data-id="${r.id}">Cuciniamo</button>
         ${o.mancanti.length?`<button class="btn ghost small" data-azione="spesa" data-id="${r.id}">Aggiungi alla spesa</button>`:""}
@@ -1912,6 +2051,44 @@ function dettaIngrediente(bottone, onTesto){
 }
 
 /* ===========================================================
+   Perché questa app
+   =========================================================== */
+function apriPerche(){
+  apriVelo("perche", `
+    <div class="velo-top"><h2>Perch\u00e9 questa app</h2>
+      <button class="chiudi" data-perche="chiudi" onclick="chiudiVelo()">Chiudi</button></div>
+
+    <p>Torni a casa e non ti va di ripiegare sui soliti tramezzini o su un pezzo di formaggio secco rimasto in frigo. "Che cucino?" è pensata per rispondere subito a questa domanda, con quello che hai davvero in casa.</p>
+
+    <div class="sez">Non solo per chi vive da solo</div>
+    <p>Se a cena avete ospiti, l'app tiene conto dei bisogni di tutti: chi è vegano, chi vegetariano, chi onnivoro, e le allergie o intolleranze di ciascuno, per la sicurezza di tutti a tavola.</p>
+
+    <div class="sez">Tu scegli cosa e quanto tempo hai</div>
+    <p>Scegli se cucinare un antipasto, un primo, un secondo o un piatto unico, e quanto tempo puoi dedicarci. Poi spunti quello che hai in dispensa: l'app lo ricorda, la volta dopo correggi solo quello che è cambiato.</p>
+
+    <div class="sez">Hai già un'idea?</div>
+    <p>Se sai già cosa vuoi preparare, l'app controlla se hai tutti gli ingredienti. Se ti manca qualcosa, ti propone una sostituzione con quello che hai già, oppure aggiunge il resto alla lista della spesa. Se la ricetta non è nel suo archivio, puoi incollarla dal web (o il suo link): l'app prova a leggerla, te la salva fra le tue ricette e ti guida nella preparazione allo stesso modo.</p>
+
+    <div class="sez">Non hai idea?</div>
+    <p>Lascia scegliere all'app: ti mostra le ricette fattibili al 100% con quello che hai, poi quelle al 90% e via via a scalare, così hai sempre decine di ricette fra cui scegliere: alcune pronte subito, altre a un ingrediente di distanza.</p>
+
+    <div class="sez">Mentre cucini</div>
+    <p>Mentre prepari il piatto lo schermo resta acceso e puoi ascoltare la tua musica: l'app ti fa compagnia senza spegnersi. Quando è pronto, un tasto ti porta dritto a una ricerca di foto di impiattamento eleganti, per capire come servirlo.</p>
+
+    <div class="sez">Anche solo per svuotare il frigo</div>
+    <p>Ogni tanto conviene smaltire quello che sta per scadere: una frittata o un piatto di recupero sono un classico. Cerca l'ingrediente che vuoi consumare e l'app ti suggerisce una ricetta fattibile a partire da quello.</p>
+
+    <div class="sez">E per finire</div>
+    <p>Ogni ricetta arriva anche con un consiglio su cosa bere: vino, birra, acqua o analcolico, con le caratteristiche giuste per accompagnare al meglio il piatto.</p>
+  `);
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-perche]");
+  if(!b) return;
+  if(b.dataset.perche === "chiudi") chiudiVelo();
+});
+
+/* ===========================================================
    Impostazioni: colori chiaro/scuro e filigrana
    =========================================================== */
 const TEMI_CHIARI = [{v:"1",n:"Verde salvia"},{v:"2",n:"Crema"},{v:"3",n:"Azzurro"},{v:"4",n:"Rosa antico"}];
@@ -2071,6 +2248,7 @@ function tappaHome(){
 /* --- menu --- */
 const menuPan = document.getElementById("menuPan");
 const menuBtn = document.getElementById("menuBtn");
+document.getElementById("infoBtn").onclick = () => apriPerche();
 menuBtn.onclick = ()=>{ menuAperto=!menuAperto; disegnaMenu(); };
 document.addEventListener("click", e=>{
   if(menuAperto && !menuPan.contains(e.target) && e.target!==menuBtn){ menuAperto=false; disegnaMenu(); }
@@ -2080,23 +2258,31 @@ function disegnaMenu(){
   if(!menuAperto){ menuPan.innerHTML=""; return; }
   const pronta = S.dispensa.length > 0;
   menuPan.innerHTML = `<div class="menu-pan">
-    <div class="sez">Scorciatoia</div>
-    <button id="mSalta" ${pronta?"":"disabled"}>${pronta?"Vai diretto alle ricette fattibili":"Prima carica la dispensa"}</button>
-    <div class="sez">Modifica</div>
-    <button data-go="0">Le mie preferenze</button>
-    <button data-go="1">Chi c'è a tavola</button>
-    <button data-go="2">La dispensa</button>
-    <button data-go="3">Cosa cucinare</button>
-    <div class="sez">Extra</div>
-    <button id="mSpesa">Lista della spesa${S.spesa.filter(x=>!x.presa).length?` (${S.spesa.filter(x=>!x.presa).length})`:""}</button>
-    <button id="mMie">Le mie ricette${S.mie.length?` (${S.mie.length})`:""}</button>
-    <button id="mNasc">Ricette nascoste${S.nascoste.length?` (${S.nascoste.length})`:""}</button>
-    <button id="mImpostazioni">Aspetto</button>
-    <button id="mSalva">Salva i miei dati in un file</button>
-    <button id="mCarica">Reimporta da un file</button>
-    <div class="sez">Altro</div>
-    <button id="mNuova">Ricomincia il percorso</button>
-    <button id="mReset" class="rischio">Azzera tutti i dati</button></div>`;
+    <div class="menu-box mb-teal">
+      <div class="sez">Scorciatoia</div>
+      <button id="mSalta" ${pronta?"":"disabled"}>${pronta?"Vai diretto alle ricette fattibili":"Prima carica la dispensa"}</button>
+    </div>
+    <div class="menu-box mb-blu">
+      <div class="sez">Modifica</div>
+      <button data-go="0">Le mie preferenze</button>
+      <button data-go="1">Chi c'è a tavola</button>
+      <button data-go="2">La dispensa</button>
+      <button data-go="3">Cosa cucinare</button>
+    </div>
+    <div class="menu-box mb-oro">
+      <div class="sez">Extra</div>
+      <button id="mSpesa">Lista della spesa${S.spesa.filter(x=>!x.presa).length?` (${S.spesa.filter(x=>!x.presa).length})`:""}</button>
+      <button id="mMie">Le mie ricette${S.mie.length?` (${S.mie.length})`:""}</button>
+      <button id="mNasc">Ricette nascoste${S.nascoste.length?` (${S.nascoste.length})`:""}</button>
+      <button id="mImpostazioni">Aspetto</button>
+      <button id="mSalva">Salva i miei dati in un file</button>
+      <button id="mCarica">Reimporta da un file</button>
+    </div>
+    <div class="menu-box mb-bordeaux">
+      <div class="sez">Altro</div>
+      <button id="mNuova">Ricomincia il percorso</button>
+      <button id="mReset" class="rischio">Azzera tutti i dati</button>
+    </div></div>`;
   menuPan.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ menuAperto=false; disegnaMenu(); vai(+b.dataset.go); });
   if(pronta) document.getElementById("mSalta").onclick=()=>{
     sess = nuovaSessione(); sess.modo="app"; menuAperto=false; disegnaMenu(); vai(4); };
@@ -2184,7 +2370,9 @@ function disegnaRadio(){
   pan.innerHTML = `<div class="radio-pan">
     <div class="sez">Musica mentre cucini</div>
     ${radioMsg ? `<div class="stato">${esc(radioMsg)}</div>` : ""}
-    ${RADIO.map((r,i)=>`<button data-i="${i}" class="${i===radioSel?"on":""}">${r.n}</button>`).join("")}
+    <div class="chips">
+      ${RADIO.map((r,i)=>`<button data-i="${i}" class="rc${i%7} ${i===radioSel?"on":""}">${r.n}</button>`).join("")}
+    </div>
     ${radioSel>=0 ? `<button class="spegni" id="radioStop">Spegni</button>` : ""}
   </div>`;
   pan.querySelectorAll("[data-i]").forEach(b=>b.onclick = ()=>accendiRadio(+b.dataset.i));
