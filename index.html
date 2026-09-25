@@ -88,7 +88,7 @@ body[data-filigrana="1"]::before{
 .pcella{border-radius:14px;padding:14px;border:2px solid transparent;
   background:var(--superficie2);cursor:pointer;transition:transform .12s,border-color .15s;-webkit-tap-highlight-color:transparent}
 .pcella:active{transform:scale(.97)}
-.pcella.sel{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 12%,var(--superficie2))}
+.pcella.sel{border-color:var(--verde);background:color-mix(in srgb,var(--verde) 12%,var(--superficie2))}
 .pcella svg{width:28px;height:28px;margin-bottom:8px;display:block;opacity:.85}
 .pcella b{display:block;font-size:.9rem;font-weight:700;line-height:1.2}
 .pcella small{display:block;font-size:.76rem;color:var(--inchiostro-soft);margin-top:3px;line-height:1.3}
@@ -319,8 +319,8 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 .btn.ghost{background:transparent;color:var(--inchiostro);border:1px solid var(--linea)}
 .btn.small{padding:8px 12px;font-size:.87rem;font-weight:500;border-radius:9px}
 .barra{position:fixed;left:0;right:0;bottom:0;z-index:25;
-  background:color-mix(in srgb,var(--carta) 88%,var(--pc));
-  border-top:1px solid color-mix(in srgb,var(--linea) 50%,var(--pc));
+  background:var(--carta);
+  border-top:1px solid var(--linea);
   padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
 .barra-in{max-width:620px;margin:0 auto;display:flex;gap:10px}
 .barra .btn{flex:1}
@@ -369,6 +369,13 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 .bevanda{border-left:3px solid var(--verde);background:color-mix(in srgb,var(--verde) 8%,transparent);
   padding:10px 12px;border-radius:0 8px 8px 0;font-size:.88rem;margin:12px 0 0}
 .bevanda .cerca-web{margin-top:8px}
+.attrezzi{border-left:3px solid var(--senape);background:color-mix(in srgb,var(--senape) 8%,transparent);
+  padding:10px 12px;border-radius:0 8px 8px 0;font-size:.88rem;margin:12px 0 0}
+.attrezzi-l{list-style:none;margin:8px 0 0;padding:0}
+.attrezzi-l li{margin:0 0 8px}
+.attrezzi-l li:last-child{margin-bottom:0}
+.attrezzi-l li b{display:block}
+.attrezzi-l li .mini{display:block;margin-top:1px}
 .vuoto{text-align:center;padding:34px 12px;color:var(--inchiostro-soft)}
 .riep{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px}
 .riep span{font-size:.75rem;background:var(--superficie2);border-radius:999px;padding:4px 10px}
@@ -1028,9 +1035,14 @@ function tappaVoglia(){
     </div>
   </div></div>`;
 
-  app.querySelectorAll(".pgrid3 [data-m]").forEach(b=>b.onclick=()=>{ sess.modo=sess.modo===b.dataset.m?null:b.dataset.m; tappaVoglia(); });
+  app.querySelectorAll(".pgrid3 [data-m]").forEach(b=>b.onclick=()=>{
+    const m = b.dataset.m;
+    if(m === "app" && sess.modo !== "app"){ sess.modo = "app"; vai(4); return; }
+    sess.modo = sess.modo===m?null:m; tappaVoglia();
+  });
   const qi = document.getElementById("qIdea");
-  if(qi){ qi.oninput = e=>{ sess.cerca = e.target.value; }; }
+  if(qi){ qi.oninput = e=>{ sess.cerca = e.target.value; };
+    qi.onkeydown = e=>{ if(e.key === "Enter") vai(4); }; }
   const segnaRec = v=>{
     const i = sess.recupero.indexOf(v);
     if(i < 0){
@@ -1240,7 +1252,7 @@ function scheda(o){
         : o.sostituibili.length ? `Ci siamo, con ${o.sostituibili.length===1?"una sostituzione":"qualche sostituzione"}`
         : "Hai tutto il necessario"}</div>
       ${o.usa?.length?`<div class="mini" style="margin-top:4px">Consuma: ${esc(o.usa.join(", "))}</div>`:""}
-      <div>${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag.in?`<span class="tag stag">\u{1F331} ${o.stag.in} ${o.stag.in===1?"ingrediente":"ingredienti"} di stagione</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
+      <div>${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag.in?`<span class="tag stag">\u{1F331} ${o.stag.in} ${o.stag.in===1?"ingrediente":"ingredienti"} di stagione</span>`:""}${(r.att||[]).some(a=>D.attrezzi[a])?`<span class="tag">\u{1F6E0}\ufe0f attrezzo speciale</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
       ${esclusi.length?`<div class="avviso">Non va bene per ${esclusi.map(c=>esc(c.nome)).join(" e ")}</div>`:""}
     </summary>
     <div class="dett">
@@ -1258,8 +1270,16 @@ function scheda(o){
       ${r._kcal?`<p class="mini" style="margin-top:4px;opacity:.75">Calorie stimate in base agli ingredienti: valore indicativo, non un dato nutrizionale certificato.</p>`:""}
       <ol class="passi">${r.proc.map(p=>`<li>${pulito(p)}</li>`).join("")}</ol>
       ${r.nota?`<div class="nota">${pulito(r.nota)}</div>`:""}
-      ${attrezzi.length?`<div class="mini" style="margin-top:12px">Ti serve: ${attrezzi.map(a=>
-          `<b>${esc(a)}</b> — ${esc(D.attrezzi[a].alt)}`).join(" · ")}</div>`:""}
+      ${(()=>{ const opz = (r.att_opz||[]).filter(a=>D.attrezzi[a]);
+        if(!attrezzi.length && !opz.length) return "";
+        return `<div class="attrezzi">
+          <b>\u{1F6E0}\ufe0f Attrezzatura particolare</b>
+          ${attrezzi.length?`<ul class="attrezzi-l">${attrezzi.map(a=>
+            `<li><b>${esc(a)}</b><span class="mini">${esc(D.attrezzi[a].uso)}</span>
+             <span class="mini" style="opacity:.8">Se non ce l'hai: ${esc(D.attrezzi[a].alt)}</span></li>`).join("")}</ul>`:""}
+          ${opz.length?`<p class="mini" style="margin-top:${attrezzi.length?"10px":"4px"}">Utile ma non indispensabile: ${opz.map(a=>
+            `<b>${esc(a)}</b> (${esc(D.attrezzi[a].uso)})`).join(", ")}</p>`:""}
+        </div>`; })()}
       ${r.all.length?`<div class="mini" style="margin-top:8px">Allergeni: ${r.all.join(", ")}</div>`:""}
       ${(()=>{ const b = abbinamentoBevanda(r); return `
       <div class="bevanda">
