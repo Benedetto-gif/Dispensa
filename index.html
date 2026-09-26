@@ -71,6 +71,25 @@ body[data-filigrana="1"]::before{
 .pcella.cat-gruppo > summary::-webkit-details-marker{display:none}
 .pcella.cat-gruppo > summary em{font-style:normal;font-weight:400;opacity:.85;font-size:.83rem}
 .pcella.cat-gruppo .corpo{padding:0 14px 14px}
+/* colori convenzionali HACCP per i reparti della dispensa */
+.pcella.cat-verdure{background:#3E8E4F;color:#fff}
+.pcella.cat-carne{background:#C0392B;color:#fff}
+.pcella.cat-pesce{background:#1E88C7;color:#fff}
+.pcella.cat-grigio{background:#6B7280;color:#fff}
+.pcella.cat-ocra{background:#B8860B;color:#fff}
+.pcella.cat-giallo{background:#E3B400;color:#3A2E00;border:1px solid #C79A00}
+.pcella.cat-latticini{background:#FAF8F2;color:#2A2A22;border:1px solid #DCD6C4}
+.pcella.cat-ghiaccio{background:#E7F5FA;color:#1B3A44;border:1px solid #C7E3ED}
+:root[data-scuro] .pcella.cat-verdure{background:#4CA860}
+:root[data-scuro] .pcella.cat-carne{background:#D9483A}
+:root[data-scuro] .pcella.cat-pesce{background:#2F9BDE}
+:root[data-scuro] .pcella.cat-grigio{background:#7C8794}
+:root[data-scuro] .pcella.cat-ocra{background:#CC9A1E}
+:root[data-scuro] .pcella.cat-giallo{background:#E3B400;color:#3A2E00}
+:root[data-scuro] .pcella.cat-latticini{background:#EDE9DD;color:#2A2A22}
+:root[data-scuro] .pcella.cat-ghiaccio{background:#D7EEF6;color:#1B3A44}
+.pcella.cat-giallo .mini,.pcella.cat-latticini .mini,.pcella.cat-ghiaccio .mini{opacity:.75}
+.pcella.cat-giallo > summary em,.pcella.cat-latticini > summary em,.pcella.cat-ghiaccio > summary em{opacity:.65}
 #cerca.ing-ok{border-color:var(--verde);background:color-mix(in srgb,var(--verde) 10%,var(--superficie))}
 .ing-esito-ok{color:var(--verde);font-weight:700}
 .pcella[class*="c-"] .ing-esito-ok{color:#EAFFEA;opacity:1}
@@ -867,11 +886,13 @@ function tappaOspiti(){
 /* --- 3. dispensa --- */
 function tappaDispensa(){
   const n = S.dispensa.length, q = cercaDisp.trim().toLowerCase();
-  const top = Object.entries(D.conteggi).sort((a,b)=>b[1]-a[1]).slice(0,25).map(x=>x[0])
-                .filter(k=>!S.dispensa.includes(k) && !BASE.has(k));
   const matchEsatto = q ? TUTTI_ING.find(i=>i.toLowerCase()===q) : null;
   const trovato = !!matchEsatto || (q && !BASE.has(q) && TUTTI_ING.some(i=>i.toLowerCase().includes(q)));
-  const COLORI_CAT = ["c-verde","c-menta","c-crema","c-senape","c-auto","c-mattone","c-bordeaux","c-verde"];
+  const COLORE_REPARTO = {
+    "Verdure e ortaggi":"cat-verdure", "Carne e salumi":"cat-carne", "Pesce":"cat-pesce",
+    "Latticini e uova":"cat-latticini", "Dispensa":"cat-giallo", "Erbe e spezie":"cat-ocra",
+    "Surgelati e congelati":"cat-ghiaccio", "Scatolette e conserve":"cat-grigio"
+  };
   app.innerHTML = `
   <div class="intro"><h2>La dispensa</h2>
     <p>${n ? `Hai ${n} ingredienti segnati${S.dispensaData?`, aggiornati il ${S.dispensaData}`:""}. Se non è cambiato nulla, vai avanti.`
@@ -905,12 +926,6 @@ function tappaDispensa(){
       <small>Acqua, olio, sale, pepe, zucchero, farina, aceto, bicarbonato e lieviti: li do per scontati in ogni ricetta e non te li mostro qui sotto</small>
       <button class="chip ${S.baseSempre?"on":""}" id="swBase" style="margin-top:10px">${S.baseSempre?"sempre in casa":"da segnare"}</button>
     </div>
-    ${(S.ingTolti.length || top.length) ? `<div class="pcella full c-mattone" style="cursor:default">
-      <svg viewBox="0 0 28 28" fill="none"><path d="M14 5v18M5 14h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <b>Scorciatoie</b>
-      ${S.ingTolti.length?`<button class="btn ghost small" id="ingRip" style="margin-top:8px">Rimetti i ${S.ingTolti.length} ingredienti tolti</button>`:""}
-      ${top.length?`<button class="btn ghost small" id="topFill" style="margin-top:8px">Segna i 25 ingredienti più usati dall'archivio</button>`:""}
-    </div>` : ""}
   </div>
   <div class="pgrid" style="margin-top:2px">
   ${Object.entries(CAT_DISP).map(([tit,listaCompleta],idx)=>{
@@ -918,7 +933,7 @@ function tappaDispensa(){
     const vis = lista.filter(i=>!q || i.toLowerCase().includes(q));
     if(!vis.length) return "";
     const presi = lista.filter(i=>S.dispensa.includes(i)).length;
-    return `<details class="pcella full cat-gruppo ${COLORI_CAT[idx%COLORI_CAT.length]}" ${q||presi?"open":""}>
+    return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||presi?"open":""}>
       <summary>${tit} <em>${presi?presi+" segnati":lista.length+" voci"}</em></summary>
       <div class="corpo"><div class="chips">
         ${vis.map(i=>{ const mesi = D.stagioni[i];
@@ -948,12 +963,7 @@ function tappaDispensa(){
       tappaDispensa();
     };
   }
-  const rip = document.getElementById("ingRip");
-  if(rip) rip.onclick = ()=>{ rimettiTolti(); tappaDispensa(); };
   document.getElementById("logoHome").onclick = ()=>{ if(S.profilo.fatto) vai(5); };
-  const tf = document.getElementById("topFill");
-  if(tf) tf.onclick=()=>{ top.forEach(k=>{ if(!S.dispensa.includes(k)) S.dispensa.push(k); });
-    S.dispensaData = new Date().toLocaleDateString("it-IT"); salva(); tappaDispensa(); };
   /* tocco breve: segno o tolgo dalla dispensa. Tocco lungo: sposta o togli dall'elenco */
   app.querySelectorAll("[data-i]").forEach(b=>{
     let attesa = null, lungo = false;
