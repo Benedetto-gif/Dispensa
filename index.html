@@ -454,6 +454,9 @@ const D = JSON.parse(document.getElementById("payload-data").textContent);
 const CAT_DISP   = D.dispensa;                       // 8 categorie di dispensa
 const BASE_ESTESA = ["zucchero","farina","aceto","bicarbonato","lievito per dolci","lievito di birra"];
 const BASE       = new Set([...D.base, ...BASE_ESTESA]);      // acqua, olio, pepe, sale + zucchero, farina, aceto, bicarbonato, lieviti
+/* i 4 ingredienti di base (D.base) non appartengono a nessun reparto: li mettiamo in Dispensa */
+CAT_DISP["Dispensa"] = CAT_DISP["Dispensa"] || [];
+D.base.forEach(k=>{ if(!CAT_DISP["Dispensa"].includes(k)) CAT_DISP["Dispensa"].unshift(k); });
 const ALLERGENI  = D.allergeni;
 const PORTATE    = ["Antipasti","Primi","Secondi","Contorni","Dolci"];
 const SING = {Antipasti:"antipasto",Primi:"primo",Secondi:"secondo",Contorni:"contorno",Dolci:"dolce"};
@@ -537,11 +540,17 @@ const MESE = new Date().getMonth() + 1;
    =========================================================== */
 const VUOTO = {
   profilo:{nome:"",regione:"",stile:"onnivoro",allergeni:[],evita:"",tempo:"999",fatto:false},
-  ospitiSalvati:[], dispensa:[], baseSempre:true, dispensaData:null,
+  ospitiSalvati:[], dispensa:[], baseMigrato:false, dispensaData:null,
   preferite:[], cucinate:{}, spesa:[],
   nascoste:[], mie:[], ingMiei:{}, ingTolti:[], ingSpostati:{}
 };
 let S = carica();
+/* al primo avvio, gli ingredienti di base risultano già in dispensa: l'utente toglie solo quelli che non ha */
+if(!S.baseMigrato){
+  BASE.forEach(k=>{ if(!S.dispensa.includes(k)) S.dispensa.push(k); });
+  S.baseMigrato = true;
+  salva();
+}
 /* le ricette scritte da te e gli ingredienti che hai aggiunto entrano nell'archivio */
 (S.mie || []).forEach(preparaRicetta);
 for(const [cat, lista] of Object.entries(S.ingMiei || {}))
@@ -592,7 +601,6 @@ function stilePiuStretto(){
   return tavolata().reduce((m,c)=> RANGO[c.stile] > RANGO[m] ? c.stile : m, "onnivoro");
 }
 function possiedo(k){
-  if(S.baseSempre && BASE.has(k)) return true;
   if(S.dispensa.includes(k)) return true;
   return (EQUIV[k]||[]).some(x=>S.dispensa.includes(x));
 }
@@ -920,16 +928,10 @@ function tappaDispensa(){
         <p class="mini" id="ingEsito" aria-live="polite"></p>` : ""}
       <p class="mini" style="margin-top:10px;opacity:.85">Tieni premuto un ingrediente qui sotto per spostarlo di reparto o toglierlo dall'elenco.</p>
     </div>
-    <div class="pcella full c-crema" style="cursor:default">
-      <svg viewBox="0 0 28 28" fill="none"><rect x="6" y="9" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M10 9V6a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2"/></svg>
-      <b>Ingredienti di base</b>
-      <small>Acqua, olio, sale, pepe, zucchero, farina, aceto, bicarbonato e lieviti: li do per scontati in ogni ricetta e non te li mostro qui sotto</small>
-      <button class="chip ${S.baseSempre?"on":""}" id="swBase" style="margin-top:10px">${S.baseSempre?"sempre in casa":"da segnare"}</button>
-    </div>
   </div>
   <div class="pgrid" style="margin-top:2px">
   ${Object.entries(CAT_DISP).map(([tit,listaCompleta],idx)=>{
-    const lista = listaCompleta.filter(i=>!BASE.has(i));
+    const lista = listaCompleta;
     const vis = lista.filter(i=>!q || i.toLowerCase().includes(q));
     if(!vis.length) return "";
     const presi = lista.filter(i=>S.dispensa.includes(i)).length;
@@ -948,7 +950,6 @@ function tappaDispensa(){
     tappaDispensa(); const n2=document.getElementById("cerca"); n2.focus(); n2.setSelectionRange(pos,pos); };
   const mic = document.getElementById("micCerca");
   if(mic) mic.onclick = ()=> dettaIngrediente(mic, testo=>{ cercaDisp = testo; tappaDispensa(); });
-  document.getElementById("swBase").onclick=()=>{ S.baseSempre=!S.baseSempre; salva(); tappaDispensa(); };
   const ingAddBtn = document.getElementById("ingAdd"), ingC = document.getElementById("ingCat");
   if(ingAddBtn){
     const g = indovinaCat(cercaDisp); if(g) ingC.value = g;
@@ -984,7 +985,8 @@ function tappaDispensa(){
     b.onclick = ()=>{
       if(lungo){ lungo = false; return; }
       const v=b.dataset.i, i=S.dispensa.indexOf(v);
-      i<0?S.dispensa.push(v):S.dispensa.splice(i,1);
+      if(i<0){ S.dispensa.push(v); if(BASE.has(v)) S.spesa = S.spesa.filter(x=>x.k!==v); }
+      else{ S.dispensa.splice(i,1); if(BASE.has(v)) metti(v, v, ""); }
       b.classList.toggle("on");
       S.dispensaData = new Date().toLocaleDateString("it-IT"); salva();
     };
