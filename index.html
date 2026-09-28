@@ -1381,7 +1381,7 @@ function scheda(o){
     <summary>
       <div class="ric-top">
         <div><div class="ric-nome"><span aria-hidden="true">${eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"")} ${bandieraRicetta(r)}</span> ${esc(r.n)}</div>
-          <div class="meta">${SING[r.cat]} · ${r.tempo} min · ${r.diff}${r._kcal?` · ~${r._kcal} kcal/porzione`:""}${r.luogo?" · "+esc(r.luogo):""}${r.stile!=="onnivoro"?" · "+r.stile:""}${r._kcal?` · <button class="btn-nutri" data-azione="nutrizione" data-id="${r.id}" onclick="event.stopPropagation()" title="Valori nutrizionali per 100 g">\u{1F4CA}</button>`:""}</div></div>
+          <div class="meta">${SING[r.cat]} · ${r.tempo} min · ${r.diff}${r._kcal?` · ~${r._kcal} kcal/porzione`:""}${r.luogo?" · "+esc(r.luogo):""}${r.stile!=="onnivoro"?" · "+r.stile:""}${r._kcal?` · <button class="btn-nutri" data-azione="nutrizione" data-id="${r.id}" title="Valori nutrizionali per 100 g">\u{1F4CA}</button>`:""}</div></div>
         <div class="pct">${o.pct}%</div>
       </div>
       <div class="fatt"><i class="pieno" style="width:${o.pieno}%"></i><i class="sost" style="width:${o.sost}%"></i></div>
@@ -1807,7 +1807,7 @@ document.addEventListener("click", e=>{
                    break;
     case "nascondi": if(!S.nascoste.includes(r.id)) S.nascoste.push(r.id);
                      salva(); tappaRicette(); break;
-    case "nutrizione": apriNutrizione(r); break;
+    case "nutrizione": e.preventDefault(); apriNutrizione(r); break;
     case "modifica": apriEditor(r); break;
     case "elimina":  if(confirm("Elimino «" + r.n + "» dalle tue ricette?")){
                        S.mie = S.mie.filter(x=>x.id !== r.id); salva(); tappaRicette();
@@ -2217,15 +2217,13 @@ function apriPerche(){
     <div class="velo-top"><h2>Perch\u00e9 questa app</h2>
       <button class="chiudi" data-perche="chiudi" onclick="chiudiVelo()">Chiudi</button></div>
 
-    <p>Torni a casa e non ti va di ripiegare sui soliti tramezzini o su un pezzo di formaggio secco rimasto in frigo.</p>
+    <p>Torni a casa e non ti va di ripiegare sui soliti tramezzini o su un pezzo di formaggio secco rimasto in frigo. "Che cucino?" è pensata per rispondere subito a questa domanda, con quello che hai davvero in casa.</p>
 
-    <div class="sez">"Che cucino?" è pensata per rispondere subito a questa domanda, con quello che hai davvero in casa.</p>
-
-    <div class="sez">"Che cucino?" non è solo per single</div>
-    <p>Se a cena hai ospiti, l'app tiene conto dei loro gusti: chi è vegano, chi vegetariano, chi onnivoro, ed anche  delle loro allergie o intolleranze. Sicurezza per tutti a tavola!</p>
+    <div class="sez">Non solo per chi vive da solo</div>
+    <p>Se a cena avete ospiti, l'app tiene conto dei bisogni di tutti: chi è vegano, chi vegetariano, chi onnivoro, e le allergie o intolleranze di ciascuno, per la sicurezza di tutti a tavola.</p>
 
     <div class="sez">Tu scegli cosa e quanto tempo hai</div>
-    <p>Scegli se cucinare un antipasto, un primo, un secondo o un piatto unico, e quanto tempo puoi dedicarci. Poi marchi quello che hai in dispensa: l'app lo ricorda, la volta dopo correggi solo quello che è cambiato.</p>
+    <p>Scegli se cucinare un antipasto, un primo, un secondo o un piatto unico, e quanto tempo puoi dedicarci. Poi spunti quello che hai in dispensa: l'app lo ricorda, la volta dopo correggi solo quello che è cambiato.</p>
 
     <div class="sez">Hai già un'idea?</div>
     <p>Se sai già cosa vuoi preparare, l'app controlla se hai tutti gli ingredienti. Se ti manca qualcosa, ti propone una sostituzione con quello che hai già, oppure aggiunge il resto alla lista della spesa. Se la ricetta non è nel suo archivio, puoi incollarla dal web (o il suo link): l'app prova a leggerla, te la salva fra le tue ricette e ti guida nella preparazione allo stesso modo.</p>
