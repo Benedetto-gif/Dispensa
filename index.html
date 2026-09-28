@@ -335,11 +335,6 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 .riga{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--linea)}
 .riga:last-child{border-bottom:0}
 .mini{font-size:.82rem;color:var(--inchiostro-soft)}
-.btn-nutri{background:none;border:none;padding:0 2px;cursor:pointer;font-size:1rem;line-height:1;vertical-align:middle}
-.tab-nutri{width:100%;border-collapse:collapse;margin-top:12px}
-.tab-nutri td{padding:8px 4px;border-bottom:1px solid rgba(128,128,128,.25)}
-.tab-nutri td:last-child{text-align:right}
-.tab-nutri tr:last-child td{border-bottom:none}
 .btn{background:var(--verde);color:var(--carta);border:0;border-radius:11px;padding:13px 18px;font-weight:700;cursor:pointer}
 .btn.ghost{background:transparent;color:var(--inchiostro);border:1px solid var(--linea)}
 .btn.small{padding:8px 12px;font-size:.87rem;font-weight:500;border-radius:9px}
@@ -363,6 +358,7 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 .ric-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
 .ric-nome{font-family:Newsreader,serif;font-size:1.18rem;font-weight:600;line-height:1.2}
 .pct{font-variant-numeric:tabular-nums;font-weight:700;font-size:1.05rem;white-space:nowrap}
+.btn-nutri{background:none;border:none;padding:0 2px;cursor:pointer;font-size:1rem;line-height:1;vertical-align:middle}
 .meta{font-size:.78rem;color:var(--inchiostro-soft);margin-top:3px}
 .tag{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:999px;background:var(--superficie2);margin:6px 5px 0 0}
 .tag.zona{background:var(--verde-chiaro);color:var(--verde);font-weight:700}
@@ -457,6 +453,7 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 const D = JSON.parse(document.getElementById("payload-data").textContent);
 
 const CAT_DISP   = D.dispensa;                       // 8 categorie di dispensa
+function ordinaCat(cat){ if(CAT_DISP[cat]) CAT_DISP[cat].sort((a,b)=>a.localeCompare(b,"it")); }
 const BASE_ESTESA = ["zucchero","farina","aceto","bicarbonato","lievito per dolci","lievito di birra"];
 const BASE       = new Set([...D.base, ...BASE_ESTESA]);      // acqua, olio, pepe, sale + zucchero, farina, aceto, bicarbonato, lieviti
 /* i 4 ingredienti di base (D.base) non appartengono a nessun reparto: li mettiamo in Dispensa */
@@ -558,25 +555,71 @@ if(!S.baseMigrato){
 }
 /* le ricette scritte da te e gli ingredienti che hai aggiunto entrano nell'archivio */
 (S.mie || []).forEach(preparaRicetta);
-for(const [cat, lista] of Object.entries(S.ingMiei || {}))
+for(const [cat, lista] of Object.entries(S.ingMiei || {})){
   (lista || []).forEach(k=>{
     CAT_DISP[cat] = CAT_DISP[cat] || [];
     if(!CAT_DISP[cat].includes(k)) CAT_DISP[cat].push(k);
   });
+  ordinaCat(cat);
+}
 /* ingredienti spostati di reparto e ingredienti tolti dall'elenco */
 for(const [k, cat] of Object.entries(S.ingSpostati || {})){
   for(const c in CAT_DISP) CAT_DISP[c] = CAT_DISP[c].filter(x=>x !== k);
   CAT_DISP[cat] = CAT_DISP[cat] || [];
   if(!CAT_DISP[cat].includes(k)) CAT_DISP[cat].push(k);
+  ordinaCat(cat);
 }
 (S.ingTolti || []).forEach(k=>{
   for(const c in CAT_DISP) CAT_DISP[c] = CAT_DISP[c].filter(x=>x !== k);
 });
+/* alfabetico in ogni reparto fin dall'avvio, non solo sulle aggiunte successive */
+Object.keys(CAT_DISP).forEach(ordinaCat);
 function archivio(){ return D.ricette.concat(S.mie || []); }
 function trovaRicetta(id){ return archivio().find(x=>x.id === id); }
 let sess = nuovaSessione();
 let passo = 0, menuAperto = false, cercaDisp = "";
 let soloPref = false;
+let ordinaPer = "fattibilita";   /* criterio di ordinamento scelto per l'elenco ricette */
+let ordinaDir = null;            /* "asc" | "desc" | null = usa il verso predefinito del criterio */
+
+/* criteri di ordinamento disponibili per l'elenco ricette: val() legge il valore su cui ordinare, def e' il verso naturale */
+const CRITERI_ORDINE = [
+  {key:"fattibilita",  label:"Fattibilità",   val:o=>o.pct,                                          def:"desc"},
+  {key:"calorie",      label:"Calorie",       val:o=>{ if(o.r._kcal==null) o.r._kcal=calorieRicetta(o.r); return o.r._kcal||0; }, def:"asc"},
+  {key:"tempo",        label:"Tempo",         val:o=>o.r.tempo,                                      def:"asc"},
+  {key:"stagionalita", label:"Stagionalità",  val:o=>o.stag.in,                                      def:"desc"},
+  {key:"difficolta",   label:"Difficoltà",    val:o=>({facile:1, media:2, difficile:3}[o.r.diff]||2),def:"asc"},
+  {key:"leggerezza",   label:"Leggerezza",    val:o=>o.r.leggero?1:0,                                def:"desc"},
+  {key:"ingredienti",  label:"N. ingredienti",val:o=>o.r.ing.length,                                 def:"asc"},
+  {key:"mancanti",     label:"Ingredienti mancanti", val:o=>o.mancanti.length,                       def:"asc"},
+  {key:"posseduti",    label:"Ingredienti che hai",  val:o=>o.r.ing.length-o.mancanti.length-o.sostituibili.length, def:"desc"},
+  {key:"nonfatta",     label:"Da più tempo non fatta", val:o=>S.cucinate[o.r.id]||0,                 def:"asc"},
+  {key:"regione",      label:"Della tua regione",    val:o=>o.zona?1:0,                                 def:"desc"},
+  {key:"alfabetico",   label:"Alfabetico",           cmp:(a,b)=>a.r.n.localeCompare(b.r.n,"it"),       def:"asc"},
+  /* nutrienti: valore per 100 g di piatto pronto, lo stesso mostrato dal tasto \u{1F4CA} */
+  {key:"n_p",     label:"Proteine",     nutri:"p",     val:o=>nutriDi(o.r).p,     def:"desc"},
+  {key:"n_g",     label:"Grassi",       nutri:"g",     val:o=>nutriDi(o.r).g,     def:"asc"},
+  {key:"n_c",     label:"Carboidrati",  nutri:"c",     val:o=>nutriDi(o.r).c,     def:"asc"},
+  {key:"n_fibra", label:"Fibre",        nutri:"fibra", val:o=>nutriDi(o.r).fibra, def:"desc"},
+  {key:"n_sale",  label:"Sale",         nutri:"sale",  val:o=>nutriDi(o.r).sale,  def:"asc"},
+  {key:"n_pporz", label:"Proteine/porzione", nutri:"pporz", val:o=>{ const n=nutriDi(o.r); return n.p*n.peso/100/(o.r.nvoci||4); }, def:"desc"},
+  {key:"n_dens",  label:"Densità proteica",  nutri:"dens",  val:o=>{ const n=nutriDi(o.r); return n.kcal ? n.p/n.kcal : 0; },               def:"desc"},
+];
+function nutriDi(r){ if(!r._nutri) r._nutri = valoriNutrizionali100g(r); return r._nutri; }
+function criterioAttivo(){ return CRITERI_ORDINE.find(c=>c.key===ordinaPer) || CRITERI_ORDINE[0]; }
+/* ordina un elenco gia' filtrato secondo ordinaPer/ordinaDir; le "cucinate di recente" restano sempre in fondo,
+   e la vecchia catena di spareggio (fattibilita', stagionalita', zona, tempo) resta come ripiego a parita' di valore */
+function ordinaLista(out){
+  const c = criterioAttivo();
+  const dir = ordinaDir || c.def;
+  const segno = dir === "asc" ? 1 : -1;
+  out.sort((a,b)=> (a.fatta?1:0)-(b.fatta?1:0)
+                 || segno*(c.cmp ? c.cmp(a,b) : c.val(a)-c.val(b))
+                 || b.pct-a.pct || (b.stag.in-a.stag.in) || (b.zona?1:0)-(a.zona?1:0)
+                 || a.r.tempo-b.r.tempo);
+  return out;
+}
+
 let cercaRec = "";               /* ricerca nella tappa "devo consumare" */            /* filtro "solo le preferite" */
 let dosiPer = 0;                 /* 0 = quante persone ci sono a tavola */
 const GIORNI_RIPOSO = 21;        /* per quanto una ricetta appena fatta resta in fondo */
@@ -700,8 +743,7 @@ function filtra(){
   });
 
   /* quelle cucinate da poco scendono in fondo: e' cosi che l'archivio non si riduce a otto piatti */
-  out.sort((a,b)=> (a.fatta?1:0)-(b.fatta?1:0) || b.pct - a.pct || (b.stag.in-a.stag.in) || (b.zona?1:0)-(a.zona?1:0)
-                   || a.r.tempo - b.r.tempo);
+  ordinaLista(out);
   return out;
 }
 
@@ -1151,10 +1193,12 @@ function tappaRicette(){
   const lista = filtra();
   const pronte = lista.filter(o=>o.mancanti.length===0 && o.sostituibili.length===0).length;
   const mostra = lista.slice(0,60);
+  const critAtt = criterioAttivo();
+  const dirAtt = ordinaDir || critAtt.def;
 
   app.innerHTML = `
   <div class="intro">
-    <h2>${lista.length} ricette, dalla più fattibile</h2>
+    <h2>${lista.length} ricette, per ${critAtt.nutri?"contenuto di ":""}${critAtt.label.toLowerCase()}</h2>
     <p>${pronte ? `${pronte} le puoi fare adesso senza uscire di casa.`
                 : "Nessuna è completa: per le prime in elenco manca pochissimo."}</p>
     <div class="riep">
@@ -1168,6 +1212,17 @@ function tappaRicette(){
     <div class="chips" style="margin-top:10px">
       <button class="chip ${soloPref?"":"on"}" id="fTutte">Tutte</button>
       <button class="chip ${soloPref?"on":""}" id="fPref">\u2605 Solo le preferite (${S.preferite.length})</button>
+    </div>
+    <p class="mini" style="margin:10px 0 4px">Ordina per</p>
+    <div class="chips" id="ordCrit">
+      ${CRITERI_ORDINE.filter(c=>!c.nutri).map(c=>`<button class="chip ${c.key===ordinaPer?"on":""}" data-crit="${c.key}">${c.label}</button>`).join("")}
+    </div>
+    <p class="mini" style="margin:10px 0 4px">Contenuto di (per 100 g; \u201cper porzione\u201d dove indicato)</p>
+    <div class="chips" id="ordNutri">
+      ${CRITERI_ORDINE.filter(c=>c.nutri).map(c=>`<button class="chip ${c.key===ordinaPer?"on":""}" data-crit="${c.key}">${c.label}</button>`).join("")}
+    </div>
+    <div class="chips" style="margin-top:6px">
+      <button class="chip" id="ordDir">${dirAtt==="asc"?"\u2191 Crescente":"\u2193 Decrescente"}</button>
     </div>
   </div>
   ${mostra.length
@@ -1187,6 +1242,14 @@ function tappaRicette(){
 
   document.getElementById("fTutte").onclick = ()=>{ soloPref = false; tappaRicette(); };
   document.getElementById("fPref").onclick  = ()=>{ soloPref = true;  tappaRicette(); };
+  app.querySelectorAll("#ordCrit .chip, #ordNutri .chip").forEach(b=>b.onclick=()=>{
+    ordinaPer = b.dataset.crit; ordinaDir = null; /* al cambio criterio riparte dal verso naturale di quel criterio */
+    tappaRicette();
+  });
+  document.getElementById("ordDir").onclick = ()=>{
+    ordinaDir = (ordinaDir || criterioAttivo().def) === "asc" ? "desc" : "asc";
+    tappaRicette();
+  };
   pulsanti("Cambia scelta", "Home", ()=>vai(5), ()=>{ sess.modo="app"; tappaVoglia(); });
 }
 
@@ -1381,7 +1444,7 @@ function scheda(o){
     <summary>
       <div class="ric-top">
         <div><div class="ric-nome"><span aria-hidden="true">${eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"")} ${bandieraRicetta(r)}</span> ${esc(r.n)}</div>
-          <div class="meta">${SING[r.cat]} · ${r.tempo} min · ${r.diff}${r._kcal?` · ~${r._kcal} kcal/porzione`:""}${r.luogo?" · "+esc(r.luogo):""}${r.stile!=="onnivoro"?" · "+r.stile:""}${r._kcal?` · <button class="btn-nutri" data-azione="nutrizione" data-id="${r.id}" title="Valori nutrizionali per 100 g">\u{1F4CA}</button>`:""}</div></div>
+          <div class="meta">${SING[r.cat]} · ${r.tempo} min · ${r.diff}${r._kcal?` · ~${r._kcal} kcal/porzione`:""}${r.luogo?" · "+esc(r.luogo):""}${r.stile!=="onnivoro"?" · "+r.stile:""}${r._kcal?` · <button class="btn-nutri" data-azione="nutrizione" data-id="${r.id}" onclick="event.preventDefault()" title="Valori nutrizionali per 100 g">\u{1F4CA}</button>`:""}</div></div>
         <div class="pct">${o.pct}%</div>
       </div>
       <div class="fatt"><i class="pieno" style="width:${o.pieno}%"></i><i class="sost" style="width:${o.sost}%"></i></div>
@@ -1807,7 +1870,7 @@ document.addEventListener("click", e=>{
                    break;
     case "nascondi": if(!S.nascoste.includes(r.id)) S.nascoste.push(r.id);
                      salva(); tappaRicette(); break;
-    case "nutrizione": e.preventDefault(); apriNutrizione(r); break;
+    case "nutrizione": apriNutrizione(r); break;
     case "modifica": apriEditor(r); break;
     case "elimina":  if(confirm("Elimino «" + r.n + "» dalle tue ricette?")){
                        S.mie = S.mie.filter(x=>x.id !== r.id); salva(); tappaRicette();
@@ -1872,6 +1935,7 @@ function aggiungiIngrediente(nome, cat){
   if(chiaviDispensa().some(([x])=>x === k)) return k;
   CAT_DISP[cat] = CAT_DISP[cat] || [];
   CAT_DISP[cat].push(k);
+  ordinaCat(cat);
   S.ingMiei[cat] = S.ingMiei[cat] || [];
   S.ingMiei[cat].push(k);
   salva();
@@ -1883,6 +1947,7 @@ function spostaIngrediente(k, cat){
   for(const c in CAT_DISP) CAT_DISP[c] = CAT_DISP[c].filter(x=>x !== k);
   CAT_DISP[cat] = CAT_DISP[cat] || [];
   CAT_DISP[cat].push(k);
+  ordinaCat(cat);
   S.ingSpostati[k] = cat;
   if(mio){
     for(const c in S.ingMiei) S.ingMiei[c] = (S.ingMiei[c]||[]).filter(x=>x !== k);
@@ -1904,6 +1969,7 @@ function rimettiTolti(){
     const cat = S.ingSpostati[k] || indovinaCat(k);
     CAT_DISP[cat] = CAT_DISP[cat] || [];
     if(!CAT_DISP[cat].includes(k)) CAT_DISP[cat].push(k);
+    ordinaCat(cat);
     if(!D.dispensa[cat] || !D.dispensa[cat].includes(k)){
       S.ingMiei[cat] = S.ingMiei[cat] || [];
       if(!S.ingMiei[cat].includes(k)) S.ingMiei[cat].push(k);
