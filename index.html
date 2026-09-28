@@ -580,6 +580,7 @@ let sess = nuovaSessione();
 let passo = 0, menuAperto = false, cercaDisp = "";
 let soloPref = false;
 let ordinaPer = "fattibilita";   /* criterio di ordinamento scelto per l'elenco ricette */
+let ordinaAperto = false;        /* pannello \"Ordina\" aperto o chiuso */
 let ordinaDir = null;            /* "asc" | "desc" | null = usa il verso predefinito del criterio */
 
 /* criteri di ordinamento disponibili per l'elenco ricette: val() legge il valore su cui ordinare, def e' il verso naturale */
@@ -1213,6 +1214,10 @@ function tappaRicette(){
       <button class="chip ${soloPref?"":"on"}" id="fTutte">Tutte</button>
       <button class="chip ${soloPref?"on":""}" id="fPref">\u2605 Solo le preferite (${S.preferite.length})</button>
     </div>
+    <div class="chips" style="margin-top:10px">
+      <button class="chip on" id="ordApri">\u21c5 Ordina: ${critAtt.label} ${dirAtt==="asc"?"\u2191":"\u2193"} ${ordinaAperto?"\u25b2":"\u25bc"}</button>
+    </div>
+    ${ordinaAperto?`<div id="ordPanel">
     <p class="mini" style="margin:10px 0 4px">Ordina per</p>
     <div class="chips" id="ordCrit">
       ${CRITERI_ORDINE.filter(c=>!c.nutri).map(c=>`<button class="chip ${c.key===ordinaPer?"on":""}" data-crit="${c.key}">${c.label}</button>`).join("")}
@@ -1224,6 +1229,7 @@ function tappaRicette(){
     <div class="chips" style="margin-top:6px">
       <button class="chip" id="ordDir">${dirAtt==="asc"?"\u2191 Crescente":"\u2193 Decrescente"}</button>
     </div>
+    </div>`:""}
   </div>
   ${mostra.length
     ? `<div class="ric-grid">${mostra.map(scheda).join("")}</div>`
@@ -1246,7 +1252,8 @@ function tappaRicette(){
     ordinaPer = b.dataset.crit; ordinaDir = null; /* al cambio criterio riparte dal verso naturale di quel criterio */
     tappaRicette();
   });
-  document.getElementById("ordDir").onclick = ()=>{
+  document.getElementById("ordApri").onclick = ()=>{ ordinaAperto = !ordinaAperto; tappaRicette(); };
+  if(document.getElementById("ordDir")) document.getElementById("ordDir").onclick = ()=>{
     ordinaDir = (ordinaDir || criterioAttivo().def) === "asc" ? "desc" : "asc";
     tappaRicette();
   };
