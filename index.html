@@ -171,6 +171,16 @@ body[data-filigrana="1"]::before{
   border-radius:999px;font-size:.72rem;font-weight:700;padding:2px 8px;
   line-height:1.6}
 .bcella.tre{grid-column:auto}
+/* box lista della spesa in home: spento se vuota, acceso se c'è qualcosa */
+.bcella.hspesa{margin-top:10px;transition:background .3s,color .3s,box-shadow .3s}
+.bcella.hspesa.spenta{background:var(--superficie2);color:var(--inchiostro-soft);border:1.5px dashed currentColor;opacity:.75}
+.bcella.hspesa.accesa{background:#2EAD3F;color:#fff;border:2px solid #fff;
+  box-shadow:0 0 0 3px #2EAD3F,0 0 22px 4px rgba(46,173,63,.75);animation:spesaAccesa 2.2s ease-in-out infinite}
+:root[data-scuro] .bcella.hspesa.accesa{background:#34C24A;box-shadow:0 0 0 3px #34C24A,0 0 26px 6px rgba(52,194,74,.8)}
+@keyframes spesaAccesa{50%{box-shadow:0 0 0 3px #2EAD3F,0 0 34px 10px rgba(46,173,63,.95)}}
+@media(prefers-reduced-motion:reduce){.bcella.hspesa.accesa{animation:none}}
+.hspesa-l{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.hspesa-l li{background:rgba(255,255,255,.22);border-radius:999px;padding:3px 10px;font-size:.82rem;font-weight:600}
 .bento-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
 @media(max-width:340px){.bento-3{grid-template-columns:1fr 1fr}}
 
@@ -1575,6 +1585,7 @@ function apriVelo(nome, html){
 function chiudiVelo(){
   veloAperto = ""; velo.innerHTML = ""; document.body.style.overflow = "";
   fermaTimer(); rilasciaSchermo();
+  if(passo === 5) tappaHome();   /* la home rilegge la lista della spesa */
 }
 window.chiudiVelo = chiudiVelo;
 /* vie di uscita extra, valide per qualunque pannello: tocco sullo sfondo fuori dal contenuto, tasto Esc */
@@ -2436,6 +2447,7 @@ function tappaHome(){
   const sal = ora < 12 ? "Buongiorno" : ora < 18 ? "Buon pomeriggio" : "Buonasera";
   const nome = p.nome ? ", " + p.nome : "";
   const comm = tavolata().length;
+  const daComprare = S.spesa.filter(x=>!x.presa);
 
   app.innerHTML = `<div class="home">
     <div class="home-saluto">${sal}${nome}<small>Cosa cuciniamo?</small></div>
@@ -2486,6 +2498,19 @@ function tappaHome(){
         <small>Un'idea precisa, lascia scegliere all'app, smaltisci un avanzo, o un menu a tema</small>
       </div>
     </div>
+    <div class="bcella hspesa ${daComprare.length?"accesa":"spenta"}" id="hSpesa">
+      <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M6 9h5l4 19h19l4-13H13" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="17" cy="34" r="2.6" fill="currentColor"/>
+  <circle cx="31" cy="34" r="2.6" fill="currentColor"/>
+</svg>
+      ${daComprare.length?`<span class="badge">${daComprare.length}</span>`:""}
+      <b>Lista della spesa</b>
+      ${daComprare.length
+        ? `<ul class="hspesa-l">${daComprare.slice(0,6).map(x=>`<li>${esc(x.t)}</li>`).join("")}</ul>
+           ${daComprare.length>6?`<small>…e altre ${daComprare.length-6} voci</small>`:""}`
+        : `<small>Niente da comprare</small>`}
+    </div>
   </div>`;
 
   barra.innerHTML = "";
@@ -2494,6 +2519,7 @@ function tappaHome(){
   document.getElementById("hDisp").onclick  = ()=>vai(2);
   document.getElementById("hOsp").onclick   = ()=>vai(1);
   document.getElementById("hVoglia").onclick = ()=>vai(3);
+  document.getElementById("hSpesa").onclick = ()=>apriSpesa();
 }
 
 /* --- menu --- */
