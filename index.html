@@ -413,6 +413,22 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 .cerca-web{display:inline-block;margin-top:10px;font-size:.88rem}
 @media (prefers-reduced-motion:no-preference){.fatt i{transition:width .4s ease}}
+
+/* casella "Ho in mente un piatto": ben visibile, nel colore della sua card */
+.idea-box{background:#6D3FA0;color:#fff;border-radius:var(--r);padding:14px;margin-bottom:12px;
+  box-shadow:0 0 0 3px #FFD45C, 0 6px 22px rgba(109,63,160,.45);animation:ideaLuce 2.4s ease-in-out infinite}
+.idea-box b{display:block;font-size:1.05rem;margin-bottom:8px}
+.idea-riga{display:flex;gap:8px;align-items:stretch}
+.idea-riga input{flex:1;min-width:0;font-size:1.15rem;padding:13px 12px;border-radius:11px;border:3px solid #FFD45C;
+  background:#fff;color:#1C2A18;outline:none}
+.idea-riga input:focus{border-color:#fff;box-shadow:0 0 0 3px #FFD45C}
+.idea-riga button{border:0;border-radius:11px;padding:0 16px;font-weight:700;font-size:1rem;background:#FFD45C;color:#3A1F5C;cursor:pointer}
+@keyframes ideaLuce{0%,100%{box-shadow:0 0 0 3px #FFD45C,0 6px 22px rgba(109,63,160,.45)}
+  50%{box-shadow:0 0 0 5px #FFE48F,0 6px 30px rgba(255,212,92,.55)}}
+@media (prefers-reduced-motion: reduce){.idea-box{animation:none}}
+/* casella di ricerca sopra i menu a tendina lunghi */
+.tendina-cerca{width:100%;box-sizing:border-box;margin:0 0 6px;padding:10px 12px;font-size:1rem;border-radius:9px;
+  border:2px solid var(--verde);background:var(--superficie);color:var(--inchiostro)}
 </style>
 </head>
 <body>
@@ -701,6 +717,56 @@ function nomeRicetta(r){
   if(!r._n) r._n = normTesto(r.n);
   return r._n;
 }
+/* Ricerca tollerante: una parola cercata trova una parola del testo se ne e' l'inizio
+   ("melanz" -> melanzane, ma "pita" non trova piu' "spanakopita"), oppure se le somiglia
+   abbastanza da essere un errore di battitura: doppie e scempie si equivalgono
+   ("caciucco" = "cacciucco") e da 5 lettere si perdona una lettera sbagliata. */
+const scempia = x => x.replace(/([a-z])\1+/g, "$1");
+function distanza(a, b){
+  if(Math.abs(a.length - b.length) > 2) return 9;
+  let prec = Array.from({length: b.length + 1}, (_, j)=>j);
+  for(let i = 1; i <= a.length; i++){
+    const cur = [i];
+    for(let j = 1; j <= b.length; j++)
+      cur[j] = Math.min(prec[j] + 1, cur[j-1] + 1, prec[j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    prec = cur;
+  }
+  return prec[b.length];
+}
+let ricercaTollerante = false;   /* si accende solo se la ricerca esatta non trova niente */
+function parolaTrova(w, testo){
+  const parole = testo.split(" ");
+  if(parole.some(p=>p.startsWith(w))) return true;
+  if(!ricercaTollerante || w.length < 5) return false;
+  const ws = scempia(w), tolleranza = ws.length >= 8 ? 2 : 1;
+  return parole.some(p=>{
+    const ps = scempia(p);
+    return ps.startsWith(ws) || distanza(ws, ps) <= tolleranza
+        || (ps.length > ws.length && distanza(ws, ps.slice(0, ws.length)) <= 1);
+  });
+}
+const tutteTrovate = (parole, testo) => parole.every(w=>parolaTrova(w, testo));
+/* ricette il cui nome combacia ma che i filtri del tavolo tengono fuori, con il motivo */
+function esclusePerNome(){
+  if(sess.modo !== "idea" || !sess.cerca.trim()) return [];
+  const parole = normTesto(sess.cerca).split(" ").filter(Boolean);
+  const evita = (S.profilo.evita||"").toLowerCase().split(",").map(x=>x.trim()).filter(Boolean);
+  const alg = allergeniTavolo();
+  const out = [];
+  archivio().forEach(r=>{
+    if(!tutteTrovate(parole, nomeRicetta(r))) return;
+    const m = [];
+    if(S.nascoste.includes(r.id)) m.push("l'avevi nascosta (la rimetti da Strumenti \u2192 Ricette nascoste)");
+    if(soloPref && !S.preferite.includes(r.id)) m.push("stai guardando solo le preferite");
+    const a = alg.filter(x=>r.all.includes(x));
+    if(a.length) m.push("contiene " + a.join(", ") + ", da escludere per qualcuno a tavola");
+    const e = evita.filter(v=>r.ing.some(i=>i.k.includes(v)));
+    if(e.length) m.push("contiene " + e.join(", ") + ", che non ti piace");
+    if(sess.accordo === "unico" && RANGO[r.stile] < RANGO[sess.stile]) m.push("non \u00e8 " + sess.stile);
+    if(m.length) out.push({r, motivo: m.join("; ")});
+  });
+  return out;
+}
 
 /* come valuta(), ma con tutti i campi che scheda() si aspetta (usata fuori da filtra(), es. nel Menu a tema) */
 function valutaCompleta(r){
@@ -714,6 +780,16 @@ function valutaCompleta(r){
   return v;
 }
 function filtra(){
+  ricercaTollerante = false;
+  let out = filtraUnaVolta();
+  if(!out.length && sess.modo === "idea" && sess.cerca.trim() && !esclusePerNome().length){
+    ricercaTollerante = true;
+    out = filtraUnaVolta();
+    if(!out.length && !esclusePerNome().length) ricercaTollerante = false;
+  }
+  return out;
+}
+function filtraUnaVolta(){
   const evita = (S.profilo.evita||"").toLowerCase().split(",").map(x=>x.trim()).filter(Boolean);
   const alg = allergeniTavolo();
   const lim = +sess.tempo;
@@ -730,9 +806,8 @@ function filtra(){
     /* se hai scritto il nome del piatto, tempo e portata non te lo nascondono */
     let perNome = false;
     if(parole.length){
-      const t = testoRicetta(r);
-      if(!parole.every(w=>t.includes(w))) return false;
-      perNome = parole.every(w=>nomeRicetta(r).includes(w));
+      if(!tutteTrovate(parole, testoRicetta(r))) return false;
+      perNome = tutteTrovate(parole, nomeRicetta(r));
     }
     if(!perNome){
       if(sess.portate.length && !sess.portate.includes(r.cat)) return false;
@@ -1091,8 +1166,9 @@ function tappaVoglia(){
       ${PAESI_TEMA.map(p=>`<button class="chip" data-p="${esc(p.v)}">${p.bandiera} ${p.n}</button>`).join("")}
     </div>
   </div>`:""}
-  ${sess.modo==="idea"?`<div class="card" style="margin-bottom:12px"><label class="campo"><span>Cosa hai in mente</span>
-    <input type="text" id="qIdea" value="${esc(sess.cerca)}" placeholder="Es. melanzane, risotto, Sicilia…" style="font-size:1rem"></label></div>`:""}
+  ${sess.modo==="idea"?`<div class="idea-box"><label for="qIdea"><b>\u{1F50D} Che piatto hai in mente?</b></label>
+    <div class="idea-riga"><input type="search" id="qIdea" enterkeyhint="search" value="${esc(sess.cerca)}" placeholder="Es. cacciucco, melanzane, Sicilia\u2026">
+    <button type="button" id="qIdeaVai">Cerca</button></div></div>`:""}
   ${sess.modo==="recupero"?(()=>{
     const scelti = sess.recupero.filter(k=>!dep.includes(k));
     const q = normTesto(cercaRec);
@@ -1146,10 +1222,15 @@ function tappaVoglia(){
     const m = b.dataset.m;
     if(m === "app" && sess.modo !== "app"){ sess.modo = "app"; vai(4); return; }
     sess.modo = sess.modo===m?null:m; tappaVoglia();
+    if(sess.modo === "idea"){
+      const q = document.getElementById("qIdea");
+      if(q){ q.scrollIntoView({block:"center", behavior:"smooth"}); q.focus(); }
+    }
   });
   const qi = document.getElementById("qIdea");
   if(qi){ qi.oninput = e=>{ sess.cerca = e.target.value; };
-    qi.onkeydown = e=>{ if(e.key === "Enter") vai(4); }; }
+    qi.onkeydown = e=>{ if(e.key === "Enter") vai(4); };
+    document.getElementById("qIdeaVai").onclick = ()=>vai(4); }
   const pt = document.getElementById("paesiTema");
   if(pt) pt.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
     const p = PAESI_TEMA.find(x=>x.v===b.dataset.p);
@@ -1206,6 +1287,7 @@ function tappaRicette(){
   const lista = filtra();
   const pronte = lista.filter(o=>o.mancanti.length===0 && o.sostituibili.length===0).length;
   const mostra = lista.slice(0,60);
+  const escluse = esclusePerNome();
   const critAtt = criterioAttivo();
   const dirAtt = ordinaDir || critAtt.def;
 
@@ -1221,7 +1303,8 @@ function tappaRicette(){
       ${sess.modo==="recupero"&&sess.recupero.length?`<span>da consumare: ${esc(sess.recupero.join(", "))}</span>`:""}
       ${sess.modo==="idea"&&sess.cerca?`<span>“${esc(sess.cerca)}”</span>`:""}
     </div>
-    ${sess.modo==="idea"&&sess.cerca.trim()?`<p class="mini">Cerco fra nomi, ingredienti e regioni. Se il nome combacia te la mostro comunque, anche fuori dal tempo e dalla portata che hai scelto.</p>`:""}
+    ${ricercaTollerante?`<p class="mini"><b>\u00ab${esc(sess.cerca)}\u00bb scritto cos\u00ec non c'\u00e8: ti mostro quelle che gli somigliano.</b></p>`:""}
+    ${sess.modo==="idea"&&sess.cerca.trim()?`<p class="mini">Cerco fra nomi, ingredienti e regioni, anche con qualche errore di battitura. Se il nome combacia te la mostro anche fuori dal tempo e dalla portata che hai scelto; se la escludono allergie, gusti o stile, te lo dico in fondo.</p>`:""}
     <div class="chips" style="margin-top:10px">
       <button class="chip ${soloPref?"":"on"}" id="fTutte">Tutte</button>
       <button class="chip ${soloPref?"on":""}" id="fPref">\u2605 Solo le preferite (${S.preferite.length})</button>
@@ -1245,6 +1328,7 @@ function tappaRicette(){
   </div>
   ${mostra.length
     ? `<div class="ric-grid">${mostra.map(scheda).join("")}</div>`
+    : escluse.length ? ""
     : sess.modo==="idea" && sess.cerca.trim()
       ? `<div class="vuoto"><p>\u00ab${esc(sess.cerca)}\u00bb non \u00e8 nell\u2019archivio.</p>
           <p class="mini">Vuoi cercarla sul web?</p>
@@ -1256,6 +1340,8 @@ function tappaRicette(){
       : `<div class="vuoto"><p>Con questi filtri non resta niente.</p>
           <p class="mini">Prova a togliere una portata, ad allargare il tempo o a cambiare lo stile.</p></div>`
   }
+  ${escluse.length?`<div class="card" style="margin-top:14px"><b>${mostra.length?"Ho trovato anche":"Le ho trovate, ma le ho escluse"}</b>
+      <ul class="spesa-l" style="margin-top:6px">${escluse.map(o=>`<li><span>${esc(o.r.n)}${o.r.id<0?" <span class=\"mini\">(tua)</span>":""}<br><span class="mini">Esclusa perch\u00e9 ${esc(o.motivo)}.</span></span></li>`).join("")}</ul></div>`:""}
   ${lista.length>mostra.length?`<p class="mini" style="text-align:center">Mostrate le prime ${mostra.length} di ${lista.length}. Restringi i filtri per vedere le altre.</p>`:""}`;
 
   document.getElementById("fTutte").onclick = ()=>{ soloPref = false; tappaRicette(); };
@@ -1601,6 +1687,38 @@ function aggiornaDosi(){
    =========================================================== */
 const velo = document.getElementById("velo");
 let veloAperto = "";
+/* ===========================================================
+   Menu a tendina lunghi: una casella di ricerca sopra, che li filtra
+   (vale per qualunque <select> con piu' di 15 voci, ovunque compaia)
+   =========================================================== */
+function tendinaCercabile(sel){
+  if(sel._cercabile || sel.options.length <= 15) return;
+  sel._cercabile = true;
+  const tutte = [...sel.options].map(o=>({v:o.value, t:o.textContent, fissa:o.value === ""}));
+  const box = document.createElement("input");
+  box.type = "search"; box.className = "tendina-cerca";
+  box.placeholder = "\u{1F50D} Scrivi per cercare fra " + tutte.filter(o=>!o.fissa).length + " voci";
+  sel.parentNode.insertBefore(box, sel);
+  box.addEventListener("input", ()=>{
+    const q = normTesto(box.value);
+    const prima = sel.value;
+    const ok = tutte.filter(o=>o.fissa || !q || normTesto(o.t).includes(q));
+    sel.innerHTML = "";
+    ok.forEach(o=>{ const op = document.createElement("option"); op.value = o.v; op.textContent = o.t; sel.append(op); });
+    if(q && !ok.some(o=>!o.fissa)){
+      const op = document.createElement("option"); op.disabled = true; op.textContent = "nessuna voce con \u00ab" + box.value + "\u00bb";
+      sel.append(op);
+    }
+    /* scelgo da solo la prima voce che combacia; se cancelli torna la scelta di prima */
+    const prima1 = ok.find(o=>!o.fissa && q && normTesto(o.t).startsWith(q)) || ok.find(o=>!o.fissa && q);
+    sel.value = prima1 ? prima1.v : (ok.some(o=>o.v === prima) ? prima : (ok[0] ? ok[0].v : ""));
+    sel.dispatchEvent(new Event("change", {bubbles:true}));
+  });
+}
+new MutationObserver(()=>document.querySelectorAll("select").forEach(tendinaCercabile))
+  .observe(document.body, {childList:true, subtree:true});
+document.querySelectorAll("select").forEach(tendinaCercabile);
+
 function apriVelo(nome, html){
   veloAperto = nome;
   velo.innerHTML = `<div class="velo"><div class="velo-in">${html}</div></div>`;
