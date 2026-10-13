@@ -1026,46 +1026,31 @@ function tappaOspiti(){
   pulsanti("Indietro", sess.ospiti.length?"Avanti":"Cucino solo per me", ()=>vai(2), ()=>{ sess.modalitaTavola=null; tappaOspiti(); });
 }
 
-/* --- 3. dispensa --- */
-function tappaDispensa(){
-  const n = S.dispensa.length, q = cercaDisp.trim().toLowerCase();
+function statoCercaDisp(){
+  const q = cercaDisp.trim().toLowerCase();
   const matchEsatto = q ? TUTTI_ING.find(i=>i.toLowerCase()===q) : null;
   const trovato = !!matchEsatto || (q && !BASE.has(q) && TUTTI_ING.some(i=>i.toLowerCase().includes(q)));
-  const COLORE_REPARTO = {
-    "Verdure e ortaggi":"cat-verdure", "Carne e salumi":"cat-carne", "Pesce":"cat-pesce",
-    "Latticini e uova":"cat-latticini", "Dispensa":"cat-giallo", "Erbe e spezie":"cat-ocra",
-    "Surgelati e congelati":"cat-ghiaccio", "Scatolette e conserve":"cat-grigio"
-  };
-  app.innerHTML = `
-  <div class="intro"><h2>La dispensa</h2>
-    <p>${n ? `Hai ${n} ingredienti segnati${S.dispensaData?`, aggiornati il ${S.dispensaData}`:""}. Se non è cambiato nulla, vai avanti.`
-          : "Segna quello che hai in casa. Resta memorizzato: la prossima volta correggi solo quello che cambia."}</p></div>
-  <div class="pgrid">
-    <div class="pcella full c-verde" style="cursor:default">
-      <svg viewBox="0 0 28 28" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2"/><line x1="17" y1="17" x2="23" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <b>Cerca o aggiungi un ingrediente</b>
-      <label class="campo" style="margin-top:10px"><span>Nome ingrediente</span>
-        <div style="display:flex;gap:8px">
-          <input type="text" id="cerca" list="ingDatalist" autocomplete="off" value="${esc(cercaDisp)}"
-            placeholder="Scrivi le prime lettere, o detta con il microfono" style="flex:1"
-            class="${q?(trovato?"ing-ok":"ing-no"):""}">
-          <button type="button" id="micCerca" class="mic-btn" aria-label="Detta l'ingrediente a voce" title="Detta l'ingrediente a voce">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="2"/><path d="M6 11v1a6 6 0 0 0 12 0v-1M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </button>
-        </div></label>
-      <datalist id="ingDatalist">${TUTTI_ING.map(i=>`<option value="${esc(i)}">`).join("")}</datalist>
+  return {q, trovato};
+}
+function htmlRispostaDisp(){
+  const {q, trovato} = statoCercaDisp();
+  return `
       ${q && trovato ? `<p class="mini ing-esito-ok" id="ingEsitoOk">\u2713 C'è già in elenco, lo trovi qui sotto.</p>` : ""}
       ${q && !trovato ? `
         <div class="riga-add" style="margin-top:8px">
           <button class="btn small" id="ingAdd">Aggiungi «${esc(cercaDisp.trim())}»</button>
           <select id="ingCat">${Object.keys(CAT_DISP).map(c=>`<option>${c}</option>`).join("")}</select>
         </div>
-        <p class="mini" id="ingEsito" aria-live="polite"></p>` : ""}
-      <p class="mini" style="margin-top:10px;opacity:.85">Tieni premuto un ingrediente qui sotto per spostarlo di reparto o toglierlo dall'elenco.</p>
-    </div>
-  </div>
-  <div class="pgrid" style="margin-top:2px">
-  ${Object.entries(CAT_DISP).map(([tit,listaCompleta],idx)=>{
+        <p class="mini" id="ingEsito" aria-live="polite"></p>` : ""}`;
+}
+function htmlRepartiDisp(){
+  const {q} = statoCercaDisp();
+  const COLORE_REPARTO = {
+    "Verdure e ortaggi":"cat-verdure", "Carne e salumi":"cat-carne", "Pesce":"cat-pesce",
+    "Latticini e uova":"cat-latticini", "Dispensa":"cat-giallo", "Erbe e spezie":"cat-ocra",
+    "Surgelati e congelati":"cat-ghiaccio", "Scatolette e conserve":"cat-grigio"
+  };
+  return `${Object.entries(CAT_DISP).map(([tit,listaCompleta],idx)=>{
     const lista = listaCompleta;
     const vis = lista.filter(i=>!q || i.toLowerCase().includes(q));
     if(!vis.length) return "";
@@ -1077,14 +1062,19 @@ function tappaDispensa(){
           const stag = mesi ? (mesi.includes(MESE)?` <span class="ing-stag" title="Di stagione ora">\u{1F331}</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F331}</span>`) : "";
           return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}${stag}</button>`; }).join("")}
       </div></div></details>`;
-  }).join("")}
-  </div>`;
-
+  }).join("")}`;
+}
+/* aggiorna solo l'esito e i reparti, lasciando intatta la casella in cui si sta scrivendo */
+function aggiornaCercaDisp(){
+  const {q, trovato} = statoCercaDisp();
   const c = document.getElementById("cerca");
-  c.oninput = e=>{ cercaDisp = e.target.value; const pos=e.target.selectionStart;
-    tappaDispensa(); const n2=document.getElementById("cerca"); n2.focus(); n2.setSelectionRange(pos,pos); };
-  const mic = document.getElementById("micCerca");
-  if(mic) mic.onclick = ()=> dettaIngrediente(mic, testo=>{ cercaDisp = testo; tappaDispensa(); });
+  if(c){ c.classList.toggle("ing-ok", !!q && !!trovato); c.classList.toggle("ing-no", !!q && !trovato); }
+  const x = document.getElementById("svuotaCerca"); if(x) x.style.display = q ? "" : "none";
+  document.getElementById("ingRisposta").innerHTML = htmlRispostaDisp();
+  document.getElementById("repartiDisp").innerHTML = htmlRepartiDisp();
+  collegaRispostaDisp(); collegaRepartiDisp();
+}
+function collegaRispostaDisp(){
   const ingAddBtn = document.getElementById("ingAdd"), ingC = document.getElementById("ingCat");
   if(ingAddBtn){
     const g = indovinaCat(cercaDisp); if(g) ingC.value = g;
@@ -1099,7 +1089,8 @@ function tappaDispensa(){
       tappaDispensa();
     };
   }
-  document.getElementById("logoHome").onclick = ()=>{ if(S.profilo.fatto) vai(5); };
+}
+function collegaRepartiDisp(){
   /* tocco breve: segno o tolgo dalla dispensa. Tocco lungo: sposta o togli dall'elenco */
   app.querySelectorAll("[data-i]").forEach(b=>{
     let attesa = null, lungo = false;
@@ -1126,6 +1117,47 @@ function tappaDispensa(){
       S.dispensaData = new Date().toLocaleDateString("it-IT"); salva();
     };
   });
+
+}
+/* --- 3. dispensa --- */
+function tappaDispensa(){
+  const n = S.dispensa.length, {q, trovato} = statoCercaDisp();
+  app.innerHTML = `
+  <div class="intro"><h2>La dispensa</h2>
+    <p>${n ? `Hai ${n} ingredienti segnati${S.dispensaData?`, aggiornati il ${S.dispensaData}`:""}. Se non è cambiato nulla, vai avanti.`
+          : "Segna quello che hai in casa. Resta memorizzato: la prossima volta correggi solo quello che cambia."}</p></div>
+  <div class="pgrid">
+    <div class="pcella full c-verde" style="cursor:default">
+      <svg viewBox="0 0 28 28" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="2"/><line x1="17" y1="17" x2="23" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <b>Cerca o aggiungi un ingrediente</b>
+      <label class="campo" style="margin-top:10px"><span>Nome ingrediente</span>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="cerca" list="ingDatalist" autocomplete="off" value="${esc(cercaDisp)}"
+            placeholder="Scrivi le prime lettere, o detta con il microfono" style="flex:1"
+            class="${q?(trovato?"ing-ok":"ing-no"):""}" enterkeyhint="done">
+          <button type="button" id="svuotaCerca" class="mic-btn" aria-label="Cancella la ricerca" title="Cancella la ricerca"
+            style="${q?"":"display:none"}"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+          <button type="button" id="micCerca" class="mic-btn" aria-label="Detta l'ingrediente a voce" title="Detta l'ingrediente a voce">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="2"/><path d="M6 11v1a6 6 0 0 0 12 0v-1M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div></label>
+      <datalist id="ingDatalist">${TUTTI_ING.map(i=>`<option value="${esc(i)}">`).join("")}</datalist>
+      <div id="ingRisposta">${htmlRispostaDisp()}</div>
+      <p class="mini" style="margin-top:10px;opacity:.85">Tieni premuto un ingrediente qui sotto per spostarlo di reparto o toglierlo dall'elenco.</p>
+    </div>
+  </div>
+  <div class="pgrid" id="repartiDisp" style="margin-top:2px">${htmlRepartiDisp()}</div>`;
+
+  const c = document.getElementById("cerca");
+  /* la casella non viene mai ridisegnata mentre scrivi: cosi' il tasto Cancella tenuto
+     premuto continua a cancellare (prima ogni lettera ricostruiva la pagina e lo fermava) */
+  c.oninput = e=>{ cercaDisp = e.target.value; aggiornaCercaDisp(); };
+  document.getElementById("svuotaCerca").onclick = ()=>{ cercaDisp = ""; c.value = ""; aggiornaCercaDisp(); c.focus(); };
+  const mic = document.getElementById("micCerca");
+  if(mic) mic.onclick = ()=> dettaIngrediente(mic, testo=>{ cercaDisp = testo; c.value = testo; aggiornaCercaDisp(); });
+  collegaRispostaDisp();
+  document.getElementById("logoHome").onclick = ()=>{ if(S.profilo.fatto) vai(5); };
+  collegaRepartiDisp();
 
   pulsanti("Indietro", "La dispensa è a posto", ()=>vai(3), ()=>vai(1));
 }
