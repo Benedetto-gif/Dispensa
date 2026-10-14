@@ -426,6 +426,13 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 @keyframes ideaLuce{0%,100%{box-shadow:0 0 0 3px #FFD45C,0 6px 22px rgba(109,63,160,.45)}
   50%{box-shadow:0 0 0 5px #FFE48F,0 6px 30px rgba(255,212,92,.55)}}
 @media (prefers-reduced-motion: reduce){.idea-box{animation:none}}
+/* tasto ✕ dentro le caselle di ricerca */
+.cx{position:relative;display:block;flex:1;min-width:0}
+.cx > input{width:100%;box-sizing:border-box;padding-right:44px!important}
+.cx-x{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:50%;
+  background:var(--linea);color:var(--inchiostro);font-size:.95rem;line-height:32px;padding:0;cursor:pointer}
+.idea-riga .cx-x{background:#E9E2F3;color:#3A1F5C}
+input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
 /* elenchi lunghi con ricerca (al posto della tendina) */
 .cb{margin:2px 0 4px}
 .cb-riga{display:flex;gap:6px}
@@ -1796,6 +1803,44 @@ function tendinaCercabile(sel){
 new MutationObserver(()=>document.querySelectorAll("select").forEach(tendinaCercabile))
   .observe(document.body, {childList:true, subtree:true});
 document.querySelectorAll("select").forEach(tendinaCercabile);
+
+/* ===========================================================
+   Tasto ✕ nelle caselle di ricerca: svuota tutto con un tocco.
+   Si aggiunge da solo a ogni casella elencata qui sotto (e a quelle
+   di tipo "search"), anche quando la pagina viene ridisegnata.
+   =========================================================== */
+const CASELLE_CON_X = '#qIdea, #recCerca, #qScienza, #impUrl, input[type="search"]';
+function aggiungiX(inp){
+  if(inp._conX || inp.closest(".cx")) return;
+  inp._conX = true;
+  /* spostare la casella le toglie il cursore: se ce l'aveva, glielo ridò */
+  const attiva = document.activeElement === inp;
+  const pos = attiva ? [inp.selectionStart, inp.selectionEnd] : null;
+  const w = document.createElement("span");
+  w.className = "cx";
+  inp.parentNode.insertBefore(w, inp);
+  w.append(inp);
+  if(attiva){ inp.focus({preventScroll:true}); try{ inp.setSelectionRange(pos[0], pos[1]); }catch(e){} }
+  const x = document.createElement("button");
+  x.type = "button"; x.className = "cx-x"; x.textContent = "✕";
+  x.setAttribute("aria-label", "Cancella tutto");
+  w.append(x);
+  const mostra = ()=>{ x.style.display = inp.value ? "" : "none"; };
+  inp.addEventListener("input", mostra);
+  /* pointerdown: la casella non perde il cursore e la tastiera resta aperta */
+  x.addEventListener("pointerdown", e=>e.preventDefault());
+  x.addEventListener("click", ()=>{
+    inp.value = "";
+    inp.dispatchEvent(new Event("input", {bubbles:true}));
+    /* se la pagina si e' ridisegnata, rimetto il cursore nella casella nuova */
+    const viva = inp.isConnected ? inp : (inp.id && document.getElementById(inp.id));
+    if(viva){ viva.focus(); }
+  });
+  mostra();
+}
+new MutationObserver(()=>document.querySelectorAll(CASELLE_CON_X).forEach(aggiungiX))
+  .observe(document.body, {childList:true, subtree:true});
+document.querySelectorAll(CASELLE_CON_X).forEach(aggiungiX);
 
 function apriVelo(nome, html){
   veloAperto = nome;
