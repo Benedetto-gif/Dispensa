@@ -432,6 +432,7 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 .cx-x{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:0;border-radius:50%;
   background:var(--linea);color:var(--inchiostro);font-size:.95rem;line-height:32px;padding:0;cursor:pointer}
 .idea-riga .cx-x{background:#E9E2F3;color:#3A1F5C}
+.cx-x.vuota{opacity:.4}
 input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
 /* elenchi lunghi con ricerca (al posto della tendina) */
 .cb{margin:2px 0 4px}
@@ -1825,7 +1826,8 @@ function aggiungiX(inp){
   x.type = "button"; x.className = "cx-x"; x.textContent = "✕";
   x.setAttribute("aria-label", "Cancella tutto");
   w.append(x);
-  const mostra = ()=>{ x.style.display = inp.value ? "" : "none"; };
+  /* sempre visibile, cosi' si sa che c'e'; a casella vuota e' piu' tenue */
+  const mostra = ()=>{ x.classList.toggle("vuota", !inp.value); };
   inp.addEventListener("input", mostra);
   /* pointerdown: la casella non perde il cursore e la tastiera resta aperta */
   x.addEventListener("pointerdown", e=>e.preventDefault());
