@@ -600,6 +600,43 @@ if(!S.baseMigrato){
   S.baseMigrato = true;
   salva();
 }
+/* ricerca: senza accenti, su nome, ingredienti, regione e tag */
+const normTesto = x => String(x||"").toLowerCase().normalize("NFD")
+  .replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim();
+/* Singolare e plurale sono lo stesso ingrediente: "carote" = "carota", "pomodori" = "pomodoro",
+   "cipolle rosse" = "cipolla rossa". Confronto le parole senza la vocale finale
+   (e senza la i di -cia/-gia e la h di -chi/-ghi). Poche parole fanno eccezione
+   perche' singolare e plurale sono cose diverse. */
+const NON_ACCORPARE = new Set(["palombo","palomba"]);
+const _radici = {};
+function radiceIng(k){
+  if(_radici[k] !== undefined) return _radici[k];
+  const n = normTesto(k);
+  return _radici[k] = NON_ACCORPARE.has(n) ? n : n.split(" ").map(p=>{
+    if(p.length <= 3) return p;
+    return p.replace(/[aeiou]$/, "").replace(/([cg])h$/, "$1").replace(/([cg])i$/, "$1");
+  }).join(" ");
+}
+/* una volta sola: gli ingredienti che avevi aggiunto a mano e che l'archivio ha gia'
+   (al singolare o al plurale) vengono uniti a quelli dell'archivio */
+(function unisciDoppioni(){
+  const ufficiali = {};
+  Object.values(CAT_DISP).flat().concat(Array.from(BASE)).forEach(k=>{ ufficiali[radiceIng(k)] = ufficiali[radiceIng(k)] || k; });
+  D.ricette.forEach(r=>r.ing.forEach(i=>{ if(i.k && !ufficiali[radiceIng(i.k)]) ufficiali[radiceIng(i.k)] = i.k; }));
+  let cambiato = false;
+  for(const cat in (S.ingMiei || {})){
+    S.ingMiei[cat] = (S.ingMiei[cat] || []).filter(k=>{
+      const u = ufficiali[radiceIng(k)];
+      if(!u || u === k) return true;
+      cambiato = true;
+      S.dispensa = S.dispensa.map(x=>x === k ? u : x).filter((x, i, a)=>a.indexOf(x) === i);
+      (S.mie || []).forEach(r=>r.ing.forEach(i=>{ if(i.k === k) i.k = u; }));
+      (S.spesa || []).forEach(x=>{ if(x.k === k) x.k = u; });
+      return false;
+    });
+  }
+  if(cambiato) salva();
+})();
 /* le ricette scritte da te e gli ingredienti che hai aggiunto entrano nell'archivio */
 (S.mie || []).forEach(preparaRicetta);
 for(const [cat, lista] of Object.entries(S.ingMiei || {})){
@@ -696,9 +733,18 @@ function allergeniTavolo(){
 function stilePiuStretto(){
   return tavolata().reduce((m,c)=> RANGO[c.stile] > RANGO[m] ? c.stile : m, "onnivoro");
 }
+let _radDisp = {chiave:null, set:null};
+function radiciDispensa(){
+  const chiave = S.dispensa.join("|");
+  if(_radDisp.chiave !== chiave) _radDisp = {chiave, set: new Set(S.dispensa.map(radiceIng))};
+  return _radDisp.set;
+}
 function possiedo(k){
   if(S.dispensa.includes(k)) return true;
-  return (EQUIV[k]||[]).some(x=>S.dispensa.includes(x));
+  if((EQUIV[k]||[]).some(x=>S.dispensa.includes(x))) return true;
+  /* stesso ingrediente scritto al singolare o al plurale */
+  const r = radiciDispensa();
+  return r.has(radiceIng(k)) || (EQUIV[k]||[]).some(x=>r.has(radiceIng(x)));
 }
 function sostituto(k){
   return (D.sost_k[k]||[]).find(alt=>possiedo(alt)) || null;
@@ -725,8 +771,6 @@ function chiEsclude(r){
   return tavolata().filter(c=> RANGO[r.stile] < RANGO[c.stile] || c.allergeni.some(a=>r.all.includes(a)));
 }
 /* ricerca: senza accenti, su nome, ingredienti, regione e tag */
-const normTesto = x => String(x||"").toLowerCase().normalize("NFD")
-  .replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim();
 function testoRicetta(r){
   if(!r._txt) r._txt = normTesto(r.n + " " + r.ing.map(i=>i.n + " " + i.k).join(" ")
                                  + " " + (r.luogo||"") + " " + (r.tags||[]).join(" "));
@@ -1048,7 +1092,8 @@ function tappaOspiti(){
 function statoCercaDisp(){
   const q = cercaDisp.trim().toLowerCase();
   const matchEsatto = q ? TUTTI_ING.find(i=>i.toLowerCase()===q) : null;
-  const trovato = !!matchEsatto || (q && !BASE.has(q) && TUTTI_ING.some(i=>i.toLowerCase().includes(q)));
+  const trovato = !!matchEsatto || (q && !BASE.has(q) && TUTTI_ING.some(i=>i.toLowerCase().includes(q)))
+    || (q && Object.values(CAT_DISP).flat().some(i=>radiceIng(i) === radiceIng(q)));
   return {q, trovato};
 }
 function htmlRispostaDisp(){
@@ -1071,7 +1116,7 @@ function htmlRepartiDisp(){
   };
   return `${Object.entries(CAT_DISP).map(([tit,listaCompleta],idx)=>{
     const lista = listaCompleta;
-    const vis = lista.filter(i=>!q || i.toLowerCase().includes(q));
+    const vis = lista.filter(i=>!q || i.toLowerCase().includes(q) || radiceIng(i) === radiceIng(q));
     if(!vis.length) return "";
     const presi = lista.filter(i=>S.dispensa.includes(i)).length;
     return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||presi?"open":""}>
@@ -2182,6 +2227,9 @@ function chiaveDi(nome){
   const tutte = chiaviDispensa().map(([k])=>k).concat(Array.from(BASE));
   const esatta = tutte.find(k=>normTesto(k) === n);
   if(esatta) return esatta;
+  const rn = radiceIng(n);
+  const stessa = tutte.find(k=>radiceIng(k) === rn);
+  if(stessa) return stessa;
   if(NOMI_K[n]) return NOMI_K[n];
   /* la chiave più lunga contenuta nel nome scritto: "passata di pomodoro" batte "pomodoro" */
   let best = "", lung = 0;
@@ -2219,6 +2267,9 @@ function aggiungiIngrediente(nome, cat){
   const k = nome.trim().toLowerCase();
   if(!k) return "";
   if(chiaviDispensa().some(([x])=>x === k)) return k;
+  /* "carote" quando c'e' gia' "carota": uso quello che c'e' */
+  const gia = chiaviDispensa().find(([x])=>radiceIng(x) === radiceIng(k));
+  if(gia) return gia[0];
   CAT_DISP[cat] = CAT_DISP[cat] || [];
   CAT_DISP[cat].push(k);
   ordinaCat(cat);
