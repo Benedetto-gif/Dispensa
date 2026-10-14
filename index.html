@@ -426,9 +426,20 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 @keyframes ideaLuce{0%,100%{box-shadow:0 0 0 3px #FFD45C,0 6px 22px rgba(109,63,160,.45)}
   50%{box-shadow:0 0 0 5px #FFE48F,0 6px 30px rgba(255,212,92,.55)}}
 @media (prefers-reduced-motion: reduce){.idea-box{animation:none}}
-/* casella di ricerca sopra i menu a tendina lunghi */
-.tendina-cerca{width:100%;box-sizing:border-box;margin:0 0 6px;padding:10px 12px;font-size:1rem;border-radius:9px;
+/* elenchi lunghi con ricerca (al posto della tendina) */
+.cb{margin:2px 0 4px}
+.cb-riga{display:flex;gap:6px}
+.cb-in{flex:1;min-width:0;box-sizing:border-box;padding:11px 12px;font-size:1rem;border-radius:10px;
   border:2px solid var(--verde);background:var(--superficie);color:var(--inchiostro)}
+.cb-x{border:0;border-radius:10px;padding:0 13px;font-size:1rem;background:var(--linea);color:var(--inchiostro);cursor:pointer}
+.cb-scelta{font-size:.85rem;margin:6px 2px 0;opacity:.9}
+.cb-lista{display:none;margin-top:6px;border-radius:10px;overflow:hidden;border:1.5px solid var(--linea);background:var(--superficie)}
+.cb-lista.aperta{display:block}
+.cb-voce{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--linea);background:transparent;
+  color:var(--inchiostro);padding:12px;font-size:1rem;cursor:pointer}
+.cb-voce:active{background:var(--verde);color:#fff}
+.cb-fissa{font-style:italic;opacity:.8}
+.cb-vuoto{padding:12px;font-size:.9rem;opacity:.75}
 </style>
 </head>
 <body>
@@ -1720,32 +1731,67 @@ function aggiornaDosi(){
 const velo = document.getElementById("velo");
 let veloAperto = "";
 /* ===========================================================
-   Menu a tendina lunghi: una casella di ricerca sopra, che li filtra
-   (vale per qualunque <select> con piu' di 15 voci, ovunque compaia)
+   Elenchi lunghi: al posto della tendina del telefono (che si apre a tutto
+   schermo e costringe a scorrere tutto) una casella in cui si scrive e un
+   elenco breve dei risultati. Vale per qualunque <select> con piu' di 15 voci.
+   La <select> resta nascosta sotto e conserva il valore, quindi il resto
+   del codice continua a leggerla come prima.
    =========================================================== */
 function tendinaCercabile(sel){
   if(sel._cercabile || sel.options.length <= 15) return;
   sel._cercabile = true;
-  const tutte = [...sel.options].map(o=>({v:o.value, t:o.textContent, fissa:o.value === ""}));
-  const box = document.createElement("input");
-  box.type = "search"; box.className = "tendina-cerca";
-  box.placeholder = "\u{1F50D} Scrivi per cercare fra " + tutte.filter(o=>!o.fissa).length + " voci";
-  sel.parentNode.insertBefore(box, sel);
-  box.addEventListener("input", ()=>{
-    const q = normTesto(box.value);
-    const prima = sel.value;
-    const ok = tutte.filter(o=>o.fissa || !q || normTesto(o.t).includes(q));
-    sel.innerHTML = "";
-    ok.forEach(o=>{ const op = document.createElement("option"); op.value = o.v; op.textContent = o.t; sel.append(op); });
-    if(q && !ok.some(o=>!o.fissa)){
-      const op = document.createElement("option"); op.disabled = true; op.textContent = "nessuna voce con \u00ab" + box.value + "\u00bb";
-      sel.append(op);
-    }
-    /* scelgo da solo la prima voce che combacia; se cancelli torna la scelta di prima */
-    const prima1 = ok.find(o=>!o.fissa && q && normTesto(o.t).startsWith(q)) || ok.find(o=>!o.fissa && q);
-    sel.value = prima1 ? prima1.v : (ok.some(o=>o.v === prima) ? prima : (ok[0] ? ok[0].v : ""));
+  const voci = [...sel.options].map(o=>({v:o.value, t:o.textContent.trim()}));
+  const fisse = voci.filter(o=>o.v === "");          /* es. "— è un ingrediente nuovo —" */
+  const normali = voci.filter(o=>o.v !== "");
+  const testoDi = v => (voci.find(o=>o.v === v) || {t:""}).t;
+
+  const box = document.createElement("div");
+  box.className = "cb";
+  box.innerHTML = `<div class="cb-riga"><input type="text" class="cb-in" autocomplete="off" enterkeyhint="done"
+      placeholder="\u{1F50D} Scrivi per cercare fra ${normali.length} voci"><button type="button" class="cb-x" aria-label="Cancella">✕</button></div>
+    <div class="cb-scelta"></div><div class="cb-lista" role="listbox"></div>`;
+  sel.style.display = "none";
+  sel.parentNode.insertBefore(box, sel.nextSibling);
+  const inp = box.querySelector(".cb-in"), lista = box.querySelector(".cb-lista"),
+        scelta = box.querySelector(".cb-scelta"), x = box.querySelector(".cb-x");
+
+  const mostraScelta = ()=>{
+    scelta.innerHTML = sel.value
+      ? `Scelto: <b>${esc(testoDi(sel.value))}</b>`
+      : (fisse[0] ? `Scelto: <b>${esc(fisse[0].t)}</b>` : "");
+  };
+  const scegli = v=>{
+    sel.value = v;
     sel.dispatchEvent(new Event("change", {bubbles:true}));
+    inp.value = ""; lista.innerHTML = ""; lista.classList.remove("aperta");
+    mostraScelta();
+  };
+  const disegna = ()=>{
+    const q = normTesto(inp.value);
+    x.style.visibility = inp.value ? "visible" : "hidden";
+    if(!q){ lista.innerHTML = ""; lista.classList.remove("aperta"); return; }
+    const inizio = normali.filter(o=>normTesto(o.t).startsWith(q));
+    const dentro = normali.filter(o=>!normTesto(o.t).startsWith(q) && normTesto(o.t).includes(q));
+    const trovate = inizio.concat(dentro).slice(0, 12);
+    lista.innerHTML =
+      trovate.map(o=>`<button type="button" class="cb-voce" data-v="${esc(o.v)}">${esc(o.t)}</button>`).join("")
+      + (trovate.length ? "" : `<div class="cb-vuoto">Nessuna voce con «${esc(inp.value)}»</div>`)
+      + fisse.map(o=>`<button type="button" class="cb-voce cb-fissa" data-v="">${esc(o.t)}</button>`).join("");
+    lista.classList.add("aperta");
+  };
+  inp.addEventListener("input", disegna);
+  inp.addEventListener("keydown", e=>{
+    if(e.key === "Enter"){ e.preventDefault(); const p = lista.querySelector(".cb-voce"); if(p) scegli(p.dataset.v); }
   });
+  /* pointerdown invece di click: la tastiera che si chiude non fa saltare il tocco */
+  lista.addEventListener("pointerdown", e=>{
+    const b = e.target.closest(".cb-voce"); if(!b) return;
+    e.preventDefault(); scegli(b.dataset.v);
+  });
+  x.onclick = ()=>{ inp.value = ""; disegna(); inp.focus(); };
+  x.style.visibility = "hidden";
+  sel._aggiorna = mostraScelta;   /* se il valore cambia da codice (es. regione dal GPS) */
+  mostraScelta();
 }
 new MutationObserver(()=>document.querySelectorAll("select").forEach(tendinaCercabile))
   .observe(document.body, {childList:true, subtree:true});
@@ -3034,7 +3080,7 @@ function trovaRegione(btn, esito){
       const citta = d.city || d.locality || "";
       if(reg){
         S.profilo.regione = reg; salva();
-        const sel = document.getElementById("pReg"); if(sel) sel.value = reg;
+        const sel = document.getElementById("pReg"); if(sel){ sel.value = reg; sel._aggiorna && sel._aggiorna(); }
         esito.textContent = "Sei in " + reg + (citta ? " (" + citta + ")" : "")
                           + ". Le ricette del posto saliranno in cima.";
       }else{
