@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" translate="no">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Che cucino?</title>
+<meta name="google" content="notranslate">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F2F4EE" id="metaTema">
 <link rel="icon" href="icon-32.png" sizes="32x32">
@@ -513,6 +514,7 @@ const LINGUA = (()=>{
 })();
 const IN_INGLESE = LINGUA === "en";
 document.documentElement.lang = LINGUA;
+document.documentElement.setAttribute("translate", "no");   /* l'app traduce da sé: niente traduttore del browser */
 /* scelta tra due testi nel codice: L("ciao", "hi") */
 function L(it, en){ return IN_INGLESE ? en : it; }
 function cambiaLingua(l){
