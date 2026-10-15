@@ -985,7 +985,7 @@ const TEMI_SPECIALI = [
    d:"Un giro del mondo: ogni corso da un paese diverso.", den:"A trip round the world: each course from a different country."},
   {v:"pasqua", e:"\u{1F423}", n:"Pasquale", en:"Easter", t:"Menu di Pasqua", ten:"Easter menu",
    d:"I classici della tavola di Pasqua.", den:"The classics of the Italian Easter table.",
-   ids:{Antipasti:[553,647,358,171], Primi:[551,272,174,147], Secondi:[533,532,737,837], Dolci:[217,725,237]}},
+   ids:{Antipasti:[553,647,358], Primi:[551,272,174,147], Secondi:[533,532,737,837,171], Dolci:[217,725,237]}},
   {v:"natale", e:"\u{1F384}", n:"Natalizio", en:"Christmas", t:"Menu di Natale", ten:"Christmas menu",
    d:"Dalla vigilia al pranzo del 25: baccal\u00e0, paste in brodo, bolliti e i dolci delle feste.", den:"From Christmas Eve to lunch on the 25th: salt cod, pasta in broth, boiled meats and festive sweets.",
    ids:{Antipasti:[163,690,152,185,296], Primi:[175,622,623,664,174], Secondi:[266,475,164,632,55], Dolci:[670,711,323,327,579,692,543]}},
@@ -1330,6 +1330,21 @@ function esclusePerNome(){
   return out;
 }
 
+/* per i Menu a tema: stile scelto (vegetariano/vegano), allergie a tavola, ingredienti da evitare, ricette nascoste */
+function adattaAlTavolo(r){
+  if((S.nascoste||[]).includes(r.id)) return false;
+  if(RANGO[r.stile] < RANGO[sess.stile]) return false;
+  const alg = allergeniTavolo(); if(alg.some(a=>r.all.includes(a))) return false;
+  const evita = paroleEvita(); if(evita.some(v=>r.ing.some(i=>i.k.includes(v)))) return false;
+  return true;
+}
+function notaStileTema(){
+  const p = [];
+  if(sess.stile && sess.stile !== "onnivoro") p.push(L(sess.stile, sess.stile === "vegano" ? "vegan" : "vegetarian"));
+  if(allergeniTavolo().length) p.push(L("allergie a tavola","table allergies"));
+  if(paroleEvita().length) p.push(L("ingredienti che non ti piacciono","ingredients you dislike"));
+  return p.length ? `<p class="mini" style="margin-top:-2px">\u2705 ${L("Rispetto: ","Respecting: ")}${p.join(", ")}.</p>` : "";
+}
 /* come valuta(), ma con tutti i campi che scheda() si aspetta (usata fuori da filtra(), es. nel Menu a tema) */
 function valutaCompleta(r){
   const v = valuta(r);
@@ -1973,7 +1988,7 @@ function tappaRicette(){
 function apriMenuTema(paese, nome){
   const corsi = ["Antipasti","Primi","Secondi","Dolci"];
   const blocchi = corsi.map(cat=>{
-    const candidate = D.ricette.filter(r=>r.estero && r.luogo===paese && r.cat===cat);
+    const candidate = D.ricette.filter(r=>r.estero && r.luogo===paese && r.cat===cat && adattaAlTavolo(r));
     if(!candidate.length){
       const sing = SING[cat] || cat.toLowerCase();
       const nomeEn = trTesto(nome) || nome, singEn = trTesto(sing) || sing;
@@ -1991,17 +2006,23 @@ function apriMenuTema(paese, nome){
     <div class="velo-top"><h2>Menu ${esc(nome)}</h2>
       <button class="chiudi" data-tema="chiudi" onclick="chiudiVelo()">Chiudi</button></div>
     <p class="mini">La proposta pi\u00f9 fattibile per ciascun corso, in base a quello che hai in dispensa.</p>
+    ${notaStileTema()}
     ${blocchi}
   `);
 }
 /* menu a tema non legati a un paese */
 let MS = null;   /* stato del menu speciale aperto: tema, scelte per corso, alternative */
 function candidatiSpeciale(t, cat){
-  const ok = r => r.cat === cat && !(S.nascoste||[]).includes(r.id);
-  if(t.ids) return (t.ids[cat]||[]).map(trovaRicetta).filter(Boolean).filter(r=>!(S.nascoste||[]).includes(r.id)).map(valutaCompleta);
+  const ok = r => r.cat === cat && adattaAlTavolo(r);
+  if(t.ids){
+    const scelte = (t.ids[cat]||[]).map(trovaRicetta).filter(Boolean).filter(adattaAlTavolo);
+    if(scelte.length || sess.stile === "onnivoro") return scelte.map(valutaCompleta);
+    /* per vegetariani/vegani, se nessun classico della festa va bene, propongo altri piatti adatti */
+    return D.ricette.filter(r=>ok(r) && !r.estero).map(valutaCompleta).sort((a,b)=>b.pct-a.pct).slice(0,6);
+  }
   let c = D.ricette.filter(ok);
   if(t.v === "mare") c = c.filter(r=>!eDiCarne(r) && (cat === "Dolci" ? (r.leggero || !r.ing.some(i=>LATT.has(i.k))) : eDiPesce(r)));
-  else if(t.v === "terra") c = c.filter(r=>!eDiPesce(r) && (cat !== "Secondi" || eDiCarne(r)));
+  else if(t.v === "terra") c = c.filter(r=>!eDiPesce(r) && (cat !== "Secondi" || sess.stile !== "onnivoro" || eDiCarne(r)));
   else if(t.v === "leggero"){
     c = c.filter(r=>{ if(r._kcal==null) r._kcal = calorieRicetta(r); return r._kcal > 0 && r._kcal <= KCAL_MAX[cat] && !/fritt|frittur|pastell|impanat|scapece|fried/i.test(r.n); });
     const l = c.filter(r=>r.leggero); if(l.length >= 3) c = l;
@@ -2022,6 +2043,12 @@ function apriMenuSpeciale(v, scelte){
     });
   }
   MS = {v, scelte};
+  if(v === "mare" && sess.stile !== "onnivoro"){
+    apriVelo("tema", `<div class="velo-top"><h2>${t.e} <span data-no-tr>${L(t.t, t.ten)}</span></h2>
+      <button class="chiudi" data-tema="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
+      <div class="sc-box" data-no-tr>\u{1F331} ${L(`Il menu di mare \u00e8 fatto di pesce e molluschi, quindi non \u00e8 compatibile con lo stile ${sess.stile} che hai scelto. Prova il menu di terra o ipocalorico: rispettano il tuo stile.`, `The seafood menu is built on fish and shellfish, so it doesn\u2019t fit the ${sess.stile === "vegano" ? "vegan" : "vegetarian"} style you chose. Try the land or low-calorie menu: they respect your style.`)}</div>`);
+    return;
+  }
   let tot = 0;
   const blocchi = corsi.map(cat=>{
     const tutte = candidatiSpeciale(t, cat);
@@ -2042,7 +2069,8 @@ function apriMenuSpeciale(v, scelte){
   apriVelo("tema", `
     <div class="velo-top"><h2>${t.e} <span data-no-tr>${L(t.t, t.ten)}</span></h2>
       <button class="chiudi" data-tema="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
-    <p class="mini" data-no-tr>${L(t.d, t.den)} ${L("Per ogni corso ti propongo la ricetta pi\u00f9 fattibile con la tua dispensa.","For each course I suggest the recipe you can best make with your pantry.")}</p>
+    <p class="mini" data-no-tr>${v === "terra" && sess.stile !== "onnivoro" ? L("Niente pesce n\u00e9 carne: ortaggi, legumi, cereali e formaggi.","No fish or meat: vegetables, pulses, grains and cheese.") : L(t.d, t.den)} ${L("Per ogni corso ti propongo la ricetta pi\u00f9 fattibile con la tua dispensa.","For each course I suggest the recipe you can best make with your pantry.")}</p>
+    ${notaStileTema()}
     ${blocchi}
     ${v === "leggero" && tot ? `<div class="sc-box" style="margin-top:12px" data-no-tr>\u{1F525} ${L(`Totale del pasto: circa ${tot} kcal a persona.`, `Meal total: about ${tot} kcal per person.`)}</div>` : ""}
   `);
