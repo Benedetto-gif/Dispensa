@@ -196,6 +196,10 @@ body[data-filigrana="1"]::before{
 /* ===== Impariamo a cucinare ===== */
 .sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .sc-gruppo{font-size:1.1rem;margin:20px 0 -2px}
+.sc-agg{width:100%;margin-top:10px}
+#smTesto,#smCons{width:100%;box-sizing:border-box;font:inherit;border-radius:12px;padding:10px;border:1px solid var(--linea);background:var(--carta);color:var(--inchiostro)}
+.sc-nav a.btn{text-decoration:none;display:inline-flex;align-items:center}
+.sc-lez .sc-intro+.sc-intro{margin-top:8px}
 .sc-grid .bcella{padding:14px}
 .sc-grid .bcella .sc-e{font-size:1.9rem;line-height:1;display:block;margin-bottom:8px}
 .sc-lez .sc-intro{font-size:1rem;line-height:1.55;margin:6px 0 4px}
@@ -966,7 +970,7 @@ const VUOTO = {
   profilo:{nome:"",regione:"",stile:"onnivoro",allergeni:[],evita:"",tempo:"999",fatto:false},
   ospitiSalvati:[], dispensa:[], baseMigrato:false, dispensaData:null,
   preferite:[], cucinate:{}, spesa:[],
-  nascoste:[], mie:[], ingMiei:{}, ingTolti:[], ingSpostati:{}
+  nascoste:[], mie:[], ingMiei:{}, ingTolti:[], ingSpostati:{}, schedeMie:[]
 };
 let S = carica();
 /* al primo avvio, gli ingredienti di base risultano già in dispensa: l'utente toglie solo quelli che non ha */
@@ -3401,8 +3405,19 @@ function sezScuola(z){
   if(z.box) h += `<div class="sc-box">\u{1F4A1} ${z.box}</div>`;
   return h;
 }
+/* schede aggiunte dall'utente (attrezzi o tecniche): testo semplice, sempre con escape */
+function lezioneMia(m){
+  const righe = t => String(t||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  const sez = [];
+  if(righe(m.consigli).length) sez.push({h:L("Consigli","Tips"), l:righe(m.consigli).map(esc)});
+  return {id:m.id, g:m.g, mia:true, c:"c-bordeaux",
+    e: esc(m.e || (m.g === "att" ? "\u{1F527}" : "\u{1F4DD}")),
+    t: esc(m.t), s: esc(m.s || L("Aggiunta da te","Added by you")),
+    intro: righe(m.testo).map(esc).join("</p><p class=\"sc-intro\">"), sez, ric:[]};
+}
+function tutteLezioni(){ return scuola().concat((S.schedeMie || []).map(lezioneMia)); }
 function apriScuola(id){
-  const lez = scuola();
+  const lez = tutteLezioni();
   const top = (titolo, indietro)=>`<div class="velo-top"><h2>${titolo}</h2>
       ${indietro?`<button class="chiudi" data-scuola="indice">\u2190 ${L("Lezioni","Lessons")}</button>`:""}
       <button class="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>`;
@@ -3413,7 +3428,9 @@ function apriScuola(id){
       ${[["tec", L("Le tecniche","Techniques")], ["att", L("L\u2019attrezzatura","Equipment")]].map(([g, nomeG])=>`
       <h3 class="sc-gruppo">${nomeG}</h3>
       <div class="sc-grid" data-no-tr>${lez.filter(x=>(x.g||"tec") === g).map(x=>`<div class="bcella ${x.c}" data-scuola="${x.id}" role="button" tabindex="0">
-        <span class="sc-e">${x.e}</span><b>${x.t}</b><small>${x.s}</small></div>`).join("")}</div>`).join("")}`);
+        ${x.mia?`<span class="badge">${L("tua","yours")}</span>`:""}
+        <span class="sc-e">${x.e}</span><b>${x.t}</b><small>${x.s}</small></div>`).join("")}</div>
+      <button class="btn ghost sc-agg" data-scuola-nuova="${g}">\uFF0B ${g === "att" ? L("Aggiungi un attrezzo","Add a piece of equipment") : L("Aggiungi una tecnica","Add a technique")}</button>`).join("")}`);
     return;
   }
   const i = lez.indexOf(l), succ = lez[(i+1) % lez.length];
@@ -3424,6 +3441,10 @@ function apriScuola(id){
       <p class="sc-intro">${l.intro}</p>
       ${l.sez.map(sezScuola).join("")}
     </div>
+    ${l.mia?`<div class="sc-nav">
+      <a class="btn ghost" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent((S.schedeMie.find(m=>m.id===l.id)||{}).t + L(" cucina come si usa"," cooking how to use"))}">\u{1F50D} ${L("Approfondisci sul web","Learn more on the web")}</a>
+      <button class="btn ghost" data-scuola-modifica="${l.id}">\u270F\uFE0F ${L("Modifica","Edit")}</button>
+      <button class="btn ghost" data-scuola-elimina="${l.id}">\u{1F5D1}\uFE0F ${L("Elimina","Delete")}</button></div>`:""}
     ${ric.length?`<h3 style="font-size:1.05rem;margin:24px 0 10px;padding-top:12px;border-top:1px solid var(--linea)">\u{1F468}\u200D\u{1F373} ${L("Mettiti alla prova","Put it into practice")}</h3>
       <div class="ric-grid">${ric.map(scheda).join("")}</div>`:""}
     <div class="sc-nav">
@@ -3440,6 +3461,50 @@ document.addEventListener("click", e=>{
 document.addEventListener("keydown", e=>{
   if(e.key !== "Enter") return;
   const b = e.target.closest && e.target.closest(".bcella[data-scuola]"); if(b) b.click();
+});
+function apriSchedaMia(g, id){
+  const m = id ? (S.schedeMie || []).find(x=>x.id === id) : null;
+  if(m) g = m.g;
+  const att = g === "att";
+  const v = k => m ? esc(m[k] || "") : "";
+  apriVelo("scuola", `<div class="velo-top"><h2>${m ? L("Modifica","Edit") : att ? L("Nuovo attrezzo","New equipment") : L("Nuova tecnica","New technique")}</h2>
+      <button class="chiudi" data-scuola="indice">${L("Annulla","Cancel")}</button></div>
+    <p class="mini">${att ? L("Aggiungi un attrezzo che usi o che vorresti comprare, con le tue note.","Add a piece of equipment you use or would like to buy, with your own notes.")
+                          : L("Aggiungi una tecnica che vuoi ricordare, con i tuoi appunti.","Add a technique you want to remember, with your own notes.")}</p>
+    <label class="campo"><span>${L("Gruppo","Group")}</span>
+      <select id="smG"><option value="att" ${att?"selected":""}>${L("L\u2019attrezzatura","Equipment")}</option><option value="tec" ${att?"":"selected"}>${L("Le tecniche","Techniques")}</option></select></label>
+    <div class="idea-riga" style="margin-top:10px">
+      <label class="campo" style="flex:0 0 76px"><span>${L("Icona","Icon")}</span><input type="text" id="smE" maxlength="8" value="${v("e")}" placeholder="${att?"\u{1F527}":"\u{1F4DD}"}" data-no-tr></label>
+      <label class="campo" style="flex:1"><span>${L("Nome","Name")}</span><input type="text" id="smT" value="${v("t")}" placeholder="${att?L("es. Sacca a poche","e.g. Piping bag"):L("es. La pasta sfoglia","e.g. Puff pastry")}" data-no-tr></label>
+    </div>
+    <label class="campo" style="margin-top:10px"><span>${L("In breve (facoltativo)","In short (optional)")}</span>
+      <input type="text" id="smS" value="${v("s")}" placeholder="${att?L("es. Per farcire e decorare","e.g. For filling and decorating"):L("es. Pieghe e riposi","e.g. Folds and rests")}" data-no-tr></label>
+    <label class="campo" style="margin-top:10px"><span>${att?L("A cosa serve","What it\u2019s for"):L("Di cosa si tratta","What it is")}</span>
+      <textarea id="smTesto" rows="5" data-no-tr>${v("testo")}</textarea></label>
+    <label class="campo" style="margin-top:10px"><span>${L("Consigli (uno per riga)","Tips (one per line)")}</span>
+      <textarea id="smCons" rows="5" data-no-tr placeholder="${att?L("es. Riempila solo per due terzi","e.g. Fill it only two-thirds full"):""}">${v("consigli")}</textarea></label>
+    <p class="mini" id="smEsito" aria-live="polite"></p>
+    <div class="azioni"><button class="btn" id="smSalva">${L("Salva","Save")}</button></div>`);
+  document.getElementById("smSalva").onclick = ()=>{
+    const val = k => document.getElementById(k).value.trim();
+    if(!val("smT")){ document.getElementById("smEsito").textContent = L("Scrivi almeno il nome.","Write at least the name."); document.getElementById("smT").focus(); return; }
+    const dati = {g:val("smG"), e:val("smE"), t:val("smT"), s:val("smS"), testo:val("smTesto"), consigli:val("smCons")};
+    S.schedeMie = S.schedeMie || [];
+    let nid = id;
+    if(m) Object.assign(m, dati); else { nid = "m" + Date.now(); S.schedeMie.push(Object.assign({id:nid}, dati)); }
+    salva(); apriScuola(nid);
+  };
+  document.getElementById("smT").focus();
+}
+document.addEventListener("click", e=>{
+  const n = e.target.closest("[data-scuola-nuova]");
+  if(n){ apriSchedaMia(n.dataset.scuolaNuova); return; }
+  const md = e.target.closest("[data-scuola-modifica]");
+  if(md){ apriSchedaMia(null, md.dataset.scuolaModifica); return; }
+  const el = e.target.closest("[data-scuola-elimina]");
+  if(el && confirm(L("Eliminare questa scheda?","Delete this card?"))){
+    S.schedeMie = (S.schedeMie || []).filter(x=>x.id !== el.dataset.scuolaElimina); salva(); apriScuola();
+  }
 });
 
 function apriScienza(){
