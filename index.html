@@ -120,6 +120,9 @@ body[data-filigrana="1"]::before{
 .ric-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:12px}
 .ws-links{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .ws-links.q4{grid-template-columns:repeat(2,1fr)}
+.cerco-altro{margin:18px 0 6px;text-align:center}
+.cerco-altro>.btn{width:100%}
+.cerco-altro-box{margin-top:10px}
 .ws-links a{border-radius:12px;padding:12px 8px;background:var(--superficie2);
   text-align:center;font-size:.84rem;font-weight:600;color:inherit;text-decoration:none;
   border:1px solid var(--linea)}
@@ -1833,19 +1836,15 @@ function tappaRicette(){
     : sess.modo==="idea" && sess.cerca.trim()
       ? `<div class="vuoto"><p>\u00ab${esc(sess.cerca)}\u00bb non \u00e8 nell\u2019archivio.</p>
           <p class="mini">Vuoi cercarla sul web? Trovata la ricetta, tocca i tre puntini in alto, \u201cCopia link\u201d, e torna qui.</p>
-          <div class="ws-links${IN_INGLESE?"":" q4"}">
-            <a href="https://www.google.com/search?q=${encodeURIComponent(L("ricetta ","recipe ")+sess.cerca)}" target="_blank" rel="noopener">\u{1F50D} Google</a>
-            ${IN_INGLESE ? `
-            <a href="https://www.bbcgoodfood.com/search?q=${encodeURIComponent(sess.cerca)}" target="_blank" rel="noopener">\u{1F7E2} BBC Good Food</a>
-            <a href="https://www.allrecipes.com/search?q=${encodeURIComponent(sess.cerca)}" target="_blank" rel="noopener">\u{1F944} Allrecipes</a>` : `
-            <a href="https://www.giallozafferano.it/ricerca-ricette/${encodeURIComponent(sess.cerca)}" target="_blank" rel="noopener">\u{1F7E1} GialloZafferano</a>
-            <a href="https://www.cucchiaio.it/ricerca/?q=${encodeURIComponent(sess.cerca)}" target="_blank" rel="noopener">\u{1F944} Cucchiaio</a>
-            <a href="https://www.google.com/search?q=${encodeURIComponent("site:casapappagallo.it "+sess.cerca)}" target="_blank" rel="noopener">\u{1F99C} Casa Pappagallo</a>`}
-          </div>
-          <button class="btn btn-web" style="margin-top:14px" data-importa-copiato>\u{1F4CB} Ho copiato il link: importa la ricetta</button></div>`
+          ${linkWebHTML(sess.cerca)}</div>`
       : `<div class="vuoto"><p>Con questi filtri non resta niente.</p>
           <p class="mini">Prova a togliere una portata, ad allargare il tempo o a cambiare lo stile.</p></div>`
   }
+  ${sess.modo==="idea" && sess.cerca.trim() && (mostra.length || escluse.length)
+    ? `<div class="cerco-altro"><button class="btn btn-web" data-cerco-altro>\u{1F310} ${L("Cerco altro","Search elsewhere")}</button>
+        <div class="cerco-altro-box" hidden>
+          <p class="mini">${L(`Cerca \u00ab${esc(sess.cerca)}\u00bb sul web. Trovata la ricetta, tocca i tre puntini in alto, \u201cCopia link\u201d, e torna qui.`, `Search the web for \u00ab${esc(sess.cerca)}\u00bb. Once you find the recipe, tap the three dots at the top, \u201cCopy link\u201d, and come back here.`)}</p>
+          ${linkWebHTML(sess.cerca)}</div></div>` : ""}
   ${escluse.length?`<div class="card" style="margin-top:14px"><b>${mostra.length?"Ho trovato anche":"Le ho trovate, ma le ho escluse"}</b>
       <ul class="spesa-l" style="margin-top:6px">${escluse.map(o=>`<li><span><span data-no-tr>${esc(nomeR(o.r))}</span>${o.r.id<0?" <span class=\"mini\">(tua)</span>":""}<br><span class="mini">Esclusa perch\u00e9 ${esc(o.motivo)}.</span></span></li>`).join("")}</ul></div>`:""}
   ${lista.length>mostra.length?`<p class="mini" style="text-align:center">Mostrate le prime ${mostra.length} di ${lista.length}. Restringi i filtri per vedere le altre.</p>`:""}`;
@@ -2329,6 +2328,19 @@ document.addEventListener("click", e=>{
   apriFuori(a.href);
 }, true);
 
+/* link per cercare la ricetta sui siti di cucina + tasto per importare il link copiato */
+function linkWebHTML(q){
+  return `<div class="ws-links${IN_INGLESE?"":" q4"}">
+            <a href="https://www.google.com/search?q=${encodeURIComponent(L("ricetta ","recipe ")+q)}" target="_blank" rel="noopener">\u{1F50D} Google</a>
+            ${IN_INGLESE ? `
+            <a href="https://www.bbcgoodfood.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">\u{1F7E2} BBC Good Food</a>
+            <a href="https://www.allrecipes.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">\u{1F944} Allrecipes</a>` : `
+            <a href="https://www.giallozafferano.it/ricerca-ricette/${encodeURIComponent(q)}" target="_blank" rel="noopener">\u{1F7E1} GialloZafferano</a>
+            <a href="https://www.cucchiaio.it/ricerca/?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">\u{1F944} Cucchiaio</a>
+            <a href="https://www.google.com/search?q=${encodeURIComponent("site:casapappagallo.it "+q)}" target="_blank" rel="noopener">\u{1F99C} Casa Pappagallo</a>`}
+          </div>
+          <button class="btn btn-web" style="margin-top:14px" data-importa-copiato>\u{1F4CB} Ho copiato il link: importa la ricetta</button>`;
+}
 function apriVelo(nome, html){
   veloAperto = nome;
   velo.innerHTML = `<div class="velo"><div class="velo-in">${html}</div></div>`;
@@ -3055,6 +3067,12 @@ function apriImport(){
       <textarea id="impTesto" rows="10" placeholder="Nome del piatto&#10;Ingredienti&#10;320 gr di pasta&#10;2 melanzane&#10;Procedimento&#10;Taglia le melanzane\u2026"></textarea></label>
     <div class="azioni"><button class="btn" data-imp="leggi">Prepara la ricetta</button></div>`);
 }
+/* "Cerco altro": apre/chiude i link ai siti di cucina sotto i risultati */
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-cerco-altro]"); if(!b) return;
+  const box = b.nextElementSibling; box.hidden = !box.hidden;
+  if(!box.hidden) box.scrollIntoView({block:"nearest", behavior:"smooth"});
+});
 /* dal "non è nell'archivio": apre la Ricetta dal web e prova a incollare subito il link copiato */
 document.addEventListener("click", async e=>{
   if(!e.target.closest("[data-importa-copiato]")) return;
