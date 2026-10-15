@@ -197,6 +197,9 @@ body[data-filigrana="1"]::before{
 .sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .sc-gruppo{font-size:1.1rem;margin:20px 0 -2px}
 .sc-agg{width:100%;margin-top:10px}
+.ico-in{display:inline-grid;place-items:center;vertical-align:middle;margin:0 2px;line-height:1}
+.ico-musica{width:30px;height:30px;border-radius:50%;border:1px solid var(--linea);background:var(--superficie);color:var(--verde);font-size:1.05rem;box-shadow:0 3px 8px rgba(0,0,0,.15)}
+.ico-nutri{font-size:1.15rem}
 .ms-corso{margin-bottom:14px}
 .ms-cat{font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;margin:4px 2px 6px;color:var(--inchiostro-soft)}
 .ms-alt{margin-top:6px;align-items:center}
@@ -3474,7 +3477,7 @@ function dettaIngrediente(bottone, onTesto){
    Perché questa app
    =========================================================== */
 const PERCHE_EN = `
-    <div class="velo-top"><h2>Why this app</h2>
+    <div class="velo-top"><h2>Why this app?</h2>
       <button class="chiudi" data-perche="chiudi" onclick="chiudiVelo()">Close</button></div>
     <div data-no-tr>
     <p>You get home and you don't feel like falling back on the usual sandwich or a dry piece of cheese left in the fridge. <strong>"What’s cooking?"</strong> (in Italian, <em>"Che cucino?"</em>) is designed to answer that question straight away, with what you actually have at home.</p>
@@ -3492,53 +3495,61 @@ const PERCHE_EN = `
     <div class="sez"><strong>Want an idea?</strong></div>
     <p>Let the app choose: <strong>"What’s cooking?"</strong> shows you the recipes you can make 100% with what you have, then those at 90% and so on, so you always have dozens of recipes to pick from: some ready right away, others one ingredient away.</p>
 
+    <div class="sez"><strong>A complete themed menu</strong></div>
+    <p>In <strong>Themed menu</strong> the app puts together a whole meal, from starter to dessert: the cooking of a country (Spanish, Greek, French, Japanese and more), a seafood or land menu, a low-calorie one with the calorie total, a trip round the world, or the holiday menus for Easter, Christmas and New Year's Eve. For each course it suggests the recipe you can best make with your pantry and, if you don't like it, you swap it with one tap. It always respects your style, vegetarian or vegan, and the allergies of everyone at the table.</p>
+
     <div class="sez"><strong>While you cook</strong></div>
-    <p>While you prepare the dish the screen stays on, so you can keep reading the method, and you can also listen to your favourite music by tapping the note: the app keeps you pleasant company.</p>
+    <p>While you prepare the dish the screen stays on, so you can keep reading the method, and you can also listen to your favourite music by tapping the button with the note <span class="ico-in ico-musica" aria-label="music button">♪</span>: the app keeps you pleasant company.</p>
     <p>When it's ready, you can look for elegant plating photos on the web without leaving the app, for nice ideas on how to serve it.</p>
 
     <div class="sez"><strong>Want to clear out the fridge?</strong></div>
     <p>Every now and then it pays to use up what is about to expire: an omelette or a leftovers dish is a classic. Look up the ingredient you want to use up and the app suggests a recipe you can make from it and from what you have.</p>
 
     <div class="sez"><strong>Finally</strong></div>
-    <p>For every recipe you can see the calories per serving and also the nutrition profile, by tapping the dedicated button.</p>
+    <p>For every recipe you can see the calories per serving and also the nutrition profile, by tapping the <span class="ico-in ico-nutri" aria-label="nutrition button">\u{1F4CA}</span> button.</p>
     <p>And every recipe comes with a suggestion of what to drink to go with your dish.</p>
+    <div class="sez"><strong>Want to know more?</strong></div>
+    <p>There's much more to discover in the <strong>Tools</strong> menu and in <strong>Let’s learn to cook</strong>.</p>
     </div>`;
 function apriPerche(){
   if(IN_INGLESE){ apriVelo("perche", PERCHE_EN); return; }
   apriVelo("perche", `
-    <div class="velo-top"><h2>Perch\u00e9 questa app</h2>
+    <div class="velo-top"><h2>Perch\u00e9 questa app?</h2>
       <button class="chiudi" data-perche="chiudi" onclick="chiudiVelo()">Chiudi</button></div>
 
     <p>Torni a casa e non ti va di ripiegare sui soliti tramezzini o su un pezzo di formaggio secco rimasto in frigo.</p> 
     
     <p><strong>"Che cucino?"</strong> è pensata per rispondere subito a questa domanda, con quello che hai davvero in casa.</p>
 
-    <div class="sez"><strong>"Che cucino?"</strong> Non è solo per single è anche per famiglie e per ospiti.</div>
-    <p>Infatti l'app tiene conto dei bisogni di tutti: o vegani, vegetariani e onnivori, e tiene conto anche delle allergie o intolleranze di ciascuno. <strong>Garantire la sicurezza di tutti a tavola è importante</strong>.</p>
+    <div class="sez"><strong>"Che cucino?"</strong> non è solo per single: è anche per famiglie e per ospiti.</div>
+    <p>Infatti l'app tiene conto dei bisogni di tutti, vegani, vegetariani e onnivori, e tiene conto anche delle allergie o intolleranze di ciascuno. <strong>Garantire la sicurezza di tutti a tavola è importante</strong>.</p>
 
     <div class="sez">Scegli cosa vuoi preparare e il tempo che hai</div>
-    <p>Un antipasto, un primo, un secondo, un dolce  o un piatto unico, o un itero pranzo o cena. Poi annoti quello che hai in dispensa: l'app lo ricorda, e così la volta dopo correggi solo quello che è cambiato.</p>
+    <p>Un antipasto, un primo, un secondo, un dolce o un piatto unico, o un intero pranzo o cena. Poi annoti quello che hai in dispensa: l'app lo ricorda, e così la volta dopo correggi solo quello che è cambiato.</p>
 
     <div class="sez"><strong>Hai già un'idea?</strong></div>
     <p>Scrivi quello che vuoi preparare, l'app controlla se hai tutti gli ingredienti. Se ti manca qualcosa non preoccuparti, <strong>"Che cucino?"</strong> ti propone una sostituzione con quello che hai già, oppure aggiunge quel che manca alla lista della spesa.</p>
-    <p>Se la ricetta non è nell'archivio cercala nel web con i tasti dedicati indirizzati a alcuni siti, o cercala autonomamente.</p>
-    <p>Copia il link e poi vai su <strong>Strumenti</strong> e incollalo nell'apposita casella: l'app prova a leggerla la processa e se è in un formato standard la salva.</p>
-    <p>Ora hai una nuova ricetta in archivio</p>
-    <div class="sez"><strong>Vuoi una idea di cosa mangiare?</strong></div>
+    <p>Se la ricetta non è nell'archivio cercala nel web con i tasti dedicati indirizzati ad alcuni siti, o cercala autonomamente.</p>
+    <p>Copia il link e poi vai su <strong>Strumenti</strong> e incollalo nell'apposita casella: l'app prova a leggerla, la elabora e, se è in un formato standard, la salva.</p>
+    <p>Ora hai una nuova ricetta in archivio.</p>
+    <div class="sez"><strong>Vuoi un'idea di cosa mangiare?</strong></div>
     <p>Lascia scegliere all'app: <strong>"Che cucino?"</strong> ti mostra le ricette fattibili al 100% con quello che hai, poi quelle al 90% e via via a scalare, così hai sempre decine di ricette fra cui scegliere: alcune pronte subito, altre a un ingrediente di distanza.</p>
 
+    <div class="sez"><strong>Un menu completo a tema</strong></div>
+    <p>In <strong>Menu a tema</strong> l'app compone un pasto intero, dall'antipasto al dolce: la cucina di un paese (spagnola, greca, francese, giapponese e altre), un menu di mare o di terra, uno ipocalorico con il totale delle calorie, un giro del mondo, oppure i menu delle feste, di Pasqua, Natale e Capodanno. Per ogni corso ti propone la ricetta più fattibile con la tua dispensa e, se non ti convince, la cambi con un tocco. Rispetta sempre il tuo stile, vegetariano o vegano, e le allergie di chi è a tavola.</p>
+
     <div class="sez"><strong>Mentre cucini</strong></div>
-    <p>Stai preparando il piatto lo schermo resta acceso così puoi continuare a leggere la procedura e se vuoi puoi ascoltare anche la tua musica preferita cliccando sul simbolo croma: così l'app ti farà piacevole compagnia.</p>
+    <p>Mentre prepari il piatto lo schermo resta acceso, così puoi continuare a leggere la procedura; e se vuoi puoi ascoltare anche la tua musica preferita toccando il tasto con la croma <span class="ico-in ico-musica" aria-label="tasto musica">♪</span>: così l'app ti farà piacevole compagnia.</p>
     <p> Quando sei pronto, puoi andare a cercare le foto di impiattamenti eleganti direttamente sul web senza uscire dall'app, belle idee di come servirlo.</p>
 
     <div class="sez"><strong>Vuoi svuotare il frigo?</strong></div>
     <p>Ogni tanto conviene smaltire quello che sta per scadere: una frittata o piatti di recupero in questo caso sono un classico. Scrivi l'ingrediente che vuoi consumare e l'app ti suggerisce una ricetta fattibile a partire da quello che desideri smaltire e quello che hai.</p>
 
     <div class="sez"><strong> Per finire</strong></div>
-    <p>Di tutte le ricette puoi conoscere l'apporto oltre che calorico per porzione anche il profilo nutrizionale cliccando l'apposito tasto.</p>
-    <p>E per ogni ricetta avrai anche con un consiglio su cosa bere per accompagnare al meglio il tuo piatto.</p>
+    <p>Di tutte le ricette puoi conoscere, oltre all'apporto calorico per porzione, anche il profilo nutrizionale toccando il tasto <span class="ico-in ico-nutri" aria-label="tasto valori nutrizionali">\u{1F4CA}</span>.</p>
+    <p>E per ogni ricetta avrai anche un consiglio su cosa bere per accompagnare al meglio il tuo piatto.</p>
     <div class="sez"><strong>Vuoi sapere di più?</strong></div> 
-    <p> C'è tanto ancora da scoprire sotto il menù <strong>Strumenti<7strong> e in <strong>Impariamo a cucinare</strong></p>
+    <p> C'è tanto ancora da scoprire sotto il menù <strong>Strumenti</strong> e in <strong>Impariamo a cucinare</strong></p>
     `);
 }
 document.addEventListener("click", e=>{
