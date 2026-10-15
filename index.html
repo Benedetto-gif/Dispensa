@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Che cucino?</title>
 <meta name="google" content="notranslate">
+<meta name="referrer" content="no-referrer">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F2F4EE" id="metaTema">
 <link rel="icon" href="icon-32.png" sizes="32x32">
@@ -4106,27 +4107,39 @@ const RADIO = [
   {n:"Jazz",       u:["https://stream.srg-ssr.ch/m/rsj/mp3_128"]},
   {n:"Rock",       u:["https://stream.radioparadise.com/rock-128",
                       "https://stream.radioparadise.com/mp3-128"]},
-  {n:"House",      u:["https://ice5.somafm.com/beatblender-128-mp3",
-                      "https://ice.somafm.com/beatblender"]},
-  {n:"Elettronica",u:["https://ice5.somafm.com/groovesalad-128-mp3",
-                      "https://ice.somafm.com/groovesalad"]},
-  {n:"Folk",       u:["https://ice5.somafm.com/folkfwd-128-mp3",
-                      "https://ice.somafm.com/folkfwd"]},
-  {n:"Lounge",     u:["https://ice5.somafm.com/secretagent-128-mp3",
-                      "https://ice.somafm.com/secretagent"]},
+  {n:"House",      u:["https://listenssl.ibizaglobalradio.com:8024/ibizaglobalradio.mp3",
+                      "https://ice2.somafm.com/beatblender-128-mp3",
+                      "https://ice5.somafm.com/beatblender-128-mp3",
+                      "https://icecast.radiofrance.fr/fipelectro-midfi.mp3?id=radiofrance"]},
+  {n:"Elettronica",u:["https://icecast.radiofrance.fr/fipelectro-midfi.mp3?id=radiofrance",
+                      "https://ice2.somafm.com/groovesalad-128-mp3",
+                      "https://ice5.somafm.com/groovesalad-128-mp3"]},
+  {n:"Folk",       u:["https://ice2.somafm.com/folkfwd-128-mp3",
+                      "https://ice5.somafm.com/folkfwd-128-mp3",
+                      "https://stream.radioparadise.com/global-128",
+                      "https://icecast.radiofrance.fr/fipworld-midfi.mp3?id=radiofrance"]},
+  {n:"Lounge",     u:["https://ice2.somafm.com/secretagent-128-mp3",
+                      "https://ice5.somafm.com/secretagent-128-mp3",
+                      "https://stream.radioparadise.com/mellow-128",
+                      "https://icecast.radiofrance.fr/fipgroove-midfi.mp3?id=radiofrance"]},
   {n:"Pop",        u:["https://stream.srg-ssr.ch/m/rsp/mp3_128"]}
 ];
 
 const radioAudio = new Audio();
 radioAudio.preload = "none";
-let radioSel = -1, radioUrl = 0, radioMsg = "", radioAperto = false, radioAvanza = false;
+let radioSel = -1, radioUrl = 0, radioMsg = "", radioAperto = false, radioAvanza = false, radioAttesa = null, radioInOnda = false;
 
 function apriFlusso(){
   const st = RADIO[radioSel];
   radioMsg = "Collego " + st.n + "\u2026";
   radioAudio.src = st.u[radioUrl];
   disegnaRadio();
-  radioAudio.play().catch(()=>avanzaRadio());
+  /* se un indirizzo non risponde e non da' nemmeno errore (succede sui telefoni), dopo 7 secondi si prova il successivo */
+  clearTimeout(radioAttesa);
+  const sel = radioSel, url = radioUrl;
+  radioInOnda = false;
+  radioAttesa = setTimeout(()=>{ if(radioSel === sel && radioUrl === url && !radioInOnda) avanzaRadio(); }, 7000);
+  radioAudio.play().catch(err=>{ if(err && (err.name === "NotAllowedError" || err.name === "AbortError")) return; if(radioSel === sel && radioUrl === url) avanzaRadio(); });
   try{
     if("mediaSession" in navigator)
       navigator.mediaSession.metadata = new MediaMetadata({title:st.n, artist:L("Che cucino?","What\u2019s cooking?")});
@@ -4143,6 +4156,7 @@ function avanzaRadio(){
   }
 }
 function fermaRadio(){
+  clearTimeout(radioAttesa);
   radioAudio.pause();
   radioAudio.removeAttribute("src");
   radioAudio.load();
@@ -4154,6 +4168,8 @@ function accendiRadio(i){
 }
 radioAudio.addEventListener("error", avanzaRadio);
 radioAudio.addEventListener("playing", ()=>{
+  clearTimeout(radioAttesa);
+  radioInOnda = true;
   radioMsg = "In onda: " + RADIO[radioSel].n;
   disegnaRadio();
 });
