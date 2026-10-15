@@ -70,33 +70,33 @@ body[data-filigrana="1"]::before{
 .pcella.cat-gruppo{padding:0}
 .pcella.cat-gruppo > summary{padding:14px;cursor:pointer;font-weight:700;display:flex;justify-content:space-between;gap:10px;list-style:none}
 .pcella.cat-gruppo > summary::-webkit-details-marker{display:none}
-.pcella.cat-gruppo > summary em{font-style:normal;font-weight:400;opacity:.85;font-size:.83rem}
+.pcella.cat-gruppo > summary em{font-style:normal;font-weight:600;opacity:1;font-size:.88rem}
 .pcella.cat-gruppo .corpo{padding:0 14px 14px}
 /* colori convenzionali HACCP per i reparti della dispensa */
-.pcella.cat-verdure{background:#3E8E4F;color:#fff}
-.pcella.cat-frutta{background:#7AA62B;color:#fff}
+.pcella.cat-verdure{background:#32723F;color:#fff}
+.pcella.cat-frutta{background:#516E1C;color:#fff}
 .pcella.cat-essiccati{background:#8D5A3B;color:#fff}
-:root[data-scuro] .pcella.cat-essiccati{background:#A26B48}
+:root[data-scuro] .pcella.cat-essiccati{background:#885A3C}
 .sotto-rep{font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;margin:12px 0 8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.4)}
 .sotto-rep:first-child{border-top:0;padding-top:0;margin-top:2px}   /* verde HACCP, tono piu' chiaro per distinguerla dalle verdure */
-.pcella.cat-carne{background:#C0392B;color:#fff}
-.pcella.cat-pesce{background:#1E88C7;color:#fff}
-.pcella.cat-grigio{background:#6B7280;color:#fff}
-.pcella.cat-ocra{background:#B8860B;color:#fff}
+.pcella.cat-carne{background:#B83729;color:#fff}
+.pcella.cat-pesce{background:#176A9B;color:#fff}
+.pcella.cat-grigio{background:#5F6572;color:#fff}
+.pcella.cat-ocra{background:#835F08;color:#fff}
 .pcella.cat-giallo{background:#E3B400;color:#3A2E00;border:1px solid #C79A00}
 .pcella.cat-latticini{background:#FAF8F2;color:#2A2A22;border:1px solid #DCD6C4}
 .pcella.cat-ghiaccio{background:#E7F5FA;color:#1B3A44;border:1px solid #C7E3ED}
-:root[data-scuro] .pcella.cat-verdure{background:#4CA860}
-:root[data-scuro] .pcella.cat-frutta{background:#8DBA3A}
-:root[data-scuro] .pcella.cat-carne{background:#D9483A}
-:root[data-scuro] .pcella.cat-pesce{background:#2F9BDE}
-:root[data-scuro] .pcella.cat-grigio{background:#7C8794}
-:root[data-scuro] .pcella.cat-ocra{background:#CC9A1E}
+:root[data-scuro] .pcella.cat-verdure{background:#337140}
+:root[data-scuro] .pcella.cat-frutta{background:#526C22}
+:root[data-scuro] .pcella.cat-carne{background:#B23B30}
+:root[data-scuro] .pcella.cat-pesce{background:#206997}
+:root[data-scuro] .pcella.cat-grigio{background:#5D656F}
+:root[data-scuro] .pcella.cat-ocra{background:#7E5F13}
 :root[data-scuro] .pcella.cat-giallo{background:#E3B400;color:#3A2E00}
 :root[data-scuro] .pcella.cat-latticini{background:#EDE9DD;color:#2A2A22}
 :root[data-scuro] .pcella.cat-ghiaccio{background:#D7EEF6;color:#1B3A44}
-.pcella.cat-giallo .mini,.pcella.cat-latticini .mini,.pcella.cat-ghiaccio .mini{opacity:.75}
-.pcella.cat-giallo > summary em,.pcella.cat-latticini > summary em,.pcella.cat-ghiaccio > summary em{opacity:.65}
+.pcella.cat-giallo .mini,.pcella.cat-latticini .mini,.pcella.cat-ghiaccio .mini{opacity:.9}
+.pcella.cat-giallo > summary em,.pcella.cat-latticini > summary em,.pcella.cat-ghiaccio > summary em{opacity:.85}
 #cerca.ing-ok{border-color:var(--verde);background:color-mix(in srgb,var(--verde) 10%,var(--superficie))}
 .ing-esito-ok{color:var(--verde);font-weight:700}
 .pcella[class*="c-"] .ing-esito-ok{color:#EAFFEA;opacity:1}
@@ -115,7 +115,7 @@ body[data-filigrana="1"]::before{
 .pcella:active{transform:scale(.97)}
 .pcella.sel{border-color:var(--verde);background:color-mix(in srgb,var(--verde) 12%,var(--superficie2))}
 .pcella svg{width:28px;height:28px;margin-bottom:8px;display:block;opacity:.85}
-.pcella b{display:block;font-size:.9rem;font-weight:700;line-height:1.2}
+.pcella b{display:block;font-size:.98rem;font-weight:800;line-height:1.2}
 .pcella small{display:block;font-size:.76rem;color:var(--inchiostro-soft);margin-top:3px;line-height:1.3}
 .ric-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:12px}
 .ws-links{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
@@ -140,29 +140,29 @@ body[data-filigrana="1"]::before{
   position:relative;overflow:hidden}
 .bcella:active{transform:scale(.97)}
 /* colori bento: vividi, cibo-ispirati, testo sempre bianco */
-.bcella.c-verde,  .pcella.c-verde  {background:#C0392B;color:#fff}   /* rosso pomodoro        */
-.bcella.c-menta,  .pcella.c-menta  {background:#1A78C2;color:#fff}   /* blu cielo             */
-.bcella.c-crema,  .pcella.c-crema  {background:#E09B00;color:#fff}   /* oro zafferano         */
+.bcella.c-verde,  .pcella.c-verde  {background:#B83729;color:#fff}   /* rosso pomodoro        */
+.bcella.c-menta,  .pcella.c-menta  {background:#1768A9;color:#fff}   /* blu cielo             */
+.bcella.c-crema,  .pcella.c-crema  {background:#865D00;color:#fff}   /* oro zafferano         */
 .bcella.c-senape, .pcella.c-senape {background:#6D3FA0;color:#fff}   /* viola melanzana       */
-.bcella.c-auto,   .pcella.c-auto   {background:#1A8C6E;color:#fff}   /* verde basilico        */
-.bcella.c-mattone,.pcella.c-mattone{background:#D45D1A;color:#fff}   /* arancio peperone      */
+.bcella.c-auto,   .pcella.c-auto   {background:#157159;color:#fff}   /* verde basilico        */
+.bcella.c-mattone,.pcella.c-mattone{background:#A74915;color:#fff}   /* arancio peperone      */
 /* adatta leggermente in modalita scura */
-:root[data-scuro] .bcella.c-verde,  :root[data-scuro] .pcella.c-verde  {background:#E04B38}
-:root[data-scuro] .bcella.c-menta,  :root[data-scuro] .pcella.c-menta  {background:#2486D0}
-:root[data-scuro] .bcella.c-crema,  :root[data-scuro] .pcella.c-crema  {background:#E8AB10}
+:root[data-scuro] .bcella.c-verde,  :root[data-scuro] .pcella.c-verde  {background:#B33C2D}
+:root[data-scuro] .bcella.c-menta,  :root[data-scuro] .pcella.c-menta  {background:#1C69A2}
+:root[data-scuro] .bcella.c-crema,  :root[data-scuro] .pcella.c-crema  {background:#805E09}
 :root[data-scuro] .bcella.c-senape, :root[data-scuro] .pcella.c-senape {background:#7E50B5}
-:root[data-scuro] .bcella.c-auto,   :root[data-scuro] .pcella.c-auto   {background:#1F9E7E}
-:root[data-scuro] .bcella.c-mattone,:root[data-scuro] .pcella.c-mattone{background:#E06B28}
+:root[data-scuro] .bcella.c-auto,   :root[data-scuro] .pcella.c-auto   {background:#16725B}
+:root[data-scuro] .bcella.c-mattone,:root[data-scuro] .pcella.c-mattone{background:#A14D1D}
 .bcella.c-bordeaux, .pcella.c-bordeaux{background:#8B3A52;color:#fff}
 :root[data-scuro] .pcella.c-bordeaux{background:#9E4A62}
 /* pcella colorata: testo e icona leggibili sopra il colore pieno */
 .pcella[class*="c-"]{border-color:transparent}
-.pcella[class*="c-"] small{color:#fff;opacity:.85}
+.pcella[class*="c-"] small{color:#fff;opacity:1;font-weight:600}
 .pcella[class*="c-"] svg{opacity:1}
 .pcella[class*="c-"].sel{outline:3px solid rgba(255,255,255,.9);outline-offset:-3px}
 .pcella[class*="c-"] input[type=text],.pcella[class*="c-"] select{color:var(--inchiostro)}
-.pcella[class*="c-"] .campo>span{color:#fff;opacity:.85}
-.pcella[class*="c-"] .mini{color:#fff;opacity:.85}
+.pcella[class*="c-"] .campo>span{color:#fff;opacity:1;font-weight:600}
+.pcella[class*="c-"] .mini{color:#fff;opacity:1;font-weight:600}
 .pcella[class*="c-"] .btn.ghost{color:#fff;border-color:rgba(255,255,255,.55)}
 .mic-btn{flex:none;width:44px;height:44px;border-radius:11px;border:1px solid var(--linea);
   background:var(--carta);color:var(--inchiostro);display:flex;align-items:center;justify-content:center;
@@ -174,9 +174,9 @@ body[data-filigrana="1"]::before{
   50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--mattone) 0%,transparent)}}
 .bcella svg{width:36px;height:36px;margin-bottom:10px;display:block;opacity:1}
 .bcella.avvia svg{width:48px;height:48px;margin-bottom:12px}
-.bcella b{display:block;font-size:1rem;font-weight:700;line-height:1.2}
-.bcella.avvia b{font-size:1.3rem}
-.bcella small{display:block;font-size:.78rem;opacity:.75;margin-top:4px;line-height:1.35}
+.bcella b{display:block;font-size:1.08rem;font-weight:800;line-height:1.2}
+.bcella.avvia b{font-size:1.38rem}
+.bcella small{display:block;font-size:.86rem;font-weight:600;opacity:.97;margin-top:4px;line-height:1.35}
 .bcella .badge{position:absolute;top:12px;right:14px;
   background:rgba(0,0,0,.18);color:inherit;
   border-radius:999px;font-size:.72rem;font-weight:700;padding:2px 8px;
@@ -185,10 +185,10 @@ body[data-filigrana="1"]::before{
 /* box lista della spesa in home: spento se vuota, acceso se c'è qualcosa */
 .bcella.hspesa{margin-top:10px;transition:background .3s,color .3s,box-shadow .3s}
 .bcella.hspesa.spenta{background:var(--superficie2);color:var(--inchiostro-soft);border:1.5px dashed currentColor;opacity:.75}
-.bcella.hspesa.accesa{background:#2EAD3F;color:#fff;border:2px solid #fff;
-  box-shadow:0 0 0 3px #2EAD3F,0 0 22px 4px rgba(46,173,63,.75);animation:spesaAccesa 2.2s ease-in-out infinite}
-:root[data-scuro] .bcella.hspesa.accesa{background:#34C24A;box-shadow:0 0 0 3px #34C24A,0 0 26px 6px rgba(52,194,74,.8)}
-@keyframes spesaAccesa{50%{box-shadow:0 0 0 3px #2EAD3F,0 0 34px 10px rgba(46,173,63,.95)}}
+.bcella.hspesa.accesa{background:#1F742A;color:#fff;border:2px solid #fff;
+  box-shadow:0 0 0 3px #1F742A,0 0 22px 4px rgba(46,173,63,.75);animation:spesaAccesa 2.2s ease-in-out infinite}
+:root[data-scuro] .bcella.hspesa.accesa{background:#1F742C;box-shadow:0 0 0 3px #1F742C,0 0 26px 6px rgba(52,194,74,.8)}
+@keyframes spesaAccesa{50%{box-shadow:0 0 0 3px #1F742A,0 0 34px 10px rgba(46,173,63,.95)}}
 @media(prefers-reduced-motion:reduce){.bcella.hspesa.accesa{animation:none}}
 .hspesa-l{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
 .hspesa-l li{background:rgba(255,255,255,.22);border-radius:999px;padding:3px 10px;font-size:.82rem;font-weight:600}
@@ -212,8 +212,8 @@ body[data-filigrana="1"]::before{
 .sc-tab{width:100%;border-collapse:collapse;font-size:.88rem}
 .sc-tab th{text-align:left;background:var(--superficie2);padding:7px 8px;font-weight:700}
 .sc-tab td{padding:7px 8px;border-bottom:1px solid var(--linea);vertical-align:top}
-.sc-box{background:#1A8C6E;color:#fff;border-radius:14px;padding:12px 14px;margin:8px 0;line-height:1.5}
-:root[data-scuro] .sc-box{background:#1F9E7E}
+.sc-box{background:#157159;color:#fff;border-radius:14px;padding:12px 14px;margin:8px 0;line-height:1.5}
+:root[data-scuro] .sc-box{background:#16725B}
 .sc-nav{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
 @media(max-width:340px){.bento-3{grid-template-columns:1fr 1fr}}
 
@@ -274,12 +274,12 @@ body[data-filigrana="1"]::before{
 .radio-pan .chips button{flex:none;border:0;border-radius:999px;padding:8px 14px;font-size:.87rem;
   font-weight:700;color:#fff;cursor:pointer}
 .radio-pan .chips button.on{outline:3px solid rgba(255,255,255,.85);outline-offset:-5px}
-.radio-pan .rc0{background:#C0392B}.radio-pan .rc1{background:#1A78C2}.radio-pan .rc2{background:#E09B00}
-.radio-pan .rc3{background:#6D3FA0}.radio-pan .rc4{background:#1A8C6E}.radio-pan .rc5{background:#D45D1A}
+.radio-pan .rc0{background:#B83729}.radio-pan .rc1{background:#1768A9}.radio-pan .rc2{background:#865D00}
+.radio-pan .rc3{background:#6D3FA0}.radio-pan .rc4{background:#157159}.radio-pan .rc5{background:#A74915}
 .radio-pan .rc6{background:#8B3A52}
-:root[data-scuro] .radio-pan .rc0{background:#E04B38}:root[data-scuro] .radio-pan .rc1{background:#2486D0}
-:root[data-scuro] .radio-pan .rc2{background:#E8AB10}:root[data-scuro] .radio-pan .rc3{background:#7E50B5}
-:root[data-scuro] .radio-pan .rc4{background:#1F9E7E}:root[data-scuro] .radio-pan .rc5{background:#E06B28}
+:root[data-scuro] .radio-pan .rc0{background:#B33C2D}:root[data-scuro] .radio-pan .rc1{background:#1C69A2}
+:root[data-scuro] .radio-pan .rc2{background:#805E09}:root[data-scuro] .radio-pan .rc3{background:#7E50B5}
+:root[data-scuro] .radio-pan .rc4{background:#16725B}:root[data-scuro] .radio-pan .rc5{background:#A14D1D}
 :root[data-scuro] .radio-pan .rc6{background:#9E4A62}
 .radio-pan button.spegni{display:block;width:100%;text-align:left;background:none;border:0;color:var(--mattone);
   padding:11px 14px;border-top:1px solid var(--linea);font-size:.93rem;font-weight:700;cursor:pointer}
@@ -327,23 +327,23 @@ header.top{position:sticky;top:0;z-index:30;background:var(--carta);border-botto
   overflow-y:auto;max-height:calc(100vh - 72px);padding:10px}
 .menu-box{border-radius:12px;padding:9px 10px 8px;margin:0 0 8px}
 .menu-box:last-child{margin-bottom:0}
-.menu-box .sez{padding:2px 2px 7px;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
-  border-bottom:0;color:inherit;opacity:.85}
+.menu-box .sez{padding:2px 2px 7px;font-size:.76rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
+  border-bottom:0;color:inherit;opacity:1}
 .menu-box button{display:block;width:100%;text-align:left;background:rgba(255,255,255,.16);color:inherit;
-  border:0;border-radius:8px;border-bottom:0;padding:11px 11px;margin:0 0 6px;font-size:.89rem;cursor:pointer}
+  border:0;border-radius:8px;border-bottom:0;padding:11px 11px;margin:0 0 6px;font-size:.98rem;font-weight:700;cursor:pointer}
 .menu-box button:last-child{margin-bottom:0}
 .menu-box button:hover{background:rgba(255,255,255,.27)}
 .menu-box button[disabled]{opacity:.5;cursor:default}
 .menu-box button.rischio{color:#fff;font-weight:700}
-.menu-box.mb-teal{background:#1A8C6E;color:#fff}
-.menu-box.mb-blu{background:#1A78C2;color:#fff}
+.menu-box.mb-teal{background:#157159;color:#fff}
+.menu-box.mb-blu{background:#1768A9;color:#fff}
 .menu-box.mb-oro{background:#8F5200;color:#fff}  /* ambra scuro: testo bianco leggibile */
 .menu-box.mb-oro button{background:rgba(255,255,255,.12)}
 .menu-box.mb-oro button:hover{background:rgba(255,255,255,.2)}
 .menu-box.mb-bordeaux{background:#8B3A52;color:#fff}
 .menu-box.mb-senape{background:#6D3FA0;color:#fff}
-:root[data-scuro] .menu-box.mb-teal{background:#1F9E7E}
-:root[data-scuro] .menu-box.mb-blu{background:#2486D0}
+:root[data-scuro] .menu-box.mb-teal{background:#16725B}
+:root[data-scuro] .menu-box.mb-blu{background:#1C69A2}
 :root[data-scuro] .menu-box.mb-oro{background:#8F5200}
 :root[data-scuro] .menu-box.mb-bordeaux{background:#9E4A62}
 :root[data-scuro] .menu-box.mb-senape{background:#7E50B5}
