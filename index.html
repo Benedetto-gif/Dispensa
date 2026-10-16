@@ -303,6 +303,21 @@ body[data-filigrana="1"]::before{
 .sc-lez ul{margin:6px 0;padding-left:1.15em}
 .sc-lez ul li{margin-bottom:6px;line-height:1.5}
 .sc-lez .passi li{line-height:1.5}
+/* icone disegnate accanto agli oggetti di cui si parla */
+.sc-ic{display:inline-block;width:30px;height:30px;flex:none;vertical-align:middle}
+.sc-ic svg{width:100%;height:100%;display:block}
+.sc-lez h3.con-ic{display:flex;align-items:center;gap:10px}
+.sc-lez h3.con-ic .sc-ic{width:36px;height:36px}
+.sc-lez ul li.con-ic{list-style:none;margin-left:-1.15em;display:grid;grid-template-columns:34px 1fr;column-gap:10px;align-items:start}
+.sc-lez ul li.con-ic .sc-ic{width:34px;height:34px;margin-top:-3px}
+.sc-lez .passi li .sc-ic{width:26px;height:26px;margin:-4px 6px 0 0}
+.sc-tab td .sc-ic{display:block;width:32px;height:32px;margin-bottom:3px}
+.sc-grid .bcella .sc-e svg,.velo-top h2 .sc-e svg{width:40px;height:40px;display:block}
+.velo-top h2 .sc-e{display:inline-block;vertical-align:middle;margin-right:4px}
+.velo-top h2 .sc-e svg{width:34px;height:34px}
+.sc-nav .btn .sc-e{display:inline-block;vertical-align:middle}
+.sc-nav .btn .sc-e svg{width:22px;height:22px}
+.sc-grid .bcella .sc-e svg{filter:drop-shadow(0 1px 1px rgba(0,0,0,.25))}
 .sc-tabw{overflow-x:auto;margin:8px 0}
 .sc-tab{width:100%;border-collapse:collapse;font-size:.88rem}
 .sc-tab th{text-align:left;background:var(--superficie2);padding:7px 8px;font-weight:700}
@@ -613,7 +628,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </g>
   </svg>
   <div class="nome">Che cucino?</div>
-  <div class="ver-splash" data-no-tr>v111</div>
+  <div class="ver-splash" data-no-tr>v112</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -623,7 +638,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
       <input type="range" id="tono" min="0" max="100" step="100" value="0" aria-label="Passa da chiaro a scuro">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
     </div>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v111</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v112</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Strumenti</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -939,6 +954,7 @@ if(IN_INGLESE){
 
 /*I18N-FINE*/</script>
 <script src="dati/scuola.js"></script>
+<script src="dati/icone-scuola.js"></script>
 <script src="dati/stagioni.js"></script>
 <script src="dati/ricette.js"></script>
 <script src="dati/ricette-en.js"></script>
@@ -3799,20 +3815,25 @@ let SCUOLA = null;
 function scuola(){
   if(!SCUOLA){
     const d = DATI["scuola-data"];
-    SCUOLA = d.it.map((l,i)=> IN_INGLESE ? Object.assign({}, l, d.en[i]) : l);
+    SCUOLA = d.it.map((l,i)=> IN_INGLESE ? Object.assign({}, l, d.en[i]) : l)
+      .map(l=>{ const k = ((window.DATI && DATI["icone-scuola"]) || {cop:{}}).cop[l.id]; const v = k && DATI["icone-scuola"].svg[k];
+                return v ? Object.assign({}, l, {e: `<span class="sc-e">${v}</span>`}) : l; });
   }
   return SCUOLA;
 }
 /* figure delle lezioni (SVG disegnati a mano) */
 const FIGURE_SCUOLA = {bovino: '<svg viewBox="0 0 380 236" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bovino con i tagli"><g fill="#B9A89A" opacity=".55"><polygon points="178,166 198,166 196,224 182,224"/><polygon points="272,162 292,164 290,224 276,224"/></g><polygon points="22,80 40,56 95,60 100,128 70,120 30,102" fill="#E0A458" opacity=".9"/><polygon points="95,60 130,50 130,138 100,128" fill="#E0A458" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="130,50 185,56 185,98 130,96" fill="#C8553D" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="130,96 185,98 185,145 150,150 130,138" fill="#C8553D" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="100,128 130,138 150,150 185,145 185,168 140,172 108,158" fill="#E0A458" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="185,56 265,58 265,100 185,98" fill="#9E2A2B" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="185,98 265,100 268,160 230,168 185,168" fill="#E0A458" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="265,58 312,56 318,98 265,100" fill="#9E2A2B" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="312,56 338,61 351,92 348,138 332,163 292,165 268,160 265,100 318,98" fill="#9E2A2B" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="140,172 172,169 167,200 146,200" fill="#E0A458" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="292,165 332,163 323,198 299,198" fill="#C8553D" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><g fill="#B9A89A"><polygon points="146,200 167,200 165,224 149,224"/><polygon points="299,198 323,198 320,224 303,224"/></g><g fill="#3B2F2A"><rect x="147" y="222" width="20" height="6" rx="2"/><rect x="301" y="222" width="21" height="6" rx="2"/><rect x="181" y="222" width="17" height="6" rx="2" opacity=".55"/><rect x="275" y="222" width="17" height="6" rx="2" opacity=".55"/></g><path d="M346 66c14 18 16 46 10 70" stroke="#B9A89A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M350 132c4 8 12 10 12 18-6-2-14-6-14-14z" fill="#3B2F2A"/><ellipse cx="96" cy="62" rx="13" ry="6" transform="rotate(-25 96 62)" fill="#E0A458" stroke="#fff" stroke-width="1.5"/><path d="M74 58c2-10 8-17 16-20" stroke="#EDE3D1" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="62" cy="76" r="3.4" fill="#3B2F2A"/><ellipse cx="30" cy="94" rx="10" ry="8" fill="#E8B4A0"/><circle cx="27" cy="92" r="1.6" fill="#3B2F2A"/><circle cx="34" cy="96" r="1.6" fill="#3B2F2A"/><g><circle cx="113" cy="98" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="113" y="102.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">1</text></g><g><circle cx="157" cy="76" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="157" y="80.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">2</text></g><g><circle cx="157" cy="120" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="157" y="124.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">3</text></g><g><circle cx="140" cy="158" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="140" y="162.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">4</text></g><g><circle cx="225" cy="78" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="225" y="82.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">5</text></g><g><circle cx="226" cy="134" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="226" y="138.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">6</text></g><g><circle cx="290" cy="78" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="290" y="82.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">7</text></g><g><circle cx="312" cy="122" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="312" y="126.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">8</text></g><g><circle cx="157" cy="184" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="157" y="188.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">9</text></g><g><circle cx="311" cy="181" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="311" y="185.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">10</text></g><g><circle cx="72" cy="100" r="10" fill="#fff" stroke="#3B2F2A" stroke-width="1.2"/><text x="72" y="104.2" text-anchor="middle" font-size="12" font-weight="800" font-family="system-ui,sans-serif" fill="#3B2F2A">11</text></g></svg>'};
-function sezScuola(z){
-  let h = `<h3>${z.h}</h3>`;
+const ICONE_SC = (window.DATI && DATI["icone-scuola"]) || {svg:{}, pos:{}, cop:{}};
+function icSc(k){ const v = k && ICONE_SC.svg[k]; return v ? `<span class="sc-ic" aria-hidden="true">${v}</span>` : ""; }
+function sezScuola(z, i, idLez){
+  const ic = ((ICONE_SC.pos[idLez] || {})[i]) || {};
+  let h = ic.h ? `<h3 class="con-ic">${icSc(ic.h)}<span>${z.h}</span></h3>` : `<h3>${z.h}</h3>`;
   if(z.fig && FIGURE_SCUOLA[z.fig]) h += `<div class="sc-fig">${FIGURE_SCUOLA[z.fig]}</div>`;
   (z.p||[]).forEach(t=>{ h += `<p>${t}</p>`; });
-  if(z.l) h += `<ul>${z.l.map(t=>`<li>${t}</li>`).join("")}</ul>`;
-  if(z.n) h += `<ol class="passi">${z.n.map(t=>`<li>${t}</li>`).join("")}</ol>`;
+  if(z.l) h += `<ul>${z.l.map((t,j)=>{ const k = (ic.l || [])[j]; return k ? `<li class="con-ic">${icSc(k)}<span>${t}</span></li>` : `<li>${t}</li>`; }).join("")}</ul>`;
+  if(z.n) h += `<ol class="passi">${z.n.map((t,j)=>`<li>${icSc((ic.n || [])[j])}${t}</li>`).join("")}</ol>`;
   if(z.tab) h += `<div class="sc-tabw"><table class="sc-tab"><thead><tr>${z.tab.h.map(t=>`<th>${t}</th>`).join("")}</tr></thead>
-    <tbody>${z.tab.r.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+    <tbody>${z.tab.r.map((r,j)=>`<tr>${r.map((c,n)=>`<td>${n === 0 ? icSc((ic.t || [])[j]) : ""}${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
   if(z.box) h += `<div class="sc-box">\u{1F4A1} ${z.box}</div>`;
   return h;
 }
@@ -3844,12 +3865,32 @@ function iconaAuto(m){
   return x ? x[1] : (m.g === "att" ? "\u{1F527}" : "\u{1F4DD}");
 }
 const ICONE_SCELTA = ["\u{1FAD9}","\u{1F353}","\u{1F34B}","\u{1F969}","\u{1F357}","\u{1F41F}","\u{1F956}","\u{1F35D}","\u{1F370}","\u{1F9C0}","\u{1F96C}","\u{1F33F}","\u{1F336}\uFE0F","\u{1F95A}","\u{1F9C1}","\u{1F52A}","\u{1F373}","\u{1F525}","\u{1F944}","\u{1F377}","\u{1F952}","\u{1F9C2}","\u{1F527}","\u{1F4DD}"];
+/* per le schede dell'utente senza icona scelta: il disegno dell'attrezzo, se lo riconosco dal nome */
+const DISEGNI_NOME = [
+  [/sifon|siphon|whipper/i,"sifone"],[/mandolin/i,"mandolina"],[/bilanc|scale\b/i,"bilancia"],[/termometr|thermomet/i,"termometro-sonda"],
+  [/grattug|microplane|grater/i,"grattugia"],[/pelapatat|peeler/i,"pelapatate"],[/chinois|colino/i,"chinoise"],[/setacc|sieve/i,"setaccio"],
+  [/spatol|marisa|spatula/i,"spatola"],[/sac.{0,3}poche|sacca|piping/i,"sac-a-poche"],[/pinz|tongs/i,"pinze"],[/cannell|torch/i,"cannello"],
+  [/mortai|pestell|mortar/i,"mortaio"],[/centrifug|spinner|spremiagl/i,"centrifuga"],[/planetari|kitchenaid|kenwood|stand mixer/i,"planetaria"],
+  [/bimby|thermomix|monsieur cuisine|cuisine companion/i,"robot-cottura"],[/robot/i,"robot-multi"],[/frullator|minipimer|blender/i,"frullatore"],
+  [/sbattitor|fruste elettr|hand mixer/i,"sbattitore"],[/mixer|tritatutto|macinacaff/i,"mixer"],[/abbattitor|blast chill/i,"abbattitore"],
+  [/sottovuoto|vacuum/i,"sottovuoto"],[/roner|sous.?vide|bassa temperatura/i,"roner"],[/friggitric|air fryer|fryer/i,"friggitrice-aria"],
+  [/forno|oven/i,"forno"],[/stamp|mould|mold/i,"stampo-silicone"],[/pressione|pressure/i,"pentola-pressione"],[/cataplana/i,"cataplana"],
+  [/cocotte|ghisa|cast iron|dutch oven/i,"ghisa-smaltata"],[/padell|wok|pan\b|skillet/i,"padella-ferro"],[/taglier|board/i,"tagliere-legno"],
+  [/acciain|affilat|cote|sharpen|whetstone/i,"acciaino"],[/coltell|knife/i,"coltello-cuoco"],[/timer|contamin/i,"timer"],
+  [/griglia|bistecchiera|grill/i,"griglia"],[/vapore|vaporiera|steamer/i,"vapore"]
+];
+function disegnoNome(m){
+  if(m.e) return "";
+  const t = (m.t || "") + " " + (m.s || ""), x = DISEGNI_NOME.find(([re])=>re.test(t));
+  const v = x && ICONE_SC.svg[x[1]];
+  return v ? `<span class="sc-e">${v}</span>` : "";
+}
 function lezioneMia(m){
   const righe = t => String(t||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
   const sez = [];
   if(righe(m.consigli).length) sez.push({h:L("Consigli","Tips"), l:righe(m.consigli).map(esc)});
   return {id:m.id, g:m.g, mia:true, c:"c-bordeaux",
-    e: esc(iconaAuto(m)),
+    e: disegnoNome(m) || esc(iconaAuto(m)),
     t: esc(m.t), s: esc(m.s || L("Aggiunta da te","Added by you")),
     intro: righe(m.testo).map(esc).join("</p><p class=\"sc-intro\">"), sez, ric:[]};
 }
@@ -3877,7 +3918,7 @@ function apriScuola(id){
     <div class="sc-lez" data-no-tr>
       <p class="mini">${l.s}</p>
       <p class="sc-intro">${l.intro}</p>
-      ${l.sez.map(sezScuola).join("")}
+      ${l.sez.map((z,i)=>sezScuola(z, i, l.id)).join("")}
     </div>
     ${l.mia?`<div class="sc-nav">
       <a class="btn ghost" target="_blank" rel="noopener" href="https://www.google.com/search?q=${encodeURIComponent((S.schedeMie.find(m=>m.id===l.id)||{}).t + L(" cucina come si usa"," cooking how to use"))}">\u{1F50D} ${L("Approfondisci sul web","Learn more on the web")}</a>
