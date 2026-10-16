@@ -1591,6 +1591,10 @@ function tappaProfilo(){
   document.getElementById("pLuogoCerca").onclick = ()=>cercaLuogo(pl.value);
   pl.onkeydown = e=>{ if(e.key === "Enter"){ e.preventDefault(); cercaLuogo(pl.value); } };
   pl.onchange = ()=>cercaLuogo(pl.value);
+  /* un tocco sulla casella la svuota, cosi' non resta la coda di un nome lungo;
+     se poi esci senza scrivere niente, torna il luogo di prima */
+  pl.onfocus = ()=>{ pl.dataset.prima = pl.value; pl.value = ""; };
+  pl.onblur = ()=>{ if(!pl.value.trim() && pl.dataset.prima) pl.value = pl.dataset.prima; };
   document.getElementById("pGeo").onclick = ()=> trovaRegione(
     document.getElementById("pGeo"), document.getElementById("pLuogoEsito"));
 
