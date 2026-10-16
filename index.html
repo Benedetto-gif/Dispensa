@@ -3609,7 +3609,9 @@ const PERCHE_EN = `<div class="perche">
     <p>And every recipe comes with a suggestion of what to drink to go with your dish.</p>
     <div class="sez"><strong>Want to know more?</strong></div>
     <p>There's much more to discover in the <strong>Tools</strong> menu and in <strong>Let’s learn to cook</strong>.</p>
-    </div></div>`;
+    </div>
+    <div class="azioni" style="margin-top:22px"><button class="btn" onclick="chiudiVelo()">Close</button></div>
+    </div>`;
 function apriPerche(){
   if(IN_INGLESE){ apriVelo("perche", PERCHE_EN); return; }
   apriVelo("perche", `<div class="perche">
@@ -3649,6 +3651,8 @@ function apriPerche(){
     <p>E per ogni ricetta avrai anche un consiglio su cosa bere per accompagnare al meglio il tuo piatto.</p>
     <div class="sez"><strong>Vuoi sapere di più?</strong></div> 
     <p> C'è tanto ancora da scoprire sotto il menù <strong>Strumenti</strong> e in <strong>Impariamo a cucinare</strong></p>
+    
+    <div class="azioni" style="margin-top:22px"><button class="btn" onclick="chiudiVelo()">Chiudi</button></div>
     </div>`);
 }
 document.addEventListener("click", e=>{
