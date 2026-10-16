@@ -135,6 +135,9 @@ body[data-filigrana="1"]::before{
 .bento{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .bento .avvia{grid-column:1/-1}
 .bento .bcella{z-index:1}
+.az-riga{display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:.95rem;line-height:1.35}
+.az-riga input{width:20px;height:20px;flex:none;margin-top:1px}
+.btn.rischio-btn{background:#B23B30;color:#fff}
 .globo,.pcella svg.globo{display:inline-block;width:28px;height:28px;vertical-align:middle;margin:0 4px 0 0;background:#fff;border-radius:50%}
 .bcella.hconosci{margin-top:-20px;padding:30px 16px 12px;display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;
   z-index:0;border-radius:0 0 18px 18px;transition:transform .28s cubic-bezier(.3,1.4,.5,1),margin .28s,box-shadow .28s;animation:conosciScivola .6s ease-out .25s both}
@@ -1244,6 +1247,47 @@ function carica(){
   return JSON.parse(JSON.stringify(VUOTO));
 }
 function salva(){ try{ localStorage.setItem("checucino.v3", JSON.stringify(S)); }catch(e){} }
+
+/* Azzera: chiede se tenere le ricette e le schede personali, e prima di cancellare
+   mette da parte una copia completa, cosi' l'azzeramento si puo' annullare */
+const CHIAVE_BACKUP = "checucino.prima-di-azzerare";
+function haBackupAzzera(){ try{ return !!localStorage.getItem(CHIAVE_BACKUP); }catch(e){ return false; } }
+function apriAzzera(){
+  const nR = (S.mie||[]).length, nS = (S.schedeMie||[]).length;
+  apriVelo("azzera", `<div class="velo-top"><h2>${L("Azzera i dati","Erase data")}</h2>
+      <button class="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
+    <p>${L("Cancello profilo, ospiti, dispensa, lista della spesa, preferite e ricette cucinate.","I\u2019ll erase your profile, guests, pantry, shopping list, favourites and cooked recipes.")}</p>
+    ${nR || nS ? `<div class="card" style="margin-top:10px">
+      <b>${L("Cosa vuoi tenere?","What do you want to keep?")}</b>
+      ${nR ? `<label class="az-riga"><input type="checkbox" id="azMie" checked> ${L(`Tieni le mie ricette (${nR}), anche quelle scaricate dal web`, `Keep my recipes (${nR}), including those from the web`)}</label>` : ""}
+      ${nS ? `<label class="az-riga"><input type="checkbox" id="azSchede" checked> ${L(`Tieni le mie schede di \u00abImpariamo a cucinare\u00bb (${nS})`, `Keep my \u00abLet\u2019s learn to cook\u00bb cards (${nS})`)}</label>` : ""}
+    </div>` : ""}
+    <p class="mini" style="margin-top:10px">${L("Tengo da parte una copia di quello che cancello: se ci ripensi, la recuperi da Strumenti \u2192 \u00abRecupera i dati azzerati\u00bb.","I keep a copy of what I erase: if you change your mind, restore it from Tools \u2192 \u00abRestore the erased data\u00bb.")}</p>
+    <div class="azioni"><button class="btn rischio-btn" id="azVai">${L("Azzera","Erase")}</button>
+      <button class="btn ghost" onclick="chiudiVelo()">${L("Annulla","Cancel")}</button></div>`);
+  document.getElementById("azVai").onclick = ()=>{
+    const tieniMie = !!(document.getElementById("azMie") || {}).checked, tieniSchede = !!(document.getElementById("azSchede") || {}).checked;
+    try{ localStorage.setItem(CHIAVE_BACKUP, JSON.stringify(S)); }catch(e){}
+    const vecchio = S;
+    S = JSON.parse(JSON.stringify(VUOTO));
+    if(tieniMie){ S.mie = vecchio.mie || []; S.ingMiei = vecchio.ingMiei || {}; S.ingSpostati = vecchio.ingSpostati || {}; S.ingTolti = vecchio.ingTolti || []; }
+    if(tieniSchede) S.schedeMie = vecchio.schedeMie || [];
+    sess = nuovaSessione(); salva(); chiudiVelo(); vai(0);
+  };
+}
+function recuperaAzzera(){
+  let b = null; try{ b = JSON.parse(localStorage.getItem(CHIAVE_BACKUP) || "null"); }catch(e){}
+  if(!b){ alert(L("Non ho una copia da recuperare.","There\u2019s no copy to restore.")); return; }
+  const nR = (b.mie||[]).length;
+  if(!confirm(L(`Rimetto i dati di prima dell\u2019azzeramento (profilo, dispensa${nR ? ", " + nR + " ricette tue" : ""}). I dati attuali verranno sostituiti. Procedo?`, `I\u2019ll put back the data from before the reset (profile, pantry${nR ? ", " + nR + " of your recipes" : ""}). Current data will be replaced. Go ahead?`))) return;
+  S = Object.assign(JSON.parse(JSON.stringify(VUOTO)), b);
+  (S.mie || []).forEach(preparaRicetta);
+  salva();
+  try{ localStorage.removeItem(CHIAVE_BACKUP); }catch(e){}
+  sess = nuovaSessione(); sess.stile = S.profilo.stile;
+  vai(S.profilo.fatto ? 5 : 0);
+  alert(L("Fatto: i tuoi dati sono tornati.","Done: your data is back."));
+}
 function nuovaSessione(){
   return {ospiti:[], modo:null, cerca:"", recupero:[], portate:[], unico:false,
           stile:S.profilo.stile, accordo:"unico", tempo:S.profilo.tempo, modalitaTavola:null};
@@ -4235,6 +4279,7 @@ function disegnaMenu(){
     <div class="menu-box mb-bordeaux">
       <div class="sez">Altro</div>
       <button id="mNuova">Ricomincia il percorso</button>
+      ${haBackupAzzera() ? `<button id="mRecupera">${L("\u21A9\uFE0F Recupera i dati azzerati","\u21A9\uFE0F Restore the erased data")}</button>` : ""}
       <button id="mReset" class="rischio">Azzera tutti i dati</button>
     </div></div>`;
   menuPan.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ menuAperto=false; disegnaMenu(); vai(+b.dataset.go); });
@@ -4249,10 +4294,9 @@ function disegnaMenu(){
   document.getElementById("mCarica").onclick=()=>{ menuAperto=false; disegnaMenu(); importaDati(); };
   document.getElementById("mLingua").onclick=()=>cambiaLingua(IN_INGLESE ? "it" : "en");
   document.getElementById("mNuova").onclick=()=>{ sess = nuovaSessione(); menuAperto=false; disegnaMenu(); vai(S.profilo.fatto ? 5 : 0); };
-  document.getElementById("mReset").onclick=()=>{
-    if(confirm("Cancello profilo, ospiti e dispensa. Sicuro?")){
-      S = JSON.parse(JSON.stringify(VUOTO)); sess = nuovaSessione(); salva(); menuAperto=false; disegnaMenu(); vai(0); }
-  };
+  document.getElementById("mReset").onclick=()=>{ menuAperto=false; disegnaMenu(); apriAzzera(); };
+  const rec = document.getElementById("mRecupera");
+  if(rec) rec.onclick=()=>{ menuAperto=false; disegnaMenu(); recuperaAzzera(); };
 }
 
 /* ===========================================================
