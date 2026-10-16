@@ -134,6 +134,10 @@ body[data-filigrana="1"]::before{
 .home-saluto small{display:block;font-size:.85rem;font-weight:400;color:var(--inchiostro-soft);margin-top:2px}
 .bento{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .bento .avvia{grid-column:1/-1}
+.bcella.hconosci{margin-top:10px;display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;padding:12px 16px}
+.bcella.hconosci svg{width:58px !important;height:38px !important;margin:0;grid-row:span 2}
+.bcella.hconosci b{font-size:1rem}
+.bcella.hconosci small{margin-top:2px}
 .bcella{border-radius:18px;padding:16px 16px 14px;cursor:pointer;
   border:1.5px solid transparent;
   transition:transform .15s,box-shadow .15s;
@@ -1058,6 +1062,10 @@ const ALL_DI = (()=>{
 })();
 
 const MESE = new Date().getMonth() + 1;
+/* i dati di stagione sono quelli italiani (emisfero nord): chi vive nell'emisfero sud ha le stagioni
+   spostate di sei mesi, quindi confronto i dati con il mese "corrispondente" del nord */
+const suEmisferoSud = () => !!(typeof S !== "undefined" && S.profilo && S.profilo.emisfero === "sud");
+const meseStagione = () => suEmisferoSud() ? ((MESE + 5) % 12) + 1 : MESE;
 
 /* ===========================================================
    Stato
@@ -1280,7 +1288,7 @@ function valuta(r){
 }
 function diStagione(r){
   const st = r.ing.map(i=>D.stagioni[i.k]).filter(Boolean);
-  return {tot: st.length, in: st.filter(m=>m.includes(MESE)).length};
+  return {tot: st.length, in: st.filter(m=>m.includes(meseStagione())).length};
 }
 function chiEsclude(r){
   return tavolata().filter(c=> RANGO[r.stile] < RANGO[c.stile] || c.allergeni.some(a=>r.all.includes(a)));
@@ -1479,6 +1487,11 @@ function tappaProfilo(){
         ${REGIONI.map(r=>`<option ${p.regione===r?"selected":""}>${r}</option>`).join("")}
       </select>
       <button type="button" class="btn ghost small" id="pGeo" style="margin-top:8px;width:100%">📍 GPS</button>
+      <div class="mini" style="margin-top:10px;font-weight:700">${L("Dove vivi","Where you live")}</div>
+      <div class="chips" id="pEmi" style="margin-top:6px" data-no-tr>
+        <button class="chip ${p.emisfero!=="sud"?"on":""}" data-v="nord" style="font-size:.76rem">${L("Emisfero nord","Northern hemisphere")}</button>
+        <button class="chip ${p.emisfero==="sud"?"on":""}" data-v="sud" style="font-size:.76rem">${L("Emisfero sud","Southern hemisphere")}</button>
+      </div>
       <p class="mini" id="pGeoEsito" aria-live="polite"></p>
     </div>
     <div class="pcella c-crema" style="cursor:default">
@@ -1512,6 +1525,10 @@ function tappaProfilo(){
   document.getElementById("pNome").oninput = e=>{ S.profilo.nome=e.target.value; salva(); };
   document.getElementById("pEvita").oninput = e=>{ S.profilo.evita=e.target.value; salva(); };
   document.getElementById("pReg").onchange = e=>{ S.profilo.regione=e.target.value; salva(); };
+  document.querySelectorAll("#pEmi .chip").forEach(b=>b.onclick=()=>{
+    S.profilo.emisfero = b.dataset.v; salva();
+    document.querySelectorAll("#pEmi .chip").forEach(x=>x.classList.toggle("on", x===b));
+  });
   document.getElementById("pGeo").onclick = ()=> trovaRegione(
     document.getElementById("pGeo"), document.getElementById("pGeoEsito"));
 
@@ -1659,7 +1676,7 @@ function htmlRepartiDisp(){
     if(!vis.length) return "";
     const presi = lista.filter(i=>S.dispensa.includes(i)).length;
     const chip = i=>{ const mesi = D.stagioni[i];
-          const stag = mesi ? (mesi.includes(MESE)?` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
+          const stag = mesi ? (mesi.includes(meseStagione())?` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
           return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}${stag}</button>`; };
     const sotto = sottoReparti(tit, vis);
     return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||presi?"open":""}>
@@ -1750,7 +1767,7 @@ function tappaDispensa(){
       <datalist id="ingDatalist">${TUTTI_ING.map(i=>`<option value="${esc(i)}">`).join("")}</datalist>
       <div id="ingRisposta">${htmlRispostaDisp()}</div>
       <p class="mini" style="margin-top:10px;opacity:.85">Tieni premuto un ingrediente qui sotto per spostarlo di reparto o toglierlo dall'elenco.</p>
-      <p class="mini" style="margin-top:4px;opacity:.85" data-no-tr>${L("\u{1F5D3}\uFE0F accanto a un ingrediente: \u00e8 di stagione ora qui da noi, nell\u2019emisfero nord; sbiadito: non \u00e8 la sua stagione.","\u{1F5D3}\uFE0F next to an ingredient: in season now here, in the northern hemisphere; faded: out of season.")}</p>
+      <p class="mini" style="margin-top:4px;opacity:.85" data-no-tr>${suEmisferoSud() ? L("\u{1F5D3}\uFE0F accanto a un ingrediente: \u00e8 di stagione ora dove vivi, nell\u2019emisfero sud; sbiadito: non \u00e8 la sua stagione.","\u{1F5D3}\uFE0F next to an ingredient: in season now where you live, in the southern hemisphere; faded: out of season.") : L("\u{1F5D3}\uFE0F accanto a un ingrediente: \u00e8 di stagione ora qui da noi, nell\u2019emisfero nord; sbiadito: non \u00e8 la sua stagione.","\u{1F5D3}\uFE0F next to an ingredient: in season now here, in the northern hemisphere; faded: out of season.")}</p>
     </div>
   </div>
   <div class="pgrid" id="repartiDisp" style="margin-top:2px">${htmlRepartiDisp()}</div>`;
@@ -2298,7 +2315,7 @@ function scheda(o){
       <ul class="ing-l">${r.ing.map(i=>{
         const q = `<em data-q="${esc(i.q)}" data-p="${porzioniDi(r)}">${esc(scalaQ(i.q, fattoreDosi(r)))}</em>`;
         const mesi = D.stagioni[i.k];
-        const stag = mesi ? (mesi.includes(MESE) ? ` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>` : ` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
+        const stag = mesi ? (mesi.includes(meseStagione()) ? ` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>` : ` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
         if(possiedo(i.k)) return `<li><span>${esc(i.n)}${stag}</span>${q}</li>`;
         const alt = sostituto(i.k);
         if(alt) return `<li class="sub"><span>${esc(i.n)}${stag} — puoi usare ${esc(alt)}</span>${q}</li>`;
@@ -3838,7 +3855,26 @@ const MESI_IT = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio
 const MESI_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const nomeMese = m => (IN_INGLESE ? MESI_EN : MESI_IT)[m-1];
 const iniMese = m => nomeMese(m).slice(0,3);
-function stagioni(){ if(!STAG) STAG = DATI["stagioni-data"]; return STAG; }
+let STAG_EMI = null;
+function stagioni(){
+  const emi = suEmisferoSud() ? "sud" : "nord";
+  if(!STAG || STAG_EMI !== emi){
+    const base = DATI["stagioni-data"];
+    if(emi === "nord") STAG = base;
+    else{
+      /* sei mesi avanti; i fermi della pesca sono regole italiane e non valgono altrove, tranne i divieti di sempre */
+      const sposta = m => ((m + 5) % 12) + 1;
+      STAG = {};
+      Object.keys(base).forEach(k=>{ STAG[k] = base[k].map(x=>{
+        const y = Object.assign({}, x, {m: x.m.map(sposta)});
+        if(x.f && x.f.length === 12){ y.f = x.f; } else { delete y.f; delete y.n; delete y.ne; }
+        if(x.f && x.f.length === 12){ y.n = x.n; y.ne = x.ne; }
+        return y; }); });
+    }
+    STAG_EMI = emi;
+  }
+  return STAG;
+}
 const STAG_TAB = [["ort","\u{1F955}","Ortaggi","Vegetables","#32723F"],["fru","\u{1F34E}","Frutta","Fruit","#A74915"],["pes","\u{1F41F}","Pesce","Fish","#176A9B"],["cro","\u{1F990}","Crostacei e molluschi","Shellfish","#6D3FA0"]];
 const iconaStag = x => x.i || x.e;
 const fermoIn = (x, m) => (x.f || []).includes(m);
@@ -3897,11 +3933,11 @@ function apriStagioni(dettaglio){
       <tbody data-no-tr>${lista.map((x,i)=>`<tr data-stag-item="${i}"><td><span class="st-ti">${iconaStag(x)}</span>${nome(x)}</td>${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<td class="${fermoIn(x,m)?"no":x.m.includes(m)?"si":""} ${m===ora?"ora":""}"></td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
   }
   apriVelo("stagioni", `${top}
-    <p class="mini">${L("Le stagioni del nostro emisfero, mese per mese. Comprare di stagione vuol dire più sapore, meno spesa e meno strada percorsa dal cibo.","The seasons of our hemisphere, month by month. Buying in season means more flavour, lower cost and fewer miles travelled by your food.")}</p>
+    <p class="mini">${(suEmisferoSud() ? L("Le stagioni dell\u2019emisfero sud, dove vivi, mese per mese. Comprare di stagione vuol dire pi\u00f9 sapore, meno spesa e meno strada percorsa dal cibo.","The seasons of the southern hemisphere, where you live, month by month. Buying in season means more flavour, lower cost and fewer miles travelled by your food.") : L("Le stagioni del nostro emisfero, mese per mese. Comprare di stagione vuol dire più sapore, meno spesa e meno strada percorsa dal cibo.","The seasons of our hemisphere, month by month. Buying in season means more flavour, lower cost and fewer miles travelled by your food."))}</p>
     ${tabs}${corpo}
-    ${stagTab==="pes"||stagTab==="cro" ? `<p class="mini st-leg" style="margin-top:12px;--st:${col}"><span class="st-q si"></span>${L("di stagione","in season")} <span class="st-q no"></span>${L("fermo biologico","closed season")}</p>
+    ${(stagTab==="pes"||stagTab==="cro") && !suEmisferoSud() ? `<p class="mini st-leg" style="margin-top:12px;--st:${col}"><span class="st-q si"></span>${L("di stagione","in season")} <span class="st-q no"></span>${L("fermo biologico","closed season")}</p>
       <div class="sc-box st-nota">\u2693 ${L("<b>Fermo della pesca a strascico 2026</b>: in Adriatico da Trieste ad Ancona da fine luglio; da San Benedetto del Tronto a Bari dal 16 agosto al 29 settembre; da Brindisi a Otranto, nello Ionio, nel Tirreno e nelle isole dal 1\u00b0 al 30 ottobre. In quei periodi c\u2019\u00e8 meno pesce fresco italiano (gamberi, scampi, naselli, triglie\u2026): le date cambiano ogni anno.","<b>2026 trawling ban</b>: in the Adriatic from Trieste to Ancona from late July; from San Benedetto del Tronto to Bari 16 August\u201329 September; from Brindisi to Otranto, in the Ionian, the Tyrrhenian and the islands 1\u201330 October. During those weeks there\u2019s less fresh Italian fish (prawns, langoustines, hake, red mullet\u2026): the dates change every year.")}</div>` : ""}
-    <p class="mini" style="margin-top:14px">${L("Le stagioni sono quelle del nostro emisfero, il nord: i mesi sono indicativi per l’Italia e possono variare di qualche settimana secondo la regione e l’annata. Fuori stagione molti prodotti si trovano lo stesso perché arrivano dall’emisfero sud, dove le stagioni sono invertite: costano di più e fanno molta più strada. Per il pesce indicano il periodo in cui è più abbondante e buono. Icone: Microsoft Fluent Emoji (licenza MIT) e disegni originali.","The seasons are those of our hemisphere, the northern one: the months are approximate for Italy and can shift by a few weeks depending on the region and the year. Out of season many products are still on sale because they come from the southern hemisphere, where the seasons are reversed: they cost more and travel much further. For fish they show when it’s most plentiful and at its best. Icons: Microsoft Fluent Emoji (MIT licence) and original drawings.")}</p>`);
+    <p class="mini" style="margin-top:14px">${suEmisferoSud() ? L("Hai indicato in \u00abConosciamoci\u00bb che vivi nell\u2019emisfero sud: ho spostato il calendario di sei mesi rispetto a quello italiano. \u00c8 un\u2019approssimazione: i mesi precisi dipendono dal paese e dal clima. Icone: Microsoft Fluent Emoji (licenza MIT) e disegni originali.","You said in \u00abLet\u2019s get acquainted\u00bb that you live in the southern hemisphere: I\u2019ve shifted the calendar six months from the Italian one. It\u2019s an approximation: exact months depend on the country and climate. Icons: Microsoft Fluent Emoji (MIT licence) and original drawings.") : L("Le stagioni sono quelle del nostro emisfero, il nord: i mesi sono indicativi per l’Italia e possono variare di qualche settimana secondo la regione e l’annata. Fuori stagione molti prodotti si trovano lo stesso perché arrivano dall’emisfero sud, dove le stagioni sono invertite: costano di più e fanno molta più strada. Per il pesce indicano il periodo in cui è più abbondante e buono. Icone: Microsoft Fluent Emoji (licenza MIT) e disegni originali.","The seasons are those of our hemisphere, the northern one: the months are approximate for Italy and can shift by a few weeks depending on the region and the year. Out of season many products are still on sale because they come from the southern hemisphere, where the seasons are reversed: they cost more and travel much further. For fish they show when it’s most plentiful and at its best. Icons: Microsoft Fluent Emoji (MIT licence) and original drawings.")}</p>`);
 }
 function centraMese(){ const c = velo.querySelector(".st-mesi .chip.on"); if(c) c.parentElement.scrollLeft = c.offsetLeft - c.parentElement.clientWidth/2 + c.offsetWidth/2; }
 document.addEventListener("click", e=>{
@@ -4015,18 +4051,9 @@ document.addEventListener("click", e=>{
 
 
 /* ===== BENTO HOME PAGE ===== */
-function tappaHome(){
-  const p = S.profilo, disp = S.dispensa.length;
-  const ora = new Date().getHours();
-  const sal = ora < 12 ? "Buongiorno" : ora < 18 ? "Buon pomeriggio" : "Buonasera";
-  const nome = p.nome ? ", " + p.nome : "";
-  const comm = tavolata().length;
-  const daComprare = S.spesa.filter(x=>!x.presa);
-
-  app.innerHTML = `<div class="home">
-    <div class="home-saluto">${sal}${nome}<small>Cosa cuciniamo?</small></div>
-    <div class="bento">
-      <div class="bcella c-verde avvia" id="hAvvia">
+/* il riquadro "Conosciamoci": grande in cima finche' il profilo non e' compilato, poi piccolo in fondo */
+function htmlConosciamoci(piccolo){
+  return `<div class="bcella c-verde ${piccolo ? "hconosci" : "avvia"}" id="hAvvia">
         <svg viewBox="0 0 68 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:88px;height:57px">
   <!-- lei: capelli lunghi -->
   <path d="M10 33c-2-5-2-11 0-15 2-6 7-9 11-9s9 3 11 9c2 4 2 10 0 15" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
@@ -4047,7 +4074,20 @@ function tappaHome(){
 </svg>
         <b>Conosciamoci</b>
         <small>Rivedi o aggiorna il tuo profilo</small>
-      </div>
+      </div>`;
+}
+function tappaHome(){
+  const p = S.profilo, disp = S.dispensa.length;
+  const ora = new Date().getHours();
+  const sal = ora < 12 ? "Buongiorno" : ora < 18 ? "Buon pomeriggio" : "Buonasera";
+  const nome = p.nome ? ", " + p.nome : "";
+  const comm = tavolata().length;
+  const daComprare = S.spesa.filter(x=>!x.presa);
+
+  app.innerHTML = `<div class="home">
+    <div class="home-saluto">${sal}${nome}<small>Cosa cuciniamo?</small></div>
+    <div class="bento">
+      ${p.fatto ? "" : htmlConosciamoci(false)}
       <div class="bcella c-menta" id="hDisp">
         <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect x="8" y="7" width="28" height="34" rx="4" stroke="currentColor" stroke-width="2.2"/>
@@ -4116,6 +4156,7 @@ function tappaHome(){
            ${daComprare.length>6?`<small>…e altre ${daComprare.length-6} voci</small>`:""}`
         : `<small>Niente da comprare</small>`}
     </div>
+    ${p.fatto ? htmlConosciamoci(true) : ""}
   </div>`;
 
   barra.innerHTML = "";
@@ -4339,6 +4380,8 @@ function trovaRegione(btn, esito){
   esito.textContent = "Cerco la posizione\u2026";
   navigator.geolocation.getCurrentPosition(async pos=>{
     const la = pos.coords.latitude, lo = pos.coords.longitude;
+    S.profilo.emisfero = la < 0 ? "sud" : "nord"; salva();
+    document.querySelectorAll("#pEmi .chip").forEach(x=>x.classList.toggle("on", x.dataset.v === S.profilo.emisfero));
     try{
       const rsp = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude="
                   + la + "&longitude=" + lo + "&localityLanguage=it");
@@ -4352,7 +4395,7 @@ function trovaRegione(btn, esito){
                           + ". Le ricette del posto saliranno in cima.";
       }else{
         esito.textContent = (d.countryName && d.countryName !== "Italia")
-          ? "Sei in " + d.countryName + ", fuori dalle regioni italiane. Scegline una dall\u2019elenco se vuoi."
+          ? "Sei in " + d.countryName + ", fuori dalle regioni italiane" + (la < 0 ? ": ho impostato l\u2019emisfero sud, cos\u00ec le stagioni sono le tue." : ". Scegli una regione dall\u2019elenco se vuoi.")
           : "Posizione trovata ma non la regione. Scegli dall\u2019elenco.";
       }
     }catch(e){
