@@ -145,14 +145,23 @@ body[data-filigrana="1"]::before{
 .az-riga input{width:20px;height:20px;flex:none;margin-top:1px}
 .btn.rischio-btn{background:#B23B30;color:#fff}
 .globo,.pcella svg.globo{display:inline-block;width:28px;height:28px;vertical-align:middle;margin:0 4px 0 0;background:#fff;border-radius:50%}
-.bcella.hconosci{margin-top:-20px;padding:30px 16px 12px;display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;
-  z-index:0;border-radius:0 0 18px 18px;transition:transform .28s cubic-bezier(.3,1.4,.5,1),margin .28s,box-shadow .28s;animation:conosciScivola .6s ease-out .25s both}
-.bcella.hconosci.su{transform:translateY(-6px);margin-top:4px;border-radius:18px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
-@keyframes conosciScivola{from{transform:translateY(-34px);opacity:.3}to{transform:none;opacity:1}}
-@media(prefers-reduced-motion:reduce){.bcella.hconosci{animation:none}}
+/* "Conosciamoci" a profilo compilato: un cassetto chiuso sotto Dispensa e A tavola, con l'orecchietta per tirarlo fuori */
+.cassetto{position:relative;margin-top:-16px;padding-bottom:24px;z-index:0}
+.bcella.hconosci{display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;
+  max-height:24px;padding:0 16px;overflow:hidden;border-radius:0 0 14px 14px;
+  transition:max-height .38s ease,padding .38s ease,border-radius .38s}
+.bcella.hconosci > *{opacity:0;transition:opacity .2s}
+.cassetto.aperto .bcella.hconosci{max-height:130px;padding:28px 16px 14px;border-radius:0 0 18px 18px}
+.cassetto.aperto .bcella.hconosci > *{opacity:1;transition-delay:.15s}
 .bcella.hconosci svg{width:58px !important;height:38px !important;margin:0;grid-row:span 2}
 .bcella.hconosci b{font-size:1rem}
 .bcella.hconosci small{margin-top:2px}
+.orecchio{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:76px;height:24px;border:0;cursor:pointer;
+  border-radius:0 0 14px 14px;background:#B83729;color:#fff;display:flex;align-items:center;justify-content:center;gap:4px;
+  font-size:.8rem;font-weight:800;box-shadow:0 3px 6px rgba(0,0,0,.18);-webkit-tap-highlight-color:transparent}
+.orecchio svg{width:14px;height:14px;transition:transform .3s}
+.cassetto.aperto .orecchio svg{transform:rotate(180deg)}
+:root[data-scuro] .orecchio{background:#B33C2D}
 .bcella{border-radius:18px;padding:16px 16px 14px;cursor:pointer;
   border:1.5px solid transparent;
   transition:transform .15s,box-shadow .15s;
@@ -4146,6 +4155,7 @@ document.addEventListener("click", e=>{
 
 /* ===== BENTO HOME PAGE ===== */
 /* il riquadro "Conosciamoci": grande in cima finche' il profilo non e' compilato, poi piccolo in fondo */
+function profiloCompilato(){ const p = S.profilo; return !!(p.fatto && (p.nome || "").trim()); }
 function htmlConosciamoci(piccolo){
   return `<div class="bcella c-verde ${piccolo ? "hconosci" : "avvia"}" id="hAvvia">
         <svg viewBox="0 0 68 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:88px;height:57px">
@@ -4182,7 +4192,7 @@ function tappaHome(){
     <div class="home-saluto">${sal}${nome}<small>Cosa cuciniamo?</small></div>
     ${htmlPromemoriaSalva()}
     <div class="bento">
-      ${p.fatto ? "" : htmlConosciamoci(false)}
+      ${profiloCompilato() ? "" : htmlConosciamoci(false)}
       <div class="bcella c-menta" id="hDisp">
         <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect x="8" y="7" width="28" height="34" rx="4" stroke="currentColor" stroke-width="2.2"/>
@@ -4208,7 +4218,11 @@ function tappaHome(){
         <small>${comm>1?"Siete in "+comm:"Cucini per te"}</small>
       </div>
     </div>
-    ${p.fatto ? htmlConosciamoci(true) : ""}
+    ${profiloCompilato() ? `<div class="cassetto" id="cassetto">${htmlConosciamoci(true)}
+      <button class="orecchio" id="orecchio" aria-expanded="false" aria-label="${L("Apri Conosciamoci","Open Let\u2019s get acquainted")}">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.6" stroke="currentColor" stroke-width="1.6"/><path d="M3 14c.4-3 2.4-4.6 5-4.6s4.6 1.6 5 4.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button></div>` : ""}
     <div class="bento-3" style="grid-template-columns:1fr">
       <div class="bcella c-senape" id="hVoglia">
         <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -4256,11 +4270,13 @@ function tappaHome(){
 
   barra.innerHTML = "";
 
-  document.getElementById("hAvvia").onclick = e=>{
-    const t = e.currentTarget;
-    if(t.classList.contains("hconosci")){ t.classList.add("su"); setTimeout(()=>vai(0), 300); }
-    else vai(0);
+  const cass = document.getElementById("cassetto");
+  const apriCassetto = v=>{ cass.classList.toggle("aperto", v); document.getElementById("orecchio").setAttribute("aria-expanded", v ? "true" : "false"); };
+  document.getElementById("hAvvia").onclick = ()=>{
+    if(cass && !cass.classList.contains("aperto")){ apriCassetto(true); return; }
+    vai(0);
   };
+  if(cass) document.getElementById("orecchio").onclick = e=>{ e.stopPropagation(); apriCassetto(!cass.classList.contains("aperto")); };
   document.getElementById("hDisp").onclick  = ()=>vai(2);
   document.getElementById("hOsp").onclick   = ()=>vai(1);
   document.getElementById("hVoglia").onclick = ()=>vai(3);
