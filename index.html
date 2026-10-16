@@ -135,6 +135,12 @@ body[data-filigrana="1"]::before{
 .bento{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .bento .avvia{grid-column:1/-1}
 .bento .bcella{z-index:1}
+.promemoria-salva{background:#0F6E78;color:#fff;border-radius:18px;padding:14px 16px;margin:0 0 12px;display:flex;flex-direction:column;gap:4px}
+.promemoria-salva b{font-size:1rem;line-height:1.3}
+.promemoria-salva .mini{color:#fff;opacity:.92;font-size:.86rem}
+.promemoria-salva .azioni{margin-top:8px}
+.promemoria-salva .btn{background:#fff;color:#0F6E78}
+.promemoria-salva .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.6)}
 .az-riga{display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:.95rem;line-height:1.35}
 .az-riga input{width:20px;height:20px;flex:none;margin-top:1px}
 .btn.rischio-btn{background:#B23B30;color:#fff}
@@ -1086,6 +1092,7 @@ const VUOTO = {
   nascoste:[], mie:[], ingMiei:{}, ingTolti:[], ingSpostati:{}, schedeMie:[]
 };
 let S = carica();
+if(!S.primoUso){ S.primoUso = Date.now(); salva(); }
 /* al primo avvio, gli ingredienti di base risultano già in dispensa: l'utente toglie solo quelli che non ha */
 if(!S.baseMigrato){
   BASE.forEach(k=>{ if(!S.dispensa.includes(k)) S.dispensa.push(k); });
@@ -2894,6 +2901,24 @@ function togglePref(id){
   i < 0 ? S.preferite.push(id) : S.preferite.splice(i,1);
   salva();
 }
+/* promemoria per salvare i dati: dopo una ricetta o una scheda nuova, o se e' passato un mese */
+const GIORNO_MS = 86400000;
+function salvataggioFatto(){ S.ultimoSalvataggio = Date.now(); S.daSalvare = 0; S.promemoriaDopo = 0; salva(); if(passo === 5) tappaHome(); }
+function htmlPromemoriaSalva(){
+  if(!S.profilo.fatto) return "";
+  const ora = Date.now();
+  if(S.promemoriaDopo && S.promemoriaDopo > ora) return "";
+  const n = S.daSalvare || 0, da = S.ultimoSalvataggio || S.primoUso || ora;
+  const mese = ora - da > 30 * GIORNO_MS;
+  if(!n && !mese) return "";
+  const testo = n
+    ? L(`Hai ${n === 1 ? "una ricetta o scheda nuova" : n + " ricette o schede nuove"} non ancora ${n === 1 ? "salvata" : "salvate"}.`, `You have ${n === 1 ? "a new recipe or card" : n + " new recipes or cards"} not saved yet.`)
+    : (S.ultimoSalvataggio ? L("\u00c8 passato pi\u00f9 di un mese dall\u2019ultimo salvataggio.","It\u2019s been over a month since your last save.") : L("Non hai ancora salvato i tuoi dati.","You haven\u2019t saved your data yet."));
+  return `<div class="promemoria-salva" data-no-tr>
+    <b>\u{1F4BE} ${testo}</b>
+    <span class="mini">${L("Salva i tuoi dati su Drive, nella cartella Dispensa: se cambi telefono o azzeri, non perdi niente.","Save your data to Drive, in the Dispensa folder: if you change phone or reset, you lose nothing.")}</span>
+    <div class="azioni"><button class="btn" id="promSalva">${L("Salva ora","Save now")}</button><button class="btn ghost" id="promDopo">${L("Pi\u00f9 tardi","Later")}</button></div></div>`;
+}
 async function esportaDati(){
   const testo = JSON.stringify({app:"che-cucino", versione:1, dati:S}, null, 2);
   const giorno = new Date().toISOString().slice(0,10);
@@ -2903,9 +2928,11 @@ async function esportaDati(){
     const f = new File([testo], "che-cucino-" + giorno + ".txt", {type:"text/plain"});
     if(navigator.canShare && navigator.canShare({files:[f]})){
       await navigator.share({files:[f], title:"Che cucino? \u2014 " + giorno});
+      salvataggioFatto();
       return;
     }
   }catch(e){ if(e && e.name === "AbortError") return; }
+  salvataggioFatto();
   const blob = new Blob([testo], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -3621,6 +3648,7 @@ document.addEventListener("click", e=>{
 });
 
 function salvaMia(r){
+  S.daSalvare = (S.daSalvare || 0) + 1;
   preparaRicetta(r);
   S.mie = (S.mie || []).filter(x=>x.id !== r.id);
   S.mie.push(r);
@@ -3895,6 +3923,7 @@ function apriSchedaMia(g, id){
     const dati = {g:val("smG"), e:val("smE"), t:val("smT"), s:val("smS"), testo:val("smTesto"), consigli:val("smCons")};
     S.schedeMie = S.schedeMie || [];
     let nid = id;
+    S.daSalvare = (S.daSalvare || 0) + 1;
     if(m) Object.assign(m, dati); else { nid = "m" + Date.now(); S.schedeMie.push(Object.assign({id:nid}, dati)); }
     salva(); apriScuola(nid);
   };
@@ -4151,6 +4180,7 @@ function tappaHome(){
 
   app.innerHTML = `<div class="home">
     <div class="home-saluto">${sal}${nome}<small>Cosa cuciniamo?</small></div>
+    ${htmlPromemoriaSalva()}
     <div class="bento">
       ${p.fatto ? "" : htmlConosciamoci(false)}
       <div class="bcella c-menta" id="hDisp">
@@ -4235,6 +4265,8 @@ function tappaHome(){
   document.getElementById("hOsp").onclick   = ()=>vai(1);
   document.getElementById("hVoglia").onclick = ()=>vai(3);
   document.getElementById("hScuola").onclick = ()=>apriScuola();
+  const ps = document.getElementById("promSalva"); if(ps) ps.onclick = ()=>esportaDati();
+  const pd = document.getElementById("promDopo"); if(pd) pd.onclick = ()=>{ S.promemoriaDopo = Date.now() + 7 * GIORNO_MS; salva(); tappaHome(); };
   document.getElementById("hStag").onclick = ()=>{ stagMese = new Date().getMonth()+1; stagVista = "mese"; apriStagioni(); centraMese(); };
   { const m = new Date().getMonth()+1, st = stagioni();
     const n = ["ort","fru","pes","cro"].reduce((a,k)=>a + st[k].filter(x=>x.m.includes(m) && x.m.length<12 && !fermoIn(x,m)).length, 0);
