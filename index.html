@@ -1492,7 +1492,7 @@ function tappaProfilo(){
           style="flex:1;padding:9px;border-radius:9px;border:1.5px solid var(--linea);background:var(--carta);color:var(--inchiostro);font-size:.95rem">
         <button type="button" id="pLuogoCerca">${L("Cerca","Find")}</button>
       </div>
-      <p class="mini" id="pLuogoEsito" aria-live="polite" data-no-tr>${p.luogo ? (p.emisfero === "sud" ? L("Emisfero sud: le stagioni sono le tue.","Southern hemisphere: the seasons are yours.") : L("Emisfero nord.","Northern hemisphere.")) : L("Serve per le stagioni: dal luogo capisco in che emisfero vivi. Con il GPS qui sotto lo trovo da solo.","Used for the seasons: from the place I work out which hemisphere you live in. The GPS below finds it on its own.")}</p>
+      <p class="mini" id="pLuogoEsito" aria-live="polite" data-no-tr style="font-size:.95rem;font-weight:700">${p.luogo ? bandiera(p.paeseCod) + " " + esc(p.luogo) + (p.regione && p.paeseCod === "IT" ? " \u00b7 " + esc(p.regione) : "") : L("Serve per le stagioni: dal luogo capisco in che emisfero vivi. Con il GPS qui sotto lo trovo da solo.","Used for the seasons: from the place I work out which hemisphere you live in. The GPS below finds it on its own.")}</p>
       <div class="chips" id="pLuogoScelte" style="margin-top:6px" data-no-tr></div>
     </div>
     <div class="pcella c-menta" style="cursor:default">
@@ -4389,18 +4389,18 @@ function abbinaRegione(nome){
 /* "Dove vivi": dal nome del luogo ricavo l'emisfero (e, se e' in Italia, la regione).
    Se ci sono luoghi con lo stesso nome in emisferi diversi, chiedo quale. */
 let luogoUltimo = "";
-function impostaLuogo(nome, paese, lat, regIt){
+function bandiera(cod){ return (cod && /^[a-z]{2}$/i.test(cod)) ? String.fromCodePoint(...cod.toUpperCase().split("").map(c=>0x1F1E6 + c.charCodeAt(0) - 65)) : "\u{1F4CD}"; }
+function impostaLuogo(nome, paese, lat, regIt, cod){
   const sud = lat < 0;
   S.profilo.luogo = nome + (paese ? ", " + paese : "");
   S.profilo.emisfero = sud ? "sud" : "nord";
+  S.profilo.paeseCod = cod || "";
   if(regIt){ S.profilo.regione = regIt; const sel = document.getElementById("pReg"); if(sel){ sel.value = regIt; sel._aggiorna && sel._aggiorna(); } }
   salva();
   const inp = document.getElementById("pLuogo"); if(inp) inp.value = S.profilo.luogo;
   const sc = document.getElementById("pLuogoScelte"); if(sc) sc.innerHTML = "";
   const es = document.getElementById("pLuogoEsito");
-  if(es) es.textContent = "\u{1F4CD} " + S.profilo.luogo + " \u2014 " + (sud
-    ? L("emisfero sud: le stagioni del calendario sono spostate di sei mesi, come le tue.","southern hemisphere: the calendar seasons are shifted six months, like yours.")
-    : L("emisfero nord.","northern hemisphere.")) + (regIt ? " " + L("Regione: ","Region: ") + regIt + "." : "");
+  if(es) es.textContent = bandiera(cod) + " " + S.profilo.luogo + (regIt ? " \u00b7 " + regIt : "");
 }
 async function cercaLuogo(q){
   q = (q || "").trim();
@@ -4419,12 +4419,12 @@ async function cercaLuogo(q){
     const reg = x => (x.country_code === "IT" ? abbinaRegione(x.admin1 || "") : "");
     const nord = ris.filter(x=>x.latitude >= 0), sud = ris.filter(x=>x.latitude < 0);
     if(!nord.length || !sud.length){
-      const x = ris[0]; impostaLuogo(x.name, x.country || "", x.latitude, reg(x)); return;
+      const x = ris[0]; impostaLuogo(x.name, x.country || "", x.latitude, reg(x), x.country_code); return;
     }
     /* omonimi in emisferi diversi: chiedo quale */
     es.textContent = L(`Ci sono pi\u00f9 luoghi chiamati \u00ab${x0(q)}\u00bb, in emisferi diversi. Qual \u00e8 il tuo?`, `There are several places called \u00ab${x0(q)}\u00bb, in different hemispheres. Which one is yours?`);
-    sc.innerHTML = ris.slice(0,6).map((x,i)=>`<button class="chip" data-luogo="${i}">${esc(x.name)} (${esc([x.admin1, x.country].filter(Boolean).join(", "))})</button>`).join("");
-    sc.querySelectorAll("[data-luogo]").forEach(b=>b.onclick=()=>{ const x = ris[+b.dataset.luogo]; impostaLuogo(x.name, x.country || "", x.latitude, reg(x)); });
+    sc.innerHTML = ris.slice(0,6).map((x,i)=>`<button class="chip" data-luogo="${i}">${bandiera(x.country_code)} ${esc(x.name)} (${esc([x.admin1, x.country].filter(Boolean).join(", "))})</button>`).join("");
+    sc.querySelectorAll("[data-luogo]").forEach(b=>b.onclick=()=>{ const x = ris[+b.dataset.luogo]; impostaLuogo(x.name, x.country || "", x.latitude, reg(x), x.country_code); });
   }catch(e){
     luogoUltimo = "";
     es.textContent = L("Non riesco a cercare il luogo adesso (sei senza rete?). Usa il GPS o riprova pi\u00f9 tardi.","I can\u2019t look up the place right now (are you offline?). Use the GPS or try again later.");
@@ -4447,7 +4447,7 @@ function trovaRegione(btn, esito){
       const d = await rsp.json();
       const reg = abbinaRegione(d.principalSubdivision);
       const citta = d.city || d.locality || "";
-      if(citta || d.countryName){ impostaLuogo(citta || d.countryName, citta ? (d.countryName || "") : "", la, abbinaRegione(d.principalSubdivision)); }
+      if(citta || d.countryName){ impostaLuogo(citta || d.countryName, citta ? (d.countryName || "") : "", la, abbinaRegione(d.principalSubdivision), d.countryCode); }
       if(reg){
         S.profilo.regione = reg; salva();
         const sel = document.getElementById("pReg"); if(sel){ sel.value = reg; sel._aggiorna && sel._aggiorna(); }
