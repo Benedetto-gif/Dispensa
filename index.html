@@ -386,10 +386,12 @@ body[data-filigrana="1"]::before{
   border-bottom:1px solid var(--linea)}
 
 /* schermata d'apertura */
-#splash{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;gap:16px;
+#splash{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;align-content:center;gap:16px;
   background:linear-gradient(180deg,#2E5B43,#1C3A2B);transition:opacity .45s ease}
 #splash.via{opacity:0;pointer-events:none}
 #splash svg{width:min(44vw,180px);height:auto}
+#splash .ver-splash{margin-top:-8px;font:700 .85rem/1 Inter,system-ui,sans-serif;letter-spacing:.06em;color:#F0DFB8;opacity:0;animation:sp-nome .5s ease .9s forwards}
+#infoBtn .ver{font:700 .62rem/1 Inter,system-ui,sans-serif;font-style:normal;margin-left:3px;opacity:.75;letter-spacing:.02em}
 #splash .nome{font-family:Newsreader,Georgia,serif;font-size:clamp(1.7rem,7.5vw,2.4rem);
   font-weight:600;letter-spacing:-.01em;line-height:1.1;text-align:center;color:#F0DFB8;
   opacity:0;animation:sp-nome .5s ease .75s forwards}
@@ -611,6 +613,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </g>
   </svg>
   <div class="nome">Che cucino?</div>
+  <div class="ver-splash" data-no-tr>v111</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -620,7 +623,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
       <input type="range" id="tono" min="0" max="100" step="100" value="0" aria-label="Passa da chiaro a scuro">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
     </div>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="width:38px;padding:0;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif">i</button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v111</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Strumenti</button>
   </div>
   <div class="rail" id="rail"></div>
