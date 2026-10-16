@@ -4508,12 +4508,37 @@ function impostaLuogo(nome, paese, lat, regIt, cod){
   S.profilo.luogo = nome + (paese ? ", " + paese : "");
   S.profilo.emisfero = sud ? "sud" : "nord";
   S.profilo.paeseCod = cod || "";
-  if(regIt){ S.profilo.regione = regIt; const sel = document.getElementById("pReg"); if(sel){ sel.value = regIt; sel._aggiorna && sel._aggiorna(); } }
+  /* la regione segue sempre il luogo: niente regioni rimaste da prima (es. Veneto mentre sei in Sicilia) */
+  S.profilo.regione = regIt || "";
+  { const sel = document.getElementById("pReg"); if(sel){ sel.value = S.profilo.regione; sel._aggiorna && sel._aggiorna(); } }
   salva();
   const inp = document.getElementById("pLuogo"); if(inp) inp.value = S.profilo.luogo;
   const sc = document.getElementById("pLuogoScelte"); if(sc) sc.innerHTML = "";
   const es = document.getElementById("pLuogoEsito");
   if(es) es.innerHTML = globo(S.profilo.emisfero) + " " + bandiera(cod) + " " + esc(S.profilo.luogo) + (regIt ? " \u00b7 " + esc(regIt) : "");
+}
+/* cerca un nome su Open-Meteo; se non c'e', prova a staccare i prefissi ("Acicastello" -> "Aci Castello")
+   e infine chiede a OpenStreetMap, che conosce anche i nomi scritti attaccati */
+async function cercaNome(nome){
+  const lingua = IN_INGLESE ? "en" : "it";
+  const om = async n => { const r = await fetch("https://geocoding-api.open-meteo.com/v1/search?count=8&language=" + lingua + "&name=" + encodeURIComponent(n)); const d = await r.json(); return d.results || []; };
+  let ris = await om(nome);
+  if(ris.length) return ris;
+  const varianti = new Set();
+  const m = nome.match(/^(aci|san|santa|sant|santo|santi|castel|castello|monte|porto|villa|torre|borgo|rocca|ponte|pieve|casal|campo|val|bagno|bagni|marina|lido|serra|terra|forte|riva|colle|poggio|pozzo|fiume|piano|mezzo|sotto|sopra)(.+)$/i);
+  if(m) varianti.add(m[1] + " " + m[2]);
+  const n2 = nome.replace(/([a-z])(castello|castel|monte|marina|terme|superiore|inferiore|scalo|lido)$/i, "$1 $2");
+  if(n2 !== nome) varianti.add(n2);
+  if(/[-']/.test(nome)) varianti.add(nome.replace(/[-']/g, " "));
+  for(const v of varianti){ ris = await om(v); if(ris.length) return ris; }
+  try{
+    const r = await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=" + lingua + "&q=" + encodeURIComponent(nome));
+    const d = await r.json();
+    return (d || []).filter(x=>x.address).map(x=>{ const a = x.address; return {
+      name: a.city || a.town || a.village || a.municipality || a.hamlet || x.name || nome,
+      country: a.country || "", country_code: (a.country_code || "").toUpperCase(),
+      admin1: a.state || a.region || "", latitude: +x.lat, longitude: +x.lon }; });
+  }catch(e){ return []; }
 }
 async function cercaLuogo(q){
   q = (q || "").trim();
@@ -4522,9 +4547,7 @@ async function cercaLuogo(q){
   luogoUltimo = q;
   es.textContent = L("Cerco il luogo\u2026","Looking up the place\u2026"); sc.innerHTML = "";
   try{
-    const r = await fetch("https://geocoding-api.open-meteo.com/v1/search?count=8&language=" + (IN_INGLESE ? "en" : "it") + "&name=" + encodeURIComponent(q.split(",")[0].trim()));
-    const d = await r.json();
-    let ris = (d.results || []);
+    let ris = await cercaNome(q.split(",")[0].trim());
     /* se ha scritto anche il paese ("Cordoba, Argentina") tengo solo quello */
     const paeseScritto = q.includes(",") ? normTesto(q.split(",").slice(1).join(" ")) : "";
     if(paeseScritto){ const f = ris.filter(x=>normTesto((x.country||"") + " " + (x.admin1||"")).includes(paeseScritto)); if(f.length) ris = f; }
@@ -4555,11 +4578,23 @@ function trovaRegione(btn, esito){
     const la = pos.coords.latitude, lo = pos.coords.longitude;
     S.profilo.emisfero = la < 0 ? "sud" : "nord"; salva();
     try{
+      /* prima OpenStreetMap: sulla costa e' piu' preciso (l'altro servizio scambia Aci Castello per il mar Ionio) */
+      try{
+        const rn = await fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&addressdetails=1&accept-language="
+                    + (IN_INGLESE ? "en" : "it") + "&lat=" + la + "&lon=" + lo);
+        const n = await rn.json(), a = (n && n.address) || {};
+        const comune = a.city || a.town || a.village || a.municipality || a.hamlet || a.suburb || "";
+        if(comune){
+          const cod = (a.country_code || "").toUpperCase();
+          impostaLuogo(comune, a.country || "", la, cod === "IT" ? abbinaRegione(a.state || a.region || "") : "", cod);
+          return;
+        }
+      }catch(e){}
       const rsp = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude="
                   + la + "&longitude=" + lo + "&localityLanguage=it");
       const d = await rsp.json();
       const reg = abbinaRegione(d.principalSubdivision);
-      const citta = d.city || d.locality || "";
+      const citta = d.city || (d.principalSubdivision ? d.locality : "") || "";
       if(citta || d.countryName){ impostaLuogo(citta || d.countryName, citta ? (d.countryName || "") : "", la, abbinaRegione(d.principalSubdivision), d.countryCode); return; }
       if(reg){
         S.profilo.regione = reg; salva();
@@ -4579,7 +4614,7 @@ function trovaRegione(btn, esito){
     esito.textContent = (err.code === err.PERMISSION_DENIED)
       ? "Permesso negato. Puoi scegliere la regione a mano."
       : "Posizione non disponibile adesso. Scegli la regione a mano.";
-  }, {enableHighAccuracy:false, timeout:10000, maximumAge:600000});
+  }, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
 }
 
 /* ===========================================================
