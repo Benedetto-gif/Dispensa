@@ -8,11 +8,15 @@
  * l'app continua comunque a funzionare senza connessione.
  */
 
-const VERSIONE = 'checucino-v91';
+const VERSIONE = 'checucino-v92';
 
 const FILE = [
   './',
   './index.html',
+  './dati/ricette.js',
+  './dati/ricette-en.js',
+  './dati/scuola.js',
+  './dati/stagioni.js',
   './manifest.json',
   './icon-192.png',
   './icon-180.png',
