@@ -1554,18 +1554,10 @@ function tappaProfilo(){
         <button type="button" id="pLuogoCerca">${L("Cerca","Find")}</button>
         <button type="button" id="pGeo" title="${L("Trova dove sei con il GPS","Find where you are with GPS")}">\u{1F4CD} GPS</button>
       </div>
-      <p class="mini" id="pLuogoEsito" aria-live="polite" data-no-tr style="font-size:.95rem;font-weight:700">${p.luogo ? globo(p.emisfero) + " " + bandiera(p.paeseCod) + " " + esc(p.luogo) + (p.regione && p.paeseCod === "IT" ? " \u00b7 " + esc(p.regione) : "") : L("Con il GPS la trovo da solo.","With GPS I find it on my own.")}</p>
+      <p class="mini" id="pLuogoEsito" aria-live="polite" data-no-tr style="font-size:.95rem;font-weight:700">${p.luogo ? globo(p.emisfero) + " " + bandiera(p.paeseCod) + " " + esc(p.luogo) : L("Con il GPS la trovo da solo.","With GPS I find it on my own.")}</p>
       <div class="chips" id="pLuogoScelte" style="margin-top:6px" data-no-tr></div>
     </div>
-    <div class="pcella c-menta" style="cursor:default">
-      <svg viewBox="0 0 28 28" fill="none"><path d="M14 4a10 10 0 1 0 0 20A10 10 0 0 0 14 4z" stroke="currentColor" stroke-width="2"/><path d="M14 9v6l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <b>Regione</b>
-      <select id="pReg" style="margin-top:8px;width:100%;padding:8px 4px;border-radius:9px;border:1.5px solid var(--linea);background:var(--carta);color:var(--inchiostro);font-size:.86rem">
-        <option value="">Qualsiasi</option>
-        ${REGIONI.map(r=>`<option ${p.regione===r?"selected":""}>${r}</option>`).join("")}
-      </select>
-    </div>
-    <div class="pcella c-crema" style="cursor:default">
+    <div class="pcella full c-crema" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><path d="M6 20 Q14 8 22 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="20" r="2" fill="currentColor"/></svg>
       <b>Come mangi</b>
       <div class="chips" id="pStile" style="margin-top:8px">
@@ -1595,7 +1587,6 @@ function tappaProfilo(){
   });
   document.getElementById("pNome").oninput = e=>{ S.profilo.nome=e.target.value; salva(); };
   document.getElementById("pEvita").oninput = e=>{ S.profilo.evita=e.target.value; salva(); };
-  document.getElementById("pReg").onchange = e=>{ S.profilo.regione=e.target.value; salva(); };
   const pl = document.getElementById("pLuogo");
   document.getElementById("pLuogoCerca").onclick = ()=>cercaLuogo(pl.value);
   pl.onkeydown = e=>{ if(e.key === "Enter"){ e.preventDefault(); cercaLuogo(pl.value); } };
@@ -2048,7 +2039,7 @@ function tappaRicette(){
     ${ordinaAperto?`<div id="ordPanel">
     <p class="mini" style="margin:10px 0 4px">Ordina per</p>
     <div class="chips" id="ordCrit">
-      ${CRITERI_ORDINE.filter(c=>!c.nutri).map(c=>`<button class="chip ${c.key===ordinaPer?"on":""}" data-crit="${c.key}">${c.label}</button>`).join("")}
+      ${CRITERI_ORDINE.filter(c=>!c.nutri && (c.key !== "regione" || S.profilo.regione)).map(c=>`<button class="chip ${c.key===ordinaPer?"on":""}" data-crit="${c.key}">${c.label}</button>`).join("")}
     </div>
     <p class="mini" style="margin:10px 0 4px">Contenuto di (per 100 g; \u201cper porzione\u201d dove indicato)</p>
     <div class="chips" id="ordNutri">
@@ -4503,19 +4494,24 @@ function globo(emi){
     <circle cx="16" cy="16" r="13" fill="none" stroke="#2B4A55" stroke-width="1.6"/></svg>`;
 }
 function bandiera(cod){ return (cod && /^[a-z]{2}$/i.test(cod)) ? String.fromCodePoint(...cod.toUpperCase().split("").map(c=>0x1F1E6 + c.charCodeAt(0) - 65)) : "\u{1F4CD}"; }
-function impostaLuogo(nome, paese, lat, regIt, cod){
-  const sud = lat < 0;
-  S.profilo.luogo = nome + (paese ? ", " + paese : "");
-  S.profilo.emisfero = sud ? "sud" : "nord";
-  S.profilo.paeseCod = cod || "";
-  /* la regione segue sempre il luogo: niente regioni rimaste da prima (es. Veneto mentre sei in Sicilia) */
-  S.profilo.regione = regIt || "";
-  { const sel = document.getElementById("pReg"); if(sel){ sel.value = S.profilo.regione; sel._aggiorna && sel._aggiorna(); } }
+function nomeProvincia(x){
+  return (x || "").replace(/^(libero consorzio comunale di|citt\u00e0 metropolitana di|citta metropolitana di|metropolitan city of|province of|provincia autonoma di|provincia di|provincia del|provincia della|provincia dell['\u2019])\s*/i, "").trim();
+}
+function impostaLuogo(nome, paese, lat, regIt, cod, prov){
+  cod = (cod || "").toUpperCase();
+  prov = nomeProvincia(prov);
+  S.profilo.luogo = cod === "IT"
+    ? nome + " (" + [prov && normTesto(prov) !== normTesto(nome) ? prov : "", paese || "Italia"].filter(Boolean).join(", ") + ")"
+    : nome + (paese ? ", " + paese : "");
+  S.profilo.emisfero = lat < 0 ? "sud" : "nord";
+  S.profilo.paeseCod = cod;
+  /* la regione non si mostra piu': serve solo, in Italia, a far salire le ricette della tua zona */
+  S.profilo.regione = cod === "IT" ? (regIt || "") : "";
   salva();
   const inp = document.getElementById("pLuogo"); if(inp) inp.value = S.profilo.luogo;
   const sc = document.getElementById("pLuogoScelte"); if(sc) sc.innerHTML = "";
   const es = document.getElementById("pLuogoEsito");
-  if(es) es.innerHTML = globo(S.profilo.emisfero) + " " + bandiera(cod) + " " + esc(S.profilo.luogo) + (regIt ? " \u00b7 " + esc(regIt) : "");
+  if(es) es.innerHTML = globo(S.profilo.emisfero) + " " + bandiera(cod) + " " + esc(S.profilo.luogo);
 }
 /* cerca un nome su Open-Meteo; se non c'e', prova a staccare i prefissi ("Acicastello" -> "Aci Castello")
    e infine chiede a OpenStreetMap, che conosce anche i nomi scritti attaccati */
@@ -4537,7 +4533,7 @@ async function cercaNome(nome){
     return (d || []).filter(x=>x.address).map(x=>{ const a = x.address; return {
       name: a.city || a.town || a.village || a.municipality || a.hamlet || x.name || nome,
       country: a.country || "", country_code: (a.country_code || "").toUpperCase(),
-      admin1: a.state || a.region || "", latitude: +x.lat, longitude: +x.lon }; });
+      admin1: a.state || a.region || "", admin2: a.province || a.county || "", latitude: +x.lat, longitude: +x.lon }; });
   }catch(e){ return []; }
 }
 async function cercaLuogo(q){
@@ -4555,12 +4551,12 @@ async function cercaLuogo(q){
     const reg = x => (x.country_code === "IT" ? abbinaRegione(x.admin1 || "") : "");
     const nord = ris.filter(x=>x.latitude >= 0), sud = ris.filter(x=>x.latitude < 0);
     if(!nord.length || !sud.length){
-      const x = ris[0]; impostaLuogo(x.name, x.country || "", x.latitude, reg(x), x.country_code); return;
+      const x = ris[0]; impostaLuogo(x.name, x.country || "", x.latitude, reg(x), x.country_code, x.admin2); return;
     }
     /* omonimi in emisferi diversi: chiedo quale */
     es.textContent = L(`Ci sono pi\u00f9 luoghi chiamati \u00ab${x0(q)}\u00bb, in emisferi diversi. Qual \u00e8 il tuo?`, `There are several places called \u00ab${x0(q)}\u00bb, in different hemispheres. Which one is yours?`);
     sc.innerHTML = ris.slice(0,6).map((x,i)=>`<button class="chip" data-luogo="${i}">${bandiera(x.country_code)} ${esc(x.name)} (${esc([x.admin1, x.country].filter(Boolean).join(", "))})</button>`).join("");
-    sc.querySelectorAll("[data-luogo]").forEach(b=>b.onclick=()=>{ const x = ris[+b.dataset.luogo]; impostaLuogo(x.name, x.country || "", x.latitude, reg(x), x.country_code); });
+    sc.querySelectorAll("[data-luogo]").forEach(b=>b.onclick=()=>{ const x = ris[+b.dataset.luogo]; impostaLuogo(x.name, x.country || "", x.latitude, reg(x), x.country_code, x.admin2); });
   }catch(e){
     luogoUltimo = "";
     es.textContent = L("Non riesco a cercare il luogo adesso (sei senza rete?). Usa il GPS o riprova pi\u00f9 tardi.","I can\u2019t look up the place right now (are you offline?). Use the GPS or try again later.");
@@ -4569,7 +4565,7 @@ async function cercaLuogo(q){
 }
 function trovaRegione(btn, esito){
   if(!navigator.geolocation){
-    esito.textContent = "Questo telefono non sa dirmi dove sei. Scegli la regione dall\u2019elenco.";
+    esito.textContent = L("Questo telefono non sa dirmi dove sei: scrivi il luogo qui sopra.","This phone can\u2019t tell where you are: type the place above.");
     return;
   }
   btn.disabled = true;
@@ -4586,7 +4582,7 @@ function trovaRegione(btn, esito){
         const comune = a.city || a.town || a.village || a.municipality || a.hamlet || a.suburb || "";
         if(comune){
           const cod = (a.country_code || "").toUpperCase();
-          impostaLuogo(comune, a.country || "", la, cod === "IT" ? abbinaRegione(a.state || a.region || "") : "", cod);
+          impostaLuogo(comune, a.country || "", la, cod === "IT" ? abbinaRegione(a.state || a.region || "") : "", cod, a.province || a.county || "");
           return;
         }
       }catch(e){}
@@ -4595,25 +4591,17 @@ function trovaRegione(btn, esito){
       const d = await rsp.json();
       const reg = abbinaRegione(d.principalSubdivision);
       const citta = d.city || (d.principalSubdivision ? d.locality : "") || "";
-      if(citta || d.countryName){ impostaLuogo(citta || d.countryName, citta ? (d.countryName || "") : "", la, abbinaRegione(d.principalSubdivision), d.countryCode); return; }
-      if(reg){
-        S.profilo.regione = reg; salva();
-        const sel = document.getElementById("pReg"); if(sel){ sel.value = reg; sel._aggiorna && sel._aggiorna(); }
-        esito.textContent = "Sei in " + reg + (citta ? " (" + citta + ")" : "")
-                          + ". Le ricette del posto saliranno in cima.";
-      }else{
-        esito.textContent = (d.countryName && d.countryName !== "Italia")
-          ? "Sei in " + d.countryName + ", fuori dalle regioni italiane" + (la < 0 ? ": ho impostato l\u2019emisfero sud, cos\u00ec le stagioni sono le tue." : ". Scegli una regione dall\u2019elenco se vuoi.")
-          : "Posizione trovata ma non la regione. Scegli dall\u2019elenco.";
-      }
+      const prov = (((d.localityInfo || {}).administrative || []).find(x=>x.adminLevel === 6) || {}).name || "";
+      if(citta || d.countryName){ impostaLuogo(citta || d.countryName, citta ? (d.countryName || "") : "", la, reg, d.countryCode, citta ? prov : ""); return; }
+      esito.textContent = L("Posizione trovata, ma non il nome del luogo: scrivilo qui sopra.","Position found, but not the place name: type it above.");
     }catch(e){
-      esito.textContent = "Non sono riuscito a leggere la regione. Scegli dall\u2019elenco.";
+      esito.textContent = L("Non sono riuscito a leggere il luogo: scrivilo qui sopra.","I couldn\u2019t read the place: type it above.");
     }finally{ btn.disabled = false; }
   }, err=>{
     btn.disabled = false;
     esito.textContent = (err.code === err.PERMISSION_DENIED)
-      ? "Permesso negato. Puoi scegliere la regione a mano."
-      : "Posizione non disponibile adesso. Scegli la regione a mano.";
+      ? L("Permesso negato: scrivi il luogo qui sopra.","Permission denied: type the place above.")
+      : L("Posizione non disponibile adesso: scrivi il luogo qui sopra.","Position not available right now: type the place above.");
   }, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
 }
 
