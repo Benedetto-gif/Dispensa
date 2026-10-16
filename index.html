@@ -1492,8 +1492,9 @@ function tappaProfilo(){
         <input type="text" id="pLuogo" value="${esc(p.luogo || "")}" placeholder="${L("Citt\u00e0 o paese, es. Catania","Town or city, e.g. Melbourne")}" enterkeyhint="search" data-no-tr
           style="flex:1;padding:9px;border-radius:9px;border:1.5px solid var(--linea);background:var(--carta);color:var(--inchiostro);font-size:.95rem">
         <button type="button" id="pLuogoCerca">${L("Cerca","Find")}</button>
+        <button type="button" id="pGeo" title="${L("Trova dove sei con il GPS","Find where you are with GPS")}">\u{1F4CD} GPS</button>
       </div>
-      <p class="mini" id="pLuogoEsito" aria-live="polite" data-no-tr style="font-size:.95rem;font-weight:700">${p.luogo ? globo(p.emisfero) + " " + bandiera(p.paeseCod) + " " + esc(p.luogo) + (p.regione && p.paeseCod === "IT" ? " \u00b7 " + esc(p.regione) : "") : L("Serve per le stagioni: dal luogo capisco in che emisfero vivi. Con il GPS qui sotto lo trovo da solo.","Used for the seasons: from the place I work out which hemisphere you live in. The GPS below finds it on its own.")}</p>
+      <p class="mini" id="pLuogoEsito" aria-live="polite" data-no-tr style="font-size:.95rem;font-weight:700">${p.luogo ? globo(p.emisfero) + " " + bandiera(p.paeseCod) + " " + esc(p.luogo) + (p.regione && p.paeseCod === "IT" ? " \u00b7 " + esc(p.regione) : "") : L("Con il GPS la trovo da solo.","With GPS I find it on my own.")}</p>
       <div class="chips" id="pLuogoScelte" style="margin-top:6px" data-no-tr></div>
     </div>
     <div class="pcella c-menta" style="cursor:default">
@@ -1503,8 +1504,6 @@ function tappaProfilo(){
         <option value="">Qualsiasi</option>
         ${REGIONI.map(r=>`<option ${p.regione===r?"selected":""}>${r}</option>`).join("")}
       </select>
-      <button type="button" class="btn ghost small" id="pGeo" style="margin-top:8px;width:100%">📍 GPS</button>
-      <p class="mini" id="pGeoEsito" aria-live="polite"></p>
     </div>
     <div class="pcella c-crema" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><path d="M6 20 Q14 8 22 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="20" r="2" fill="currentColor"/></svg>
@@ -1542,7 +1541,7 @@ function tappaProfilo(){
   pl.onkeydown = e=>{ if(e.key === "Enter"){ e.preventDefault(); cercaLuogo(pl.value); } };
   pl.onchange = ()=>cercaLuogo(pl.value);
   document.getElementById("pGeo").onclick = ()=> trovaRegione(
-    document.getElementById("pGeo"), document.getElementById("pGeoEsito"));
+    document.getElementById("pGeo"), document.getElementById("pLuogoEsito"));
 
   salutoVocale(p.nome);
 
@@ -4459,7 +4458,7 @@ function trovaRegione(btn, esito){
       const d = await rsp.json();
       const reg = abbinaRegione(d.principalSubdivision);
       const citta = d.city || d.locality || "";
-      if(citta || d.countryName){ impostaLuogo(citta || d.countryName, citta ? (d.countryName || "") : "", la, abbinaRegione(d.principalSubdivision), d.countryCode); }
+      if(citta || d.countryName){ impostaLuogo(citta || d.countryName, citta ? (d.countryName || "") : "", la, abbinaRegione(d.principalSubdivision), d.countryCode); return; }
       if(reg){
         S.profilo.regione = reg; salva();
         const sel = document.getElementById("pReg"); if(sel){ sel.value = reg; sel._aggiorna && sel._aggiorna(); }
