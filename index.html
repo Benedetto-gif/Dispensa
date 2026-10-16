@@ -135,6 +135,7 @@ body[data-filigrana="1"]::before{
 .bento{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .bento .avvia{grid-column:1/-1}
 .bento .bcella{z-index:1}
+.globo,.pcella svg.globo{display:inline-block;width:28px;height:28px;vertical-align:middle;margin:0 4px 0 0;background:#fff;border-radius:50%}
 .bcella.hconosci{margin-top:-20px;padding:30px 16px 12px;display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;
   z-index:0;border-radius:0 0 18px 18px;transition:transform .28s cubic-bezier(.3,1.4,.5,1),margin .28s,box-shadow .28s;animation:conosciScivola .6s ease-out .25s both}
 .bcella.hconosci.su{transform:translateY(-6px);margin-top:4px;border-radius:18px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
@@ -1492,7 +1493,7 @@ function tappaProfilo(){
           style="flex:1;padding:9px;border-radius:9px;border:1.5px solid var(--linea);background:var(--carta);color:var(--inchiostro);font-size:.95rem">
         <button type="button" id="pLuogoCerca">${L("Cerca","Find")}</button>
       </div>
-      <p class="mini" id="pLuogoEsito" aria-live="polite" data-no-tr style="font-size:.95rem;font-weight:700">${p.luogo ? bandiera(p.paeseCod) + " " + esc(p.luogo) + (p.regione && p.paeseCod === "IT" ? " \u00b7 " + esc(p.regione) : "") : L("Serve per le stagioni: dal luogo capisco in che emisfero vivi. Con il GPS qui sotto lo trovo da solo.","Used for the seasons: from the place I work out which hemisphere you live in. The GPS below finds it on its own.")}</p>
+      <p class="mini" id="pLuogoEsito" aria-live="polite" data-no-tr style="font-size:.95rem;font-weight:700">${p.luogo ? globo(p.emisfero) + " " + bandiera(p.paeseCod) + " " + esc(p.luogo) + (p.regione && p.paeseCod === "IT" ? " \u00b7 " + esc(p.regione) : "") : L("Serve per le stagioni: dal luogo capisco in che emisfero vivi. Con il GPS qui sotto lo trovo da solo.","Used for the seasons: from the place I work out which hemisphere you live in. The GPS below finds it on its own.")}</p>
       <div class="chips" id="pLuogoScelte" style="margin-top:6px" data-no-tr></div>
     </div>
     <div class="pcella c-menta" style="cursor:default">
@@ -4389,6 +4390,17 @@ function abbinaRegione(nome){
 /* "Dove vivi": dal nome del luogo ricavo l'emisfero (e, se e' in Italia, la regione).
    Se ci sono luoghi con lo stesso nome in emisferi diversi, chiedo quale. */
 let luogoUltimo = "";
+/* mappamondo con l'emisfero in cui vivi colorato */
+function globo(emi){
+  const meta = emi === "sud" ? "M3 16a13 13 0 0 0 26 0z" : "M3 16a13 13 0 0 1 26 0z";
+  return `<svg class="globo" viewBox="0 0 32 32" role="img" aria-label="${emi === "sud" ? L("emisfero sud","southern hemisphere") : L("emisfero nord","northern hemisphere")}">
+    <circle cx="16" cy="16" r="13" fill="#E8F1F2" stroke="#2B4A55" stroke-width="1.6"/>
+    <path d="${meta}" fill="#F2A33A"/>
+    <ellipse cx="16" cy="16" rx="6" ry="13" fill="none" stroke="#2B4A55" stroke-width="1" opacity=".55"/>
+    <path d="M16 3v26M5 9.5h22M5 22.5h22" stroke="#2B4A55" stroke-width=".9" opacity=".45" fill="none"/>
+    <path d="M3 16h26" stroke="#C0392B" stroke-width="1.6"/>
+    <circle cx="16" cy="16" r="13" fill="none" stroke="#2B4A55" stroke-width="1.6"/></svg>`;
+}
 function bandiera(cod){ return (cod && /^[a-z]{2}$/i.test(cod)) ? String.fromCodePoint(...cod.toUpperCase().split("").map(c=>0x1F1E6 + c.charCodeAt(0) - 65)) : "\u{1F4CD}"; }
 function impostaLuogo(nome, paese, lat, regIt, cod){
   const sud = lat < 0;
@@ -4400,7 +4412,7 @@ function impostaLuogo(nome, paese, lat, regIt, cod){
   const inp = document.getElementById("pLuogo"); if(inp) inp.value = S.profilo.luogo;
   const sc = document.getElementById("pLuogoScelte"); if(sc) sc.innerHTML = "";
   const es = document.getElementById("pLuogoEsito");
-  if(es) es.textContent = bandiera(cod) + " " + S.profilo.luogo + (regIt ? " \u00b7 " + regIt : "");
+  if(es) es.innerHTML = globo(S.profilo.emisfero) + " " + bandiera(cod) + " " + esc(S.profilo.luogo) + (regIt ? " \u00b7 " + esc(regIt) : "");
 }
 async function cercaLuogo(q){
   q = (q || "").trim();
