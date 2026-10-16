@@ -749,7 +749,7 @@ const EN_SCHEMI = [
   [/^Hai (\d+) ingredienti$/, m=>`You have ${m[1]} ingredients`],
   [/^…e altre (\d+) voci$/, m=>`…and ${m[1]} more items`],
   [/^Menu (.+)$/, m=>`${trOCopia(m[1])} menu`],
-  [/^🌱 (\d+) ingredient[ei] di stagione$/, m=>`🌱 ${m[1]} seasonal ingredient${m[1]==="1"?"":"s"}`],
+  [/^🗓️ (\d+) ingredient[ei] di stagione$/, m=>`🗓️ ${m[1]} seasonal ingredient${m[1]==="1"?"":"s"}`],
   [/^Non va bene per (.+)$/, m=>`Not suitable for ${m[1].replace(/ e /g, " and ")}`],
   [/^Se non ce l'hai: (.+)$/, m=>`If you don't have one: ${trOCopia(m[1])}`],
   [/^Allergeni: (.+)$/, m=>`Allergens: ${trOCopia(m[1])}`],
@@ -1659,7 +1659,7 @@ function htmlRepartiDisp(){
     if(!vis.length) return "";
     const presi = lista.filter(i=>S.dispensa.includes(i)).length;
     const chip = i=>{ const mesi = D.stagioni[i];
-          const stag = mesi ? (mesi.includes(MESE)?` <span class="ing-stag" title="Di stagione ora">\u{1F331}</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F331}</span>`) : "";
+          const stag = mesi ? (mesi.includes(MESE)?` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
           return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}${stag}</button>`; };
     const sotto = sottoReparti(tit, vis);
     return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||presi?"open":""}>
@@ -1750,6 +1750,7 @@ function tappaDispensa(){
       <datalist id="ingDatalist">${TUTTI_ING.map(i=>`<option value="${esc(i)}">`).join("")}</datalist>
       <div id="ingRisposta">${htmlRispostaDisp()}</div>
       <p class="mini" style="margin-top:10px;opacity:.85">Tieni premuto un ingrediente qui sotto per spostarlo di reparto o toglierlo dall'elenco.</p>
+      <p class="mini" style="margin-top:4px;opacity:.85" data-no-tr>${L("\u{1F5D3}\uFE0F accanto a un ingrediente: \u00e8 di stagione ora; sbiadito: non \u00e8 la sua stagione.","\u{1F5D3}\uFE0F next to an ingredient: in season now; faded: out of season.")}</p>
     </div>
   </div>
   <div class="pgrid" id="repartiDisp" style="margin-top:2px">${htmlRepartiDisp()}</div>`;
@@ -2289,7 +2290,7 @@ function scheda(o){
         : o.sostituibili.length ? `Ci siamo, con ${o.sostituibili.length===1?"una sostituzione":"qualche sostituzione"}`
         : "Hai tutto il necessario"}</div>
       ${o.usa?.length?`<div class="mini" style="margin-top:4px">Consuma: ${esc(o.usa.join(", "))}</div>`:""}
-      <div>${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag.in?`<span class="tag stag">\u{1F331} ${o.stag.in} ${o.stag.in===1?"ingrediente":"ingredienti"} di stagione</span>`:""}${(r.att||[]).some(a=>D.attrezzi[a])?`<span class="tag">\u{1F6E0}\ufe0f attrezzo speciale</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
+      <div>${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag.in?`<span class="tag stag">\u{1F5D3}\uFE0F ${o.stag.in} ${o.stag.in===1?"ingrediente":"ingredienti"} di stagione</span>`:""}${(r.att||[]).some(a=>D.attrezzi[a])?`<span class="tag">\u{1F6E0}\ufe0f attrezzo speciale</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
       ${esclusi.length?`<div class="avviso">Non va bene per ${esclusi.map(c=>esc(c.nome)).join(" e ")}</div>`:""}
     </summary>
     <div class="dett">
@@ -2297,7 +2298,7 @@ function scheda(o){
       <ul class="ing-l">${r.ing.map(i=>{
         const q = `<em data-q="${esc(i.q)}" data-p="${porzioniDi(r)}">${esc(scalaQ(i.q, fattoreDosi(r)))}</em>`;
         const mesi = D.stagioni[i.k];
-        const stag = mesi ? (mesi.includes(MESE) ? ` <span class="ing-stag" title="Di stagione ora">\u{1F331}</span>` : ` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F331}</span>`) : "";
+        const stag = mesi ? (mesi.includes(MESE) ? ` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>` : ` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
         if(possiedo(i.k)) return `<li><span>${esc(i.n)}${stag}</span>${q}</li>`;
         const alt = sostituto(i.k);
         if(alt) return `<li class="sub"><span>${esc(i.n)}${stag} — puoi usare ${esc(alt)}</span>${q}</li>`;
