@@ -632,7 +632,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </g>
   </svg>
   <div class="nome">Che cucino?</div>
-  <div class="ver-splash" data-no-tr>v117</div>
+  <div class="ver-splash" data-no-tr>v118</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -642,7 +642,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
       <svg class="luna" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v117</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v118</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -2662,7 +2662,8 @@ function linkWebHTML(q){
             <a href="https://www.google.com/search?q=${encodeURIComponent("site:casapappagallo.it "+q)}" target="_blank" rel="noopener">\u{1F99C} Casa Pappagallo</a>
             <a href="https://www.google.com/search?q=${encodeURIComponent("site:cookaround.com/ricetta "+q)}" target="_blank" rel="noopener">\u{1F468}\u200D\u{1F373} Cookaround</a>`}
           </div>
-          <button class="btn btn-web" style="margin-top:14px" data-importa-copiato>\u{1F4CB} Ho copiato il link: importa la ricetta</button>`;
+          <button class="btn btn-web" style="margin-top:14px" data-importa-copiato>\u{1F4CB} Ho copiato il link: importa la ricetta</button>
+          <p class="mini" style="margin-top:8px">${L("Pi\u00f9 semplice: sulla pagina della ricetta tocca <b>Condividi</b> e scegli <b>Che cucino?</b> \u2014 la ricetta arriva qui da sola, senza copiare niente.","Easier: on the recipe page tap <b>Share</b> and choose <b>Che cucino?</b> \u2014 the recipe comes straight here, no copying needed.")}</p>`;
 }
 function apriVelo(nome, html){
   veloAperto = nome;
@@ -3513,6 +3514,20 @@ document.addEventListener("click", async e=>{
     else u.focus();
   }catch(err){ u.focus(); }
 });
+/* ricetta condivisa dal telefono (Condividi -> Che cucino?): arriva come ?url=... o dentro ?text=... */
+(function(){
+  const q = new URLSearchParams(location.search);
+  if(!q.has("url") && !q.has("text") && !q.has("title")) return;
+  const m = ((q.get("url") || "") + " " + (q.get("text") || "") + " " + (q.get("title") || "")).match(/https?:\/\/[^\s"'<>]+/i);
+  try{ history.replaceState(null, "", location.pathname); }catch(e){}
+  if(!m) return;
+  const link = m[0].replace(/[).,;]+$/, "");
+  setTimeout(()=>{
+    apriImport();
+    const u = document.getElementById("impUrl");
+    if(u){ u.value = link; u.dispatchEvent(new Event("input", {bubbles:true})); scaricaDaWeb(link, document.getElementById("impEsito")); }
+  }, 400);
+})();
 /* tasto "Incolla" (legge gli appunti) e Invio nella casella del link */
 document.addEventListener("click", async e=>{
   if(!e.target.closest("#impIncolla")) return;
@@ -3729,6 +3744,7 @@ const PERCHE_EN = `<div class="perche">
     <div class="sez"><strong>Already have an idea?</strong></div>
     <p>If you already know what you want to make, the app checks whether you have all the ingredients. If something is missing, it suggests a substitute from what you already have, or adds the rest to the shopping list.</p>
     <p>If the recipe isn't in the archive, search the web with the buttons for a few recipe sites, or find it yourself, copy the link, then go to <strong>Extras → My recipes</strong>, tap <strong>«Paste a recipe from the web»</strong> and paste the link in the box: the app tries to read it and saves it.</p>
+    <p>Even simpler, on an Android phone with the app installed: on the recipe page tap <strong>Share</strong> and choose <strong>Che cucino?</strong>. The link arrives on its own, no copying needed.</p>
     <p>Now you have a new recipe in the archive.</p>
     <div class="sez"><strong>Want an idea?</strong></div>
     <p>Let the app choose: <strong>"What’s cooking?"</strong> shows you the recipes you can make 100% with what you have, then those at 90% and so on, so you always have dozens of recipes to pick from: some ready right away, others one ingredient away.</p>
@@ -3771,6 +3787,7 @@ function apriPerche(){
     <p>Scrivi quello che vuoi preparare, l'app controlla se hai tutti gli ingredienti. Se ti manca qualcosa non preoccuparti, <strong>"Che cucino?"</strong> ti propone una sostituzione con quello che hai già, oppure aggiunge quel che manca alla lista della spesa.</p>
     <p>Se la ricetta non è nell'archivio cercala nel web con i tasti dedicati indirizzati ad alcuni siti, o cercala autonomamente.</p>
     <p>Se la trovi sul web, copia il link e poi vai su <strong>Extra → Le mie ricette</strong>, tocca <strong>«Incolla una ricetta dal web»</strong> e incolla il link nella casella: l'app prova a leggerla, la elabora e, se è in un formato standard, la salva.</p>
+    <p>Ancora più semplice, sul telefono Android con l'app installata: dalla pagina della ricetta tocca <strong>Condividi</strong> e scegli <strong>Che cucino?</strong>. Il link arriva da solo, senza copiarlo.</p>
     <p>Ora hai una nuova ricetta in archivio.</p>
     <div class="sez"><strong>Vuoi un'idea di cosa mangiare?</strong></div>
     <p>Lascia scegliere all'app: <strong>"Che cucino?"</strong> ti mostra le ricette fattibili al 100% con quello che hai, poi quelle al 90% e via via a scalare, così hai sempre decine di ricette fra cui scegliere: alcune pronte subito, altre a un ingrediente di distanza.</p>
