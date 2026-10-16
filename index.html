@@ -303,6 +303,10 @@ body[data-filigrana="1"]::before{
 .velo-in{max-width:620px;margin:0 auto}
 .velo-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
 .velo-top h2{flex:1;font-size:1.3rem}
+.perche .velo-top h2{font-size:1.75rem;line-height:1.2}
+.perche .sez{font-size:1.22rem;font-weight:800;line-height:1.3;margin:24px 0 6px;color:var(--verde)}
+.perche .sez strong{font-weight:800}
+.perche p{font-size:1rem;line-height:1.55}
 .chiudi{flex:none;background:var(--superficie);border:1px solid var(--linea);border-radius:10px;
   padding:7px 12px;cursor:pointer;font-size:.88rem;color:inherit}
 .passo-n{font-size:.76rem;color:var(--inchiostro-soft);letter-spacing:.03em;margin-top:14px}
@@ -3571,7 +3575,7 @@ function dettaIngrediente(bottone, onTesto){
 /* ===========================================================
    Perché questa app
    =========================================================== */
-const PERCHE_EN = `
+const PERCHE_EN = `<div class="perche">
     <div class="velo-top"><h2>Why this app?</h2>
       <button class="chiudi" data-perche="chiudi" onclick="chiudiVelo()">Close</button></div>
     <div data-no-tr>
@@ -3605,10 +3609,10 @@ const PERCHE_EN = `
     <p>And every recipe comes with a suggestion of what to drink to go with your dish.</p>
     <div class="sez"><strong>Want to know more?</strong></div>
     <p>There's much more to discover in the <strong>Tools</strong> menu and in <strong>Let’s learn to cook</strong>.</p>
-    </div>`;
+    </div></div>`;
 function apriPerche(){
   if(IN_INGLESE){ apriVelo("perche", PERCHE_EN); return; }
-  apriVelo("perche", `
+  apriVelo("perche", `<div class="perche">
     <div class="velo-top"><h2>Perch\u00e9 questa app?</h2>
       <button class="chiudi" data-perche="chiudi" onclick="chiudiVelo()">Chiudi</button></div>
 
@@ -3622,7 +3626,7 @@ function apriPerche(){
     <div class="sez">Ora scegli cosa vuoi preparare e il tempo che hai</div>
     <p>Un antipasto, un primo, un secondo, un dolce o un piatto unico, o un intero pranzo o cena. Hai deciso? Annota quello che hai in dispensa: l'app lo ricorda, e così la volta dopo correggi solo quello che è cambiato.</p>
 
-    <div class="sez"><h2><strong>Forse hai già un'idea?</strong></h2></div>
+    <div class="sez"><strong>Forse hai già un'idea?</strong></div>
     <p>Scrivi quello che vuoi preparare, l'app controlla se hai tutti gli ingredienti. Se ti manca qualcosa non preoccuparti, <strong>"Che cucino?"</strong> ti propone una sostituzione con quello che hai già, oppure aggiunge quel che manca alla lista della spesa.</p>
     <p>Se la ricetta non è nell'archivio cercala nel web con i tasti dedicati indirizzati ad alcuni siti, o cercala autonomamente.</p>
     <p>Copia il link e poi vai su <strong>Strumenti</strong> e incollalo nell'apposita casella: l'app prova a leggerla, la elabora e, se è in un formato standard, la salva.</p>
@@ -3645,7 +3649,7 @@ function apriPerche(){
     <p>E per ogni ricetta avrai anche un consiglio su cosa bere per accompagnare al meglio il tuo piatto.</p>
     <div class="sez"><strong>Vuoi sapere di più?</strong></div> 
     <p> C'è tanto ancora da scoprire sotto il menù <strong>Strumenti</strong> e in <strong>Impariamo a cucinare</strong></p>
-    `);
+    </div>`);
 }
 document.addEventListener("click", e=>{
   const b = e.target.closest("[data-perche]");
