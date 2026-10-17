@@ -653,7 +653,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v126</div>
+  <div class="ver-splash" data-no-tr>v127</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -664,7 +664,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v126</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v127</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -1100,8 +1100,20 @@ const DEPERIBILI = ["Verdure e ortaggi","Frutta","Carne e salumi","Pesce","Latti
 
 /* un surgelato o una conserva valgono l'ingrediente fresco corrispondente */
 const EQUIV = {};
+/* ...ma non sempre: sardine in scatola, vongole in scatola e verdure sott'olio o sott'aceto
+   non fanno le veci del fresco in ogni ricetta (le sarde a beccafico vogliono sarde fresche).
+   Per queste la ricetta le propone come sostituzione, ben visibile, e non le conta come l'ingrediente vero. */
+const CONSERVE_DIVERSE = new Set(["vongole in scatola","carciofini sott\u2019olio","funghi sott\u2019olio","peperoni sott\u2019aceto"]);
 [D.surgelati, D.conserve, D.essiccati].forEach(m=>{
   for(const [dispensa, fresco] of Object.entries(m||{})){
+    /* le sardine in scatola sono un altro prodotto: non valgono le sarde fresche nemmeno come sostituzione */
+    if(m === D.conserve && dispensa === "sardine in scatola") continue;
+    if(m === D.conserve && CONSERVE_DIVERSE.has(dispensa)){
+      D.sost_k = D.sost_k || {};
+      const l = D.sost_k[fresco] = D.sost_k[fresco] || [];
+      if(!l.includes(dispensa)) l.push(dispensa);
+      continue;
+    }
     (EQUIV[fresco] = EQUIV[fresco] || []).push(dispensa);
   }
 });
