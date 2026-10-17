@@ -89,6 +89,13 @@ body[data-filigrana="1"]::before{
 .pcella.cat-latticini{background:#FAF8F2;color:#2A2A22;border:1px solid #DCD6C4}
 .pcella.cat-ghiaccio{background:#E7F5FA;color:#1B3A44;border:1px solid #C7E3ED}
 .pcella.cat-cantina{background:#6E1E35;color:#fff}
+.cant-n{font-weight:800;font-size:.85em;opacity:.85;margin-left:2px}
+.cant-bott{border:1px solid var(--linea);border-left:5px solid #6E1E35;border-radius:12px;padding:12px 14px;margin:10px 0;background:var(--carta)}
+.cant-tit{font-weight:800;font-size:1.05rem}
+.cant-det{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:.92rem;color:var(--inchiostro-soft)}
+.cant-az{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.cant-riga{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+[data-cantina] input{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--linea);border-radius:10px;background:var(--carta);color:var(--inchiostro);font:inherit}
 :root[data-scuro] .pcella.cat-cantina{background:#7A2640}
 :root[data-scuro] .pcella.cat-verdure{background:#337140}
 :root[data-scuro] .pcella.cat-frutta{background:#526C22}
@@ -639,7 +646,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v122</div>
+  <div class="ver-splash" data-no-tr>v123</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -650,7 +657,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v122</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v123</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -1808,7 +1815,8 @@ function htmlRepartiDisp(){
     const presi = lista.filter(i=>S.dispensa.includes(i)).length;
     const chip = i=>{ const mesi = D.stagioni[i];
           const stag = mesi ? (mesi.includes(meseStagione())?` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
-          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}${stag}</button>`; };
+          const nb = tit === "Cantina" ? nBottiglie(i) : 0;
+          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}</button>`; };
     const sotto = sottoReparti(tit, vis);
     return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||presi?"open":""}>
       <summary>${tit} <em>${presi?presi+" segnati":lista.length+" voci"}</em></summary>
@@ -1864,6 +1872,7 @@ function collegaRepartiDisp(){
     b.addEventListener("contextmenu", ev=>{ ev.preventDefault(); ferma(); apriIngOpz(b.dataset.i); });
     b.onclick = ()=>{
       if(lungo){ lungo = false; return; }
+      if(b.closest(".cat-cantina")){ cantinaInModifica = -1; apriCantina(b.dataset.i); return; }
       const v=b.dataset.i, i=S.dispensa.indexOf(v);
       if(i<0){ S.dispensa.push(v); if(BASE.has(v)) S.spesa = S.spesa.filter(x=>x.k!==v); }
       else{ S.dispensa.splice(i,1); if(BASE.has(v)) metti(v, v, ""); }
@@ -1898,6 +1907,7 @@ function tappaDispensa(){
       <datalist id="ingDatalist">${TUTTI_ING.map(i=>`<option value="${esc(i)}">`).join("")}</datalist>
       <div id="ingRisposta">${htmlRispostaDisp()}</div>
       <p class="mini" style="margin-top:10px;opacity:.85">Tieni premuto un ingrediente qui sotto per spostarlo di reparto o toglierlo dall'elenco.</p>
+      <p class="mini" style="margin-top:6px;opacity:.85" data-no-tr>\u{1F377} ${L("Nella Cantina tocca una bottiglia per aprire la sua scheda: etichetta, azienda, vitigno, annata.","In the Wine cellar, tap a bottle to open its card: label, producer, grape, vintage.")}</p>
       <p class="mini" style="margin-top:4px;opacity:.85" data-no-tr>${suEmisferoSud() ? L("\u{1F5D3}\uFE0F accanto a un ingrediente: \u00e8 di stagione ora dove vivi, nell\u2019emisfero sud; sbiadito: non \u00e8 la sua stagione.","\u{1F5D3}\uFE0F next to an ingredient: in season now where you live, in the southern hemisphere; faded: out of season.") : L("\u{1F5D3}\uFE0F accanto a un ingrediente: \u00e8 di stagione ora qui da noi, nell\u2019emisfero nord; sbiadito: non \u00e8 la sua stagione.","\u{1F5D3}\uFE0F next to an ingredient: in season now here, in the northern hemisphere; faded: out of season.")}</p>
     </div>
   </div>
@@ -3226,6 +3236,108 @@ document.addEventListener("click", e=>{
   }
   chiudiVelo();
   if(passo === 2) tappaDispensa();
+});
+
+
+/* ===========================================================
+   Cantina: toccando una bottiglia si apre la sua scheda, con le bottiglie
+   che hai (etichetta, azienda, vitigno, annata, quante) e la ricerca sul web
+   =========================================================== */
+const VITIGNI = ["Aglianico","Barbera","Cabernet Sauvignon","Cannonau","Carricante","Catarratto","Chardonnay","Corvina","Dolcetto","Falanghina","Fiano","Frappato","Friulano","Garganega","Gewürztraminer","Glera","Greco","Grillo","Inzolia","Lagrein","Lambrusco","Malvasia","Merlot","Montepulciano","Moscato","Nebbiolo","Negroamaro","Nerello Cappuccio","Nerello Mascalese","Nero d'Avola","Nero di Troia","Passerina","Pecorino","Perricone","Pinot bianco","Pinot grigio","Pinot nero","Primitivo","Refosco","Ribolla gialla","Riesling","Sagrantino","Sangiovese","Sauvignon blanc","Syrah","Teroldego","Trebbiano","Verdicchio","Vermentino","Zibibbo"];
+const RE_VINO = /(vin[oi]\b|prosecc|spumant|champagn|moscato|marsala|passito|vin santo)/;
+function bottiglie(k){ S.cantina = S.cantina || {}; return S.cantina[k] = S.cantina[k] || []; }
+function nBottiglie(k){ return ((S.cantina || {})[k] || []).reduce((t, b)=>t + (+b.n || 1), 0); }
+function cercaBottigliaURL(b, k, dove){
+  const q = [b.etichetta, b.azienda, b.annata].filter(Boolean).join(" ") || k;
+  return dove === "vivino" ? "https://www.vivino.com/search/wines?q=" + encodeURIComponent(q)
+                           : "https://www.google.com/search?q=" + encodeURIComponent(q + (RE_VINO.test(normTesto(k)) && !/vin/i.test(q) ? L(" vino"," wine") : ""));
+}
+let cantinaInModifica = -1;
+function apriCantina(k){
+  const vino = RE_VINO.test(normTesto(k));
+  const lista = bottiglie(k);
+  const ce = S.dispensa.includes(k);
+  const ed = cantinaInModifica >= 0 ? lista[cantinaInModifica] : null;
+  const v = x=>esc(ed && ed[x] != null ? String(ed[x]) : "");
+  const card = (b, i)=>`
+    <div class="cant-bott">
+      <div class="cant-tit">\u{1F377} ${esc(b.etichetta || nomeIng(k))}${(+b.n||1) > 1 ? ` <span class="cant-n">×${+b.n}</span>` : ""}</div>
+      <div class="cant-det">
+        ${b.azienda ? `<span>\u{1F3E0} ${esc(b.azienda)}</span>` : ""}
+        ${b.vitigno ? `<span>\u{1F347} ${esc(b.vitigno)}</span>` : ""}
+        ${b.annata ? `<span>\u{1F4C5} ${esc(b.annata)}</span>` : ""}
+      </div>
+      <div class="cant-az">
+        <button class="btn small ghost" data-cn="web" data-i="${i}">\u{1F50D} Google</button>
+        ${vino ? `<button class="btn small ghost" data-cn="vivino" data-i="${i}">\u{1F347} Vivino</button>` : ""}
+        <button class="btn small ghost" data-cn="mod" data-i="${i}">✏️ ${L("Modifica","Edit")}</button>
+        <button class="btn small ghost" data-cn="meno" data-i="${i}">➖ ${L("Ne ho aperta una","Opened one")}</button>
+      </div>
+    </div>`;
+  apriVelo("cantina", `<div data-cantina="${esc(k)}">
+    <div class="velo-top"><h2>\u{1F377} ${esc(nomeIng(k))}</h2>
+      <button class="chiudi" data-cn="chiudi">${L("Chiudi","Close")}</button></div>
+    ${lista.length ? `<div class="sez">${L("Le tue bottiglie","Your bottles")} (${nBottiglie(k)})</div>${lista.map(card).join("")}`
+                   : `<p class="mini">${L("Nessuna bottiglia registrata. Compila la scheda qui sotto, oppure segna solo che ce l’hai.","No bottles recorded yet. Fill in the card below, or just mark that you have some.")}</p>`}
+    <div class="sez">${ed ? L("Modifica la bottiglia","Edit the bottle") : L("Aggiungi una bottiglia","Add a bottle")}</div>
+    <label class="campo"><span>\u{1F3F7}️ ${L("Nome in etichetta","Name on the label")}</span><input id="cnEtichetta" value="${v("etichetta")}" placeholder="${vino ? L("es. Etna Rosso","e.g. Etna Rosso") : ""}" autocomplete="off"></label>
+    <label class="campo"><span>\u{1F3E0} ${L("Azienda","Producer")}</span><input id="cnAzienda" value="${v("azienda")}" autocomplete="off"></label>
+    <label class="campo"><span>\u{1F347} ${vino ? L("Vitigno","Grape variety") : L("Vitigno o materia prima","Grape or base ingredient")}</span><input id="cnVitigno" value="${v("vitigno")}" list="cnVitigni" autocomplete="off"></label>
+    <datalist id="cnVitigni">${VITIGNI.map(x=>`<option value="${esc(x)}">`).join("")}</datalist>
+    <div class="cant-riga">
+      <label class="campo"><span>\u{1F4C5} ${vino ? L("Annata (vendemmia)","Vintage") : L("Anno","Year")}</span><input id="cnAnnata" type="number" inputmode="numeric" min="1900" max="2100" value="${v("annata")}"></label>
+      <label class="campo"><span>\u{1F37E} ${L("Bottiglie","Bottles")}</span><input id="cnN" type="number" inputmode="numeric" min="1" max="999" value="${ed ? v("n") || 1 : 1}"></label>
+    </div>
+    <div class="azioni">
+      <button class="btn" data-cn="salva">\u{1F4BE} ${ed ? L("Salva le modifiche","Save changes") : L("Salva la bottiglia","Save the bottle")}</button>
+      <button class="btn ghost" data-cn="webform">\u{1F50D} ${L("Cerca sul web","Search the web")}</button>
+      ${ed ? `<button class="btn ghost" data-cn="annulla">${L("Annulla","Cancel")}</button>` : ""}
+    </div>
+    <p class="mini">${L("La ricerca usa quello che hai scritto (etichetta, azienda, annata): trovi scheda tecnica, vitigno e abbinamenti, poi completi tu i campi.","The search uses what you typed (label, producer, vintage): you’ll find the tech sheet, grape and pairings, then fill in the fields yourself.")}</p>
+    <div class="azioni" style="margin-top:20px">
+      ${ce ? `<button class="btn ghost" data-cn="togli">${L("Non ne ho più: togli dalla cantina","None left: remove from the cellar")}</button>`
+           : `<button class="btn ghost" data-cn="segna">✓ ${L("Ce l’ho, senza dettagli","I have some, no details")}</button>`}
+    </div>
+  </div>`);
+}
+function aggiornaRepartiCantina(){ if(document.getElementById("repartiDisp")) aggiornaCercaDisp(); }
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-cn]");
+  if(!b) return;
+  const box = b.closest("[data-cantina]"); if(!box) return;
+  const k = box.dataset.cantina, a = b.dataset.cn, lista = bottiglie(k), i = +b.dataset.i;
+  const campo = id=>(document.getElementById(id)?.value || "").trim();
+  const dalForm = ()=>({ etichetta: campo("cnEtichetta"), azienda: campo("cnAzienda"), vitigno: campo("cnVitigno"),
+                         annata: campo("cnAnnata"), n: Math.max(1, parseInt(campo("cnN")) || 1) });
+  if(a === "chiudi"){ cantinaInModifica = -1; chiudiVelo(); aggiornaRepartiCantina(); return; }
+  if(a === "web" || a === "vivino"){ apriFuori(cercaBottigliaURL(lista[i], k, a)); return; }
+  if(a === "webform"){ apriFuori(cercaBottigliaURL(dalForm(), k, "web")); return; }
+  if(a === "mod"){ cantinaInModifica = i; apriCantina(k); return; }
+  if(a === "annulla"){ cantinaInModifica = -1; apriCantina(k); return; }
+  if(a === "salva"){
+    const nuova = dalForm();
+    if(!nuova.etichetta && !nuova.azienda && !nuova.vitigno && !nuova.annata){
+      document.getElementById("cnEtichetta").focus(); return;
+    }
+    if(cantinaInModifica >= 0) lista[cantinaInModifica] = nuova; else lista.push(nuova);
+    cantinaInModifica = -1;
+    if(!S.dispensa.includes(k)) S.dispensa.push(k);
+  }
+  if(a === "meno"){
+    const bt = lista[i]; bt.n = (+bt.n || 1) - 1;
+    if(bt.n <= 0) lista.splice(i, 1);
+    if(!lista.length && confirm(L("Era l’ultima bottiglia registrata. Tolgo «"+nomeIng(k)+"» dalla cantina?","That was the last recorded bottle. Remove “"+nomeIng(k)+"” from the cellar?")))
+      S.dispensa = S.dispensa.filter(x=>x !== k);
+  }
+  if(a === "segna" && !S.dispensa.includes(k)) S.dispensa.push(k);
+  if(a === "togli"){
+    if(lista.length && !confirm(L("Tolgo «"+nomeIng(k)+"» dalla cantina e cancello le "+lista.length+" bottiglie registrate?","Remove “"+nomeIng(k)+"” from the cellar and delete the "+lista.length+" recorded bottles?"))) return;
+    S.dispensa = S.dispensa.filter(x=>x !== k); S.cantina[k] = [];
+  }
+  S.dispensaData = new Date().toLocaleDateString("it-IT");
+  salva();
+  apriCantina(k);
+  aggiornaRepartiCantina();
 });
 
 /* ===========================================================
