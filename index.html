@@ -2,6 +2,7 @@
 <html lang="it" translate="no">
 <head>
 <meta charset="utf-8">
+<meta name="author" content="Benedetto Daniele Sgroi">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Che cucino?</title>
 <meta name="google" content="notranslate">
@@ -412,6 +413,8 @@ body[data-filigrana="1"]::before{
 #splash svg{width:min(44vw,180px);height:auto}
 #splash .ver-splash{margin-top:-8px;font:700 .85rem/1 Inter,system-ui,sans-serif;letter-spacing:.06em;color:#F0DFB8;opacity:0;animation:sp-nome .5s ease .9s forwards}
 #infoBtn .ver{font:700 .62rem/1 Inter,system-ui,sans-serif;font-style:normal;margin-left:3px;opacity:.75;letter-spacing:.02em}
+#splash .autore-splash{margin-top:-10px;font:italic 500 1rem/1.2 Newsreader,Georgia,serif;letter-spacing:.01em;color:#F0DFB8;text-align:center;opacity:0;animation:sp-nome .5s ease .85s forwards}
+.perche .autore{margin:-4px 0 14px;font:italic 500 1rem/1.3 Newsreader,Georgia,serif;opacity:.8}
 #splash .nome{font-family:Newsreader,Georgia,serif;font-size:clamp(1.7rem,7.5vw,2.4rem);
   font-weight:600;letter-spacing:-.01em;line-height:1.1;text-align:center;color:#F0DFB8;
   opacity:0;animation:sp-nome .5s ease .75s forwards}
@@ -633,7 +636,8 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </g>
   </svg>
   <div class="nome">Che cucino?</div>
-  <div class="ver-splash" data-no-tr>v118</div>
+  <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
+  <div class="ver-splash" data-no-tr>v120</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -644,7 +648,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v119</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v120</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -952,6 +956,7 @@ if(IN_INGLESE){
   const nomeEn = ()=>{
     const m = document.getElementById("logoHome"); if(m) m.innerHTML = "What\u2019s cooking<span>?</span>";
     document.querySelectorAll("#splash .nome").forEach(e=>e.textContent = "What\u2019s cooking?");
+    document.querySelectorAll("#splash .autore-splash").forEach(e=>e.textContent = "by Benedetto Daniele Sgroi");
     const sp = document.getElementById("splash"); if(sp) sp.setAttribute("aria-label", "What\u2019s cooking? is opening");
     const ap = document.querySelector('meta[name="apple-mobile-web-app-title"]'); if(ap) ap.content = "What\u2019s cooking?";
   };
@@ -3734,6 +3739,7 @@ function dettaIngrediente(bottone, onTesto){
 const PERCHE_EN = `<div class="perche">
     <div class="velo-top"><h2>Why this app?</h2>
       <button class="chiudi" data-perche="chiudi" onclick="chiudiVelo()">Close</button></div>
+    <p class="autore" data-no-tr>by Benedetto Daniele Sgroi</p>
     <div data-no-tr>
     <p>You get home and you don't feel like falling back on the usual sandwich or a dry piece of cheese left in the fridge. <strong>"What’s cooking?"</strong> (in Italian, <em>"Che cucino?"</em>) is designed to answer that question straight away, with what you actually have at home.</p>
 
@@ -3774,6 +3780,7 @@ function apriPerche(){
   apriVelo("perche", `<div class="perche">
     <div class="velo-top"><h2>Perch\u00e9 questa app?</h2>
       <button class="chiudi" data-perche="chiudi" onclick="chiudiVelo()">Chiudi</button></div>
+    <p class="autore" data-no-tr>di Benedetto Daniele Sgroi</p>
 
     <p>Torni a casa e non ti va di ripiegare sui soliti tramezzini o su un pezzo di formaggio secco rimasto in frigo.</p> 
     
