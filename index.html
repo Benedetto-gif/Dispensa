@@ -637,7 +637,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v120</div>
+  <div class="ver-splash" data-no-tr>v121</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -648,7 +648,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v120</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v121</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -1086,6 +1086,22 @@ const EQUIV = {};
     (EQUIV[fresco] = EQUIV[fresco] || []).push(dispensa);
   }
 });
+/* nomi delle ricette piu' specifici di quelli della dispensa: se in dispensa c'e' la voce
+   generica, la ricetta e' fattibile (es. la ricetta chiede "pomodori pelati", in dispensa "pelati") */
+const ALIAS_ING = {
+  "peperoncino":["peperoncino fresco","peperoncino secco"], "peperoncino in polvere":["peperoncino secco"],
+  "pomodori pelati":["pelati"], "alici":["alici fresche"], "baccala":["baccal\u00e0 dissalato"],
+  "lattuga":["lattuga romana"], "pecorino fresco":["formaggio pecorino fresco"], "cacao amaro":["cacao"],
+  "caciocavallo silano":["caciocavallo"], "formaggio grana":["parmigiano"], "finocchio selvatico":["finocchietto selvatico"],
+  "salame a cubetti":["salame"], "semolino":["semola"], "farina di semola":["semola"], "sale grosso":["sale"],
+  "paprica dolce":["paprica"], "olive taggiasche":["olive"], "gamberetti":["gamberi","gamberi surgelati"],
+  "fagioli cannellini":["fagioli","fagioli in scatola"], "fagioli secchi":["fagioli"], "fagiolina del Trasimeno":["fagioli"],
+  "ceci secchi":["ceci"], "lardo di Arnad":["lardo"], "lardo di Colonnata":["lardo"], "provola affumicata":["provola"],
+  "salsiccia sarda":["salsiccia"], "salsiccia pezzente":["salsiccia"], "prosciutto di San Daniele":["prosciutto crudo"],
+  "costine di maiale affumicate":["costine di maiale"], "carne di maiale":["maiale"], "burro chiarificato":["burro"],
+  "peperone verde":["peperoni"]
+};
+for(const [k, l] of Object.entries(ALIAS_ING)) l.forEach(x=>{ (EQUIV[k] = EQUIV[k] || []).includes(x) || EQUIV[k].push(x); });
 
 /* lo stile si ricalcola dagli ingredienti: i tag dell'archivio hanno qualche svista */
 const RANGO = {onnivoro:0, vegetariano:1, vegano:2};
@@ -1740,15 +1756,17 @@ function tappaOspiti(){
 
 function statoCercaDisp(){
   const q = cercaDisp.trim().toLowerCase();
-  const matchEsatto = q ? TUTTI_ING.find(i=>i.toLowerCase()===q || nomeIng(i).toLowerCase()===q) : null;
-  const trovato = !!matchEsatto || (q && !BASE.has(q) && TUTTI_ING.some(i=>i.toLowerCase().includes(q) || (IN_INGLESE && nomeIng(i).toLowerCase().includes(q))))
-    || (q && Object.values(CAT_DISP).flat().some(i=>radiceIng(i) === radiceIng(q)))
-    || (q && IN_INGLESE && !!chiaveDaInglese(q));
-  return {q, trovato};
+  const elenco = Object.values(CAT_DISP).flat();          /* l'elenco di adesso, con le voci aggiunte o tolte */
+  const trovato = !!q && (elenco.some(i=>i.toLowerCase()===q || nomeIng(i).toLowerCase()===q || radiceIng(i) === radiceIng(q))
+    || (IN_INGLESE && elenco.includes(chiaveDaInglese(q))));
+  /* voci che contengono le lettere scritte ma non sono quell'ingrediente (es. "salame a cubetti" per "salame") */
+  const simili = !!q && !trovato && elenco.some(i=>i.toLowerCase().includes(q) || (IN_INGLESE && nomeIng(i).toLowerCase().includes(q)));
+  return {q, trovato, simili};
 }
 function htmlRispostaDisp(){
-  const {q, trovato} = statoCercaDisp();
+  const {q, trovato, simili} = statoCercaDisp();
   return `
+      ${simili ? `<p class="mini" id="ingSimili" data-no-tr>${L("Non c'\u00e8 \u00ab"+esc(cercaDisp.trim())+"\u00bb in elenco, solo voci simili qui sotto. Se non \u00e8 una di queste, aggiungilo:", "\u201c"+esc(cercaDisp.trim())+"\u201d isn't on the list, only similar items below. If it's none of these, add it:")}</p>` : ""}
       ${q && trovato ? `<p class="mini ing-esito-ok" id="ingEsitoOk">\u2713 C'è già in elenco, lo trovi qui sotto.</p>` : ""}
       ${q && !trovato ? `
         <div class="riga-add" style="margin-top:8px">
