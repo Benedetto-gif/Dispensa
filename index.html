@@ -336,6 +336,7 @@ body[data-filigrana="1"]::before{
 /* tasto unico chiaro/scuro e tasto lingua */
 .menu-btn.tondo{width:38px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .menu-btn.tondo svg{width:18px;height:18px}
+@media (max-width:374px){.top-in .menu-btn.tondo{width:32px!important}.top-in .lingua-btn{min-width:32px;padding-left:4px;padding-right:4px}#infoBtn{padding:0 5px!important}}
 .menu-btn.tondo .sole{display:none;color:#E9A21F}
 .menu-btn.tondo .luna{color:#3B4A6B}
 :root[data-scuro] .menu-btn.tondo .sole{display:block}
@@ -642,7 +643,8 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
       <svg class="luna" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v118</span></button>
+    <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v119</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -4747,6 +4749,59 @@ if("serviceWorker" in navigator){
     navigator.serviceWorker.register("service-worker.js").catch(()=>{});
   });
 }
+</script>
+<script id="condividi-app">
+/* Tasto Condividi: manda il link dell'app con le istruzioni per installarla */
+(function(){
+  var URL_APP = 'https://benedetto-gif.github.io/Dispensa/';
+  function EN(){ return (document.documentElement.lang||'').slice(0,2) === 'en'; }
+  var L = {
+    it: { nome:'Che cucino?', testo:'', wa:'💬 Manda con WhatsApp', ml:'✉️ Manda per email', cp:'🔗 Copia il link e le istruzioni', ok:'✅ Copiato: incollalo dove vuoi', ko:'⚠️ Copia non riuscita: tieni premuto il link qui sotto', x:'Chiudi', tit:'Condividi', ogg:' da provare' },
+    en: { nome:"What's cooking?", testo:'', wa:'💬 Send with WhatsApp', ml:'✉️ Send by email', cp:'🔗 Copy link and instructions', ok:'✅ Copied: paste it anywhere', ko:'⚠️ Copy failed: press and hold the link below', x:'Close', tit:'Share', ogg:' to try' }
+  };
+  L.it.testo = 'Ciao! Ti mando Che cucino? da provare 🍲\nAprila dal link qui sotto e installala sulla schermata Home:\n• iPhone: aprila con Safari → tasto Condividi ⬆️ → «Aggiungi alla schermata Home»\n• Android: aprila con Chrome → menu ⋮ → «Installa app»\nFammi sapere cosa ne pensi!';
+  L.en.testo = "Hi! Here's What's cooking? for you to try 🍲\nOpen the link below and add it to your Home Screen:\n• iPhone: open it in Safari → Share button ⬆️ → “Add to Home Screen”\n• Android: open it in Chrome → menu ⋮ → “Install app”\nLet me know what you think!";
+  function T(){ return EN() ? L.en : L.it; }
+  function copia(t){
+    try { if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t); } catch(e){}
+    return new Promise(function(ok,ko){ try{ var a=document.createElement('textarea'); a.value=t; a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); var r=document.execCommand('copy'); a.remove(); r?ok():ko(); }catch(e){ko(e);} });
+  }
+  function pannello(){
+    var v = document.getElementById('cond-app-pan'); if (v) v.remove();
+    var t = T(), NOME = t.nome, TESTO = t.testo;
+    v = document.createElement('div'); v.id = 'cond-app-pan'; v.setAttribute('data-no-tr','');
+    v.innerHTML = '<div class="cap-in" role="dialog" aria-label="Condividi l\'app">' +
+      '<h3>📤 ' + t.tit + ' ' + NOME + '</h3>' +
+      '<a class="cap-b cap-wa" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(TESTO + '\n' + URL_APP) + '">' + t.wa + '</a>' +
+      '<a class="cap-b cap-ml" href="mailto:?subject=' + encodeURIComponent(NOME + t.ogg) + '&body=' + encodeURIComponent(TESTO + '\n' + URL_APP) + '">' + t.ml + '</a>' +
+      '<button type="button" class="cap-b cap-cp">' + t.cp + '</button>' +
+      '<p class="cap-u">' + URL_APP + '</p>' +
+      '<button type="button" class="cap-x">' + t.x + '</button></div>';
+    document.body.appendChild(v);
+    v.addEventListener('click', function(e){ if (e.target === v || e.target.classList.contains('cap-x')) v.remove(); });
+    v.querySelector('.cap-cp').addEventListener('click', function(){
+      var b = this;
+      copia(TESTO + '\n' + URL_APP).then(function(){ b.textContent = t.ok; }, function(){ b.textContent = t.ko; });
+    });
+  }
+  window.condividiApp = function(){
+    if (navigator.share) {
+      var t = T(); navigator.share({ title: t.nome, text: t.testo, url: URL_APP }).catch(function(e){ if (!e || e.name !== 'AbortError') pannello(); });
+    } else pannello();
+  };
+  var st = document.createElement('style');
+  st.textContent =
+    '.cond-app-btn{display:inline-flex;align-items:center;gap:6px;flex:none;cursor:pointer;border:0;border-radius:999px;padding:8px 14px;font:700 14px/1 system-ui,-apple-system,sans-serif;color:#fff;background:#25A56A;box-shadow:0 2px 8px rgba(0,0,0,.18)}' +
+    '.cond-app-btn:active{transform:scale(.96)}' +
+    '#cond-app-pan{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;padding:16px}' +
+    '#cond-app-pan .cap-in{background:#fff;color:#222;border-radius:20px;padding:20px;width:100%;max-width:420px;display:flex;flex-direction:column;gap:10px;font-family:system-ui,-apple-system,sans-serif}' +
+    '#cond-app-pan h3{margin:0 0 4px;font-size:18px;color:#222}' +
+    '#cond-app-pan .cap-b{display:block;text-align:center;text-decoration:none;border:0;border-radius:14px;padding:14px;font:700 16px/1.2 system-ui,-apple-system,sans-serif;color:#fff;cursor:pointer}' +
+    '#cond-app-pan .cap-wa{background:#25A56A}#cond-app-pan .cap-ml{background:#3B6FB6}#cond-app-pan .cap-cp{background:#C4803A}' +
+    '#cond-app-pan .cap-u{margin:2px 0;font-size:13px;color:#555;text-align:center;word-break:break-all;user-select:all;-webkit-user-select:all}' +
+    '#cond-app-pan .cap-x{background:none;border:0;color:#555;font:600 15px system-ui,sans-serif;padding:8px;cursor:pointer}';
+  document.head.appendChild(st);
+})();
 </script>
 </body>
 </html>
