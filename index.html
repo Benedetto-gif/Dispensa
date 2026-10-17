@@ -95,6 +95,13 @@ body[data-filigrana="1"]::before{
 .cant-det{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:.92rem;color:var(--inchiostro-soft)}
 .cant-az{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .cant-riga{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cant-leggi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.cant-stato{margin-top:8px}
+.cant-stato.cant-ok{color:#2E6B3F;font-weight:600}
+.cant-stato.cant-avviso{color:#A0402A;font-weight:600}
+.cant-testo{margin-top:6px;font-weight:400;color:var(--inchiostro-soft)}
+.cant-testo pre{white-space:pre-wrap;font:inherit;font-size:.85rem;margin:6px 0 0;max-height:160px;overflow:auto}
+[data-cantina] input.cant-letto{border-color:#2E6B3F;box-shadow:0 0 0 3px rgba(46,107,63,.25)}
 [data-cantina] input{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--linea);border-radius:10px;background:var(--carta);color:var(--inchiostro);font:inherit}
 :root[data-scuro] .pcella.cat-cantina{background:#7A2640}
 :root[data-scuro] .pcella.cat-verdure{background:#337140}
@@ -646,7 +653,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v123</div>
+  <div class="ver-splash" data-no-tr>v124</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -657,7 +664,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v123</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v124</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -3280,6 +3287,14 @@ function apriCantina(k){
     ${lista.length ? `<div class="sez">${L("Le tue bottiglie","Your bottles")} (${nBottiglie(k)})</div>${lista.map(card).join("")}`
                    : `<p class="mini">${L("Nessuna bottiglia registrata. Compila la scheda qui sotto, oppure segna solo che ce l’hai.","No bottles recorded yet. Fill in the card below, or just mark that you have some.")}</p>`}
     <div class="sez">${ed ? L("Modifica la bottiglia","Edit the bottle") : L("Aggiungi una bottiglia","Add a bottle")}</div>
+    <div class="cant-leggi">
+      <button class="btn small" data-cn="foto">\u{1F4F7} ${L("Fotografa l\u2019etichetta","Photograph the label")}</button>
+      <button class="btn small" data-cn="codice">\u{1F522} ${L("Codice a barre","Barcode")}</button>
+      <input type="file" id="cnFotoIn" accept="image/*" capture="environment" hidden>
+      <input type="file" id="cnCodiceIn" accept="image/*" capture="environment" hidden>
+    </div>
+    <p class="mini cant-stato" id="cnStato" aria-live="polite">${L("Fotografa l\u2019etichetta davanti, ben dritta e illuminata, oppure il codice a barre sulla retroetichetta: i campi si compilano da soli e puoi correggerli.","Photograph the front label, straight and well lit, or the barcode on the back label: the fields fill in by themselves and you can correct them.")}</p>
+    <input type="hidden" id="cnEan" value="${v("ean")}">
     <label class="campo"><span>\u{1F3F7}️ ${L("Nome in etichetta","Name on the label")}</span><input id="cnEtichetta" value="${v("etichetta")}" placeholder="${vino ? L("es. Etna Rosso","e.g. Etna Rosso") : ""}" autocomplete="off"></label>
     <label class="campo"><span>\u{1F3E0} ${L("Azienda","Producer")}</span><input id="cnAzienda" value="${v("azienda")}" autocomplete="off"></label>
     <label class="campo"><span>\u{1F347} ${vino ? L("Vitigno","Grape variety") : L("Vitigno o materia prima","Grape or base ingredient")}</span><input id="cnVitigno" value="${v("vitigno")}" list="cnVitigni" autocomplete="off"></label>
@@ -3300,6 +3315,152 @@ function apriCantina(k){
     </div>
   </div>`);
 }
+
+/* ---------- leggere l'etichetta da una foto o dal codice a barre ----------
+   Tutto gira sul telefono: il testo con Tesseract (la prima volta scarica circa 4 MB),
+   il codice a barre con il lettore del telefono o con ZXing, poi l'archivio libero Open Food Facts. */
+const CDN_TESS = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/";
+const CDN_BARRE = "https://cdn.jsdelivr.net/npm/barcode-detector@3.2.2/dist/iife/ponyfill.js";
+const _script = {};
+function caricaScript(url){
+  return _script[url] = _script[url] || new Promise((ok, ko)=>{
+    const el = document.createElement("script"); el.src = url; el.async = true;
+    el.onload = ok; el.onerror = ()=>{ delete _script[url]; el.remove(); ko(new Error("rete")); };
+    document.head.appendChild(el);
+  });
+}
+function statoCantina(t, tipo){ const p = document.getElementById("cnStato"); if(p){ p.innerHTML = t; p.className = "mini cant-stato" + (tipo ? " " + tipo : ""); } }
+/* riempie i campi rimasti vuoti; quelli gia' scritti da te non li tocco */
+function compilaCampiCantina(dati){
+  const fatti = [];
+  [["cnEtichetta","etichetta"],["cnAzienda","azienda"],["cnVitigno","vitigno"],["cnAnnata","annata"],["cnEan","ean"]].forEach(([id, c])=>{
+    const el = document.getElementById(id), val = (dati[c] || "").toString().trim();
+    if(!el || !val || el.value.trim()) return;
+    el.value = val; fatti.push(c);
+    if(el.type !== "hidden"){ el.classList.add("cant-letto"); setTimeout(()=>el.classList.remove("cant-letto"), 2500); }
+  });
+  return fatti;
+}
+/* foto ridotta a 1600 px sul lato lungo: Tesseract e' piu' veloce e legge uguale */
+async function immagineRidotta(file, lato){
+  const img = await createImageBitmap(file);
+  const k = Math.min(1, lato / Math.max(img.width, img.height));
+  const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+const RE_NON_NOME = /(denominazione|\bd\.?\s?o\.?\s?c\.?\s?g?\b|\bi\.?\s?g\.?\s?[tp]\b|indicazione|origine|% ?vol|\bvol\b|\bml\b|\bcl\b|\blitr|solfiti|contiene|imbottigliat|prodott[oa]|product of|italia|italy|\blotto\b|www\.|\.it\b|\.com\b|\be ?7[05]0\b)/i;
+const RE_AZIENDA = /(azienda agricola|az\.? ?agr|societ[aà] agricola|soc\.? ?agr|tenut[ae]|cantin[ae]\b|fattoria|castello|podere|vigneti|marchesi|marchese|feudo|baglio|masseria|cascina|winery|estate|domaine|ch[aâ]teau|\bconti\b|\bduca\b|principe|barone|famiglia)/i;
+function vitignoNelTesto(t){
+  const n = " " + normTesto(t).replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ") + " ";
+  return VITIGNI.filter(v=>n.includes(" " + normTesto(v).replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ") + " "))
+                .sort((a, b)=>b.length - a.length)[0] || "";
+}
+function annataNelTesto(t){
+  const oggi = new Date().getFullYear(), anni = [];
+  const re = /(?:^|[^\d])((?:19[5-9]|20[0-4])\d)(?!\d)/g; let m;
+  while((m = re.exec(t))){
+    const a = +m[1], prima = t.slice(Math.max(0, m.index - 14), m.index + 1).toLowerCase();
+    if(a > oggi || /(dal|since|fondat|anno di fondazione|est\.?)\s*$/.test(prima.trim())) continue;
+    anni.push({a, vend: /vendemmia|vintage|annata/.test(t.slice(Math.max(0, m.index - 25), m.index + 10).toLowerCase())});
+  }
+  return String((anni.find(x=>x.vend) || anni[0] || {}).a || "");
+}
+function leggiTestoEtichetta(testo, righe){
+  const pulisci = x=>x.replace(/[|_~^`*«»<>]/g, " ").replace(/\s+/g, " ").trim();
+  const cand = (righe || []).map(l=>({t: pulisci(l.text || ""), h: l.bbox ? l.bbox.y1 - l.bbox.y0 : 0, c: l.confidence || 0}))
+    .filter(l=>l.t.length >= 3 && l.c >= 45 && (l.t.match(/[a-zàèéìòù]/gi) || []).length >= Math.max(3, l.t.length * .6));
+  let azienda = "";
+  const imb = testo.match(/imbottigliat[oa][^\n]{0,30}?\bda\s+([^\n,–-]{3,50})/i);
+  if(imb) azienda = pulisci(imb[1]);
+  const rAz = cand.filter(l=>RE_AZIENDA.test(l.t) && !RE_NON_NOME.test(l.t)).sort((a, b)=>b.h - a.h)[0];
+  if(rAz) azienda = rAz.t;
+  const nomi = cand.filter(l=>!RE_NON_NOME.test(l.t) && l.t !== azienda && !/^\d/.test(l.t)).sort((a, b)=>b.h - a.h);
+  const etichetta = (nomi[0] || {}).t || "";
+  return { etichetta: etichetta.length > 40 ? "" : etichetta, azienda: azienda.length > 50 ? "" : azienda,
+           vitigno: vitignoNelTesto(testo), annata: annataNelTesto(testo) };
+}
+let _tessWorker = null;
+async function leggiFotoEtichetta(file, k){
+  try{
+    statoCantina("⏳ " + L("Preparo la lettura del testo (la prima volta scarica circa 4 MB)…","Getting the text reader ready (about 4 MB the first time)…"));
+    await caricaScript(CDN_TESS + "tesseract.min.js");
+    if(!_tessWorker) _tessWorker = await Tesseract.createWorker("ita", 1, {
+      workerPath: CDN_TESS + "worker.min.js",
+      corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",
+      langPath: "https://cdn.jsdelivr.net/npm/@tesseract.js-data/ita@1.0.0/4.0.0_best_int",
+      logger: m=>{ if(m.status === "recognizing text") statoCantina("\u{1F50D} " + L("Leggo l’etichetta… ","Reading the label… ") + Math.round((m.progress || 0) * 100) + "%"); }
+    });
+    statoCantina("\u{1F50D} " + L("Leggo l’etichetta…","Reading the label…"));
+    /* pagina "automatica": un'etichetta ha scritte sparse, non un unico blocco di testo come vorrebbe Tesseract di suo */
+    await _tessWorker.setParameters({tessedit_pageseg_mode: "3"});
+    /* due letture, a due grandezze: i titoli molto grandi si leggono meglio sulla foto rimpicciolita */
+    const grande = await immagineRidotta(file, 1600), piccola = await immagineRidotta(file, 800);
+    const r1 = (await _tessWorker.recognize(grande)).data;
+    statoCantina("\u{1F50D} " + L("Rileggo i titoli pi\u00f9 grandi\u2026","Re-reading the largest titles\u2026"));
+    const r2 = (await _tessWorker.recognize(piccola)).data;
+    const fattore = grande.width / piccola.width, chiave = t=>normTesto(t).replace(/[^a-z0-9]/g, "");
+    const righe = [];
+    [[r1.lines, 1], [r2.lines, fattore]].forEach(([ls, f])=>(ls || []).forEach(l=>{
+      const kk = chiave(l.text || ""); if(kk.length < 3) return;
+      const h = (l.bbox ? l.bbox.y1 - l.bbox.y0 : 0) * f;
+      const g = righe.find(x=>x.k === kk || x.k.includes(kk) || kk.includes(x.k));
+      if(!g) righe.push({k: kk, text: l.text, confidence: l.confidence, h});
+      else if(l.confidence > g.confidence){ g.k = kk; g.text = l.text; g.confidence = l.confidence; g.h = Math.max(g.h, h); }
+    }));
+    const data = {lines: righe.map(x=>({text: x.text, confidence: x.confidence, bbox: {y0: 0, y1: x.h}}))};
+    const testo = righe.map(x=>x.text.trim()).join("\n").trim();
+    if(testo.replace(/[^a-z]/gi, "").length < 4){
+      statoCantina("⚠️ " + L("Non riesco a leggere scritte in questa foto. Riprova più vicino, con l’etichetta dritta e ben illuminata.","I can’t read any text in this photo. Try again closer, with the label straight and well lit."), "cant-avviso");
+      return;
+    }
+    const dati = leggiTestoEtichetta(testo, data.lines);
+    const fatti = compilaCampiCantina(dati);
+    const nomi = {etichetta:L("etichetta","label"), azienda:L("azienda","producer"), vitigno:L("vitigno","grape"), annata:L("annata","vintage")};
+    statoCantina((fatti.length
+        ? "✅ " + L("Compilati: ","Filled in: ") + fatti.filter(f=>nomi[f]).map(f=>nomi[f]).join(", ") + ". " + L("Controlla e correggi prima di salvare.","Check and correct before saving.")
+        : "ℹ️ " + L("Ho letto il testo ma non ho trovato dati sicuri per i campi vuoti.","I read the text but found nothing certain for the empty fields."))
+      + `<details class="cant-testo"><summary>${L("Testo letto","Text read")}</summary><pre>${esc(testo)}</pre></details>`, fatti.length ? "cant-ok" : "");
+  }catch(e){
+    statoCantina("⚠️ " + L("Non riesco a scaricare il lettore di testo: serve la connessione a internet la prima volta.","I can’t download the text reader: an internet connection is needed the first time."), "cant-avviso");
+  }
+}
+async function leggiCodiceBottiglia(file, k){
+  try{
+    statoCantina("\u{1F50D} " + L("Cerco il codice a barre nella foto…","Looking for the barcode in the photo…"));
+    const formati = ["ean_13","ean_8","upc_a","upc_e"];
+    let det = null;
+    try{
+      if("BarcodeDetector" in window && (await BarcodeDetector.getSupportedFormats()).includes("ean_13")) det = new BarcodeDetector({formats: formati});
+    }catch(e){}
+    if(!det){ await caricaScript(CDN_BARRE); det = new BarcodeDetectionAPI.BarcodeDetector({formats: formati}); }
+    const trovati = await det.detect(await immagineRidotta(file, 2000));
+    const codice = trovati[0] && trovati[0].rawValue;
+    if(!codice){
+      statoCantina("⚠️ " + L("Non trovo il codice a barre. Fotografalo da vicino, dritto, che riempia quasi la foto.","I can’t find the barcode. Photograph it close up and straight, filling most of the photo."), "cant-avviso");
+      return;
+    }
+    compilaCampiCantina({ean: codice});
+    statoCantina("\u{1F522} " + L("Codice ","Code ") + esc(codice) + ". " + L("Lo cerco nell’archivio Open Food Facts…","Looking it up on Open Food Facts…"));
+    let p = null;
+    try{
+      const r = await fetch("https://world.openfoodfacts.org/api/v2/product/" + encodeURIComponent(codice) + ".json?fields=product_name,product_name_it,generic_name,generic_name_it,brands,labels");
+      const j = await r.json(); if(j && j.status === 1) p = j.product;
+    }catch(e){}
+    const cerca = `<a href="https://www.google.com/search?q=${encodeURIComponent(codice + L(" vino"," wine"))}" target="_blank" rel="noopener">${L("Cerca il codice sul web","Search the code on the web")}</a>`;
+    if(!p){
+      statoCantina("ℹ️ " + L("Codice ","Code ") + esc(codice) + L(": questo vino non è nell’archivio Open Food Facts. Prova con la foto dell’etichetta, oppure "," isn’t in the Open Food Facts database. Try a photo of the label, or ") + cerca + ".");
+      return;
+    }
+    const nome = p.product_name_it || p.product_name || "", tutto = [nome, p.generic_name_it, p.generic_name, p.labels].filter(Boolean).join(" ");
+    const nomePulito = nome.replace(/\b(d\.?o\.?c\.?g?|i\.?g\.?[tp])\b\.?/gi, "").replace(/\b(19[5-9]\d|20[0-4]\d)\b/g, "").replace(/\s+/g, " ").trim();
+    const fatti = compilaCampiCantina({ etichetta: nomePulito || nome, azienda: (p.brands || "").split(",")[0], vitigno: vitignoNelTesto(tutto), annata: annataNelTesto(tutto) });
+    statoCantina("✅ " + L("Trovato: ","Found: ") + "<b>" + esc(nome || codice) + "</b>" + (p.brands ? " — " + esc(p.brands) : "") + ". "
+      + (fatti.filter(f=>f !== "ean").length ? L("Ho compilato i campi vuoti: controllali prima di salvare.","I filled in the empty fields: check them before saving.") : L("I campi erano già compilati, non li ho cambiati.","The fields were already filled in, I left them as they were.")), "cant-ok");
+  }catch(e){
+    statoCantina("⚠️ " + L("Non riesco a leggere il codice: serve la connessione a internet la prima volta.","I can’t read the code: an internet connection is needed the first time."), "cant-avviso");
+  }
+}
 function aggiornaRepartiCantina(){ if(document.getElementById("repartiDisp")) aggiornaCercaDisp(); }
 document.addEventListener("click", e=>{
   const b = e.target.closest("[data-cn]");
@@ -3308,10 +3469,15 @@ document.addEventListener("click", e=>{
   const k = box.dataset.cantina, a = b.dataset.cn, lista = bottiglie(k), i = +b.dataset.i;
   const campo = id=>(document.getElementById(id)?.value || "").trim();
   const dalForm = ()=>({ etichetta: campo("cnEtichetta"), azienda: campo("cnAzienda"), vitigno: campo("cnVitigno"),
-                         annata: campo("cnAnnata"), n: Math.max(1, parseInt(campo("cnN")) || 1) });
+                         annata: campo("cnAnnata"), n: Math.max(1, parseInt(campo("cnN")) || 1), ean: campo("cnEan") });
   if(a === "chiudi"){ cantinaInModifica = -1; chiudiVelo(); aggiornaRepartiCantina(); return; }
   if(a === "web" || a === "vivino"){ apriFuori(cercaBottigliaURL(lista[i], k, a)); return; }
   if(a === "webform"){ apriFuori(cercaBottigliaURL(dalForm(), k, "web")); return; }
+  if(a === "foto" || a === "codice"){
+    const inp = document.getElementById(a === "foto" ? "cnFotoIn" : "cnCodiceIn");
+    inp.value = ""; inp.onchange = ()=>{ const f = inp.files && inp.files[0]; if(f) (a === "foto" ? leggiFotoEtichetta : leggiCodiceBottiglia)(f, k); };
+    inp.click(); return;
+  }
   if(a === "mod"){ cantinaInModifica = i; apriCantina(k); return; }
   if(a === "annulla"){ cantinaInModifica = -1; apriCantina(k); return; }
   if(a === "salva"){
