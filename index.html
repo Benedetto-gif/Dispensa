@@ -714,7 +714,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v146</div>
+  <div class="ver-splash" data-no-tr>v147</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -725,7 +725,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v146</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v147</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -4038,12 +4038,12 @@ function apriCantina(k){
     <div class="sez">${ed ? L("Modifica la bottiglia","Edit the bottle") : L("Aggiungi una bottiglia","Add a bottle")}</div>
     <div class="cant-leggi">
       <button class="btn small" data-cn="foto">\u{1F4F7} ${L("Fotografa l\u2019etichetta","Photograph the label")}</button>
-      <button class="btn small" data-cn="codice">\u{1F522} ${L("Codice a barre","Barcode")}</button>
+      <button class="btn small" data-cn="codice">\u{1F522} ${L("Codice a barre o QR","Barcode or QR")}</button>
       <button class="btn small" data-cn="link">\u{1F310} ${L("Dalla pagina web","From a web page")}</button>
       <input type="file" id="cnFotoIn" accept="image/*" capture="environment" hidden>
       <input type="file" id="cnCodiceIn" accept="image/*" capture="environment" hidden>
     </div>
-    <p class="mini cant-stato" id="cnStato" aria-live="polite">${L("Fotografa l\u2019etichetta davanti, ben dritta e illuminata, oppure il codice a barre sulla retroetichetta. Ancora meglio, la pagina web del vino: dalla pagina su Vivino o su un\u2019enoteca online tocca \u22EE \u2192 Condividi \u2192 Che cucino? e la scheda si compila da sola. Puoi sempre correggere.","Photograph the front label, straight and well lit, or the barcode on the back label. Even better, the wine\u2019s web page: on its Vivino or online-shop page tap \u22EE \u2192 Share \u2192 Che cucino? and the card fills in by itself. You can always correct it.")}</p>
+    <p class="mini cant-stato" id="cnStato" aria-live="polite">${L("Fotografa l\u2019etichetta davanti, ben dritta e illuminata, oppure il codice a barre o il QR sulla retroetichetta (il QR porta spesso all\u2019etichetta elettronica con produttore e annata). Ancora meglio, la pagina web del vino: dalla pagina su Vivino o su un\u2019enoteca online tocca \u22EE \u2192 Condividi \u2192 Che cucino? e la scheda si compila da sola. Puoi sempre correggere.","Photograph the front label, straight and well lit, or the barcode or QR code on the back label (the QR often leads to the e-label with producer and vintage). Even better, the wine\u2019s web page: on its Vivino or online-shop page tap \u22EE \u2192 Share \u2192 Che cucino? and the card fills in by itself. You can always correct it.")}</p>
     <input type="hidden" id="cnEan" value="${v("ean")}">
     <label class="campo"><span>\u{1F3F7}️ ${L("Nome in etichetta","Name on the label")}</span><input id="cnEtichetta" value="${v("etichetta")}" placeholder="${vino ? L("es. Etna Rosso","e.g. Etna Rosso") : ""}" autocomplete="off"></label>
     <label class="campo"><span>\u{1F3E0} ${L("Azienda","Producer")}</span><input id="cnAzienda" value="${v("azienda")}" autocomplete="off"></label>
@@ -4105,7 +4105,7 @@ function tipoVinoDa(testo){
   const r = (t.match(/\brosso\b|\brossi\b|\bred\b/g) || []).length, b = (t.match(/\bbianco\b|\bbianchi\b|\bwhite\b/g) || []).length;
   return b > r ? "vino bianco" : "vino rosso";
 }
-function leggiVinoDaPagina(html, url){
+function leggiVinoDaPagina(html, url, forza){
   if(!html) return null;
   const doc = new DOMParser().parseFromString(html, "text/html");
   if([...doc.querySelectorAll('script[type*="ld+json" i]')].some(sc=>{ try{ return cercaRicettaJson(JSON.parse(sc.textContent)); }catch(e){ return false; } })) return null;
@@ -4122,14 +4122,14 @@ function leggiVinoDaPagina(html, url){
   const tutto = nome + "\n" + descr + "\n" + corpo;
   const sembra = /\b(vino|vini|wine|annata|vendemmia|vintage|vitign|uvaggio|grape|doc[gp]?\b|igt\b|cantina|winery|sommelier|bottiglia)\b/i.test(tutto)
                && ((o && /product|wine/i.test([].concat(o["@type"]||[]).join(" "))) || SITI_VINO.test(url || "") || /(vitign|uvaggio|annata|vendemmia|grape|vintage)/i.test(corpo));
-  if(!sembra || !nome) return null;
+  if((!sembra && !forza) || !nome) return null;
   /* annata: prima nel nome, poi accanto a "annata/vendemmia/vintage" */
   const anno = s=>{ const m = String(s).match(/\b(19[5-9]\d|20[0-4]\d)\b/); return m ? m[1] : ""; };
   let annata = anno(nome);
   if(!annata){ const m = corpo.match(/(annata|vendemmia|vintage)[^\n\d]{0,20}(19[5-9]\d|20[0-4]\d)/i); if(m) annata = m[2]; }
   /* azienda: marca o produttore della scheda, oppure una riga "Produttore/Cantina/Azienda: ..." */
   let azienda = pulisciTesto(nomeDi(o && (o.brand || o.manufacturer || o.producer)) || "");
-  if(!azienda){ const m = corpo.match(/(produttore|cantina|azienda|winery|producer)\s*[:\n]\s*([^\n]{2,60})/i); if(m) azienda = m[2].split(/[.;|]\s/)[0].trim(); }
+  if(!azienda){ const m = corpo.match(/(produttore|prodotto da|imbottigliato da|imbottigliatore|cantina|azienda|winery|producer|bottled by)\s*[:\n]?\s*([^\n]{2,60})/i); if(m) azienda = m[2].split(/[.;|]\s/)[0].trim(); }
   if(/vivino|tannico|amazon|callmewine|xtrawine/i.test(azienda)) azienda = "";
   /* vitigno: riga dedicata, altrimenti i vitigni conosciuti nominati nella pagina */
   let vitigno = "";
@@ -4169,7 +4169,7 @@ document.addEventListener("change", e=>{
   apriCantinaDaWeb(d);
 });
 /* dal tasto "Dalla pagina web" nella scheda: chiedo il link e lo leggo */
-async function leggiVinoDaLink(url, kAttuale){
+async function leggiVinoDaLink(url, kAttuale, forza){
   if(!/^https?:\/\//i.test(url)) url = "https://" + url;
   statoCantina("\u23F3 " + L("Leggo la pagina del vino\u2026","Reading the wine page\u2026"));
   const vie = [
@@ -4178,7 +4178,7 @@ async function leggiVinoDaLink(url, kAttuale){
     ()=>scaricaConLimite("https://corsproxy.io/?url=" + encodeURIComponent(url))
   ];
   for(const via of vie){
-    try{ const d = leggiVinoDaPagina(await via(), url); if(d){ if(kAttuale && !d.tipo) d.tipo = kAttuale; apriCantinaDaWeb(d); return; } }catch(e){}
+    try{ const d = leggiVinoDaPagina(await via(), url, forza); if(d){ if(kAttuale && !d.tipo) d.tipo = kAttuale; apriCantinaDaWeb(d); return; } }catch(e){}
   }
   statoCantina("\u26A0\uFE0F " + L("Non sono riuscito a leggere quella pagina. Prova con la pagina del vino su Vivino o su un\u2019enoteca online.","I couldn\u2019t read that page. Try the wine\u2019s page on Vivino or an online wine shop."), "ko");
 }
@@ -4315,14 +4315,19 @@ async function leggiFotoEtichetta(file, k){
 async function leggiCodiceBottiglia(file, k){
   try{
     statoCantina("\u{1F50D} " + L("Cerco il codice a barre nella foto…","Looking for the barcode in the photo…"));
-    const formati = ["ean_13","ean_8","upc_a","upc_e"];
-    let det = null;
-    try{
-      if("BarcodeDetector" in window && (await BarcodeDetector.getSupportedFormats()).includes("ean_13")) det = new BarcodeDetector({formats: formati});
-    }catch(e){}
-    if(!det){ await caricaScript(CDN_BARRE); det = new BarcodeDetectionAPI.BarcodeDetector({formats: formati}); }
-    const trovati = await det.detect(await immagineRidotta(file, 2000));
-    const codice = trovati[0] && trovati[0].rawValue;
+    const valori = await codiceDaFoto(file);
+    /* QR sulla bottiglia: di solito porta all'etichetta elettronica (ingredienti, produttore, annata) */
+    const qr = valori.find(v=>/^https?:\/\//i.test(v) || /^www\./i.test(v));
+    if(qr){
+      const gs1 = gtinDi(qr);
+      statoCantina("\u{1F4F1} " + L("QR della bottiglia: leggo la pagina a cui porta\u2026","Bottle QR code: reading the page it points to\u2026"));
+      const prima = document.getElementById("cnEtichetta")?.value || "";
+      await leggiVinoDaLink(qr, k, true);
+      const letto = (document.getElementById("cnEtichetta")?.value || "") !== prima || document.querySelector(".cant-letto");
+      if(letto || !gs1) return;
+      valori.unshift(gs1);
+    }
+    const codice = valori.map(v=>/^\d{8,14}$/.test(v) ? v : gtinDi(v)).find(Boolean);
     if(!codice){
       statoCantina("⚠️ " + L("Non trovo il codice a barre. Fotografalo da vicino, dritto, che riempia quasi la foto.","I can’t find the barcode. Photograph it close up and straight, filling most of the photo."), "cant-avviso");
       return;
