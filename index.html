@@ -675,7 +675,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v136</div>
+  <div class="ver-splash" data-no-tr>v137</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -686,7 +686,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v136</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v137</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -2760,7 +2760,7 @@ function avvisoSito(url){
        q = decodeURIComponent(u.pathname).split("/").filter(Boolean).pop().replace(/\.\w+$/, "").replace(/^ricetta-|-ricetta$|_\d+$/g, "").replace(/[-_]+/g, " "); }catch(e){}
   const siti = IN_INGLESE ? SITI_OK_EN : SITI_OK_IT;
   const cerca = L("ricetta ","recipe ") + q + " (" + siti.map(([d])=>"site:" + d).join(" OR ") + ")";
-  box.innerHTML = `<div class="imp-avviso">\u26A0\uFE0F <span data-no-tr>${L(`<b>${esc(host)}</b> non \u00e8 fra i siti consigliati: potrebbe non usare il formato standard e la ricetta potrebbe arrivare incompleta. Provo lo stesso.`, `<b>${esc(host)}</b> isn\u2019t one of the recommended sites: it may not use the standard format and the recipe may arrive incomplete. I\u2019ll try anyway.`)}</span>
+  box.innerHTML = `<div class="imp-avviso">\u26A0\uFE0F <span data-no-tr>${L(`<b>${esc(host)}</b> non \u00e8 fra i siti consigliati: potrebbe non usare il formato standard e la ricetta potrebbe arrivare incompleta. Provo lo stesso: se non ti convince, puoi comunque eliminarla.`, `<b>${esc(host)}</b> isn\u2019t one of the recommended sites: it may not use the standard format and the recipe may arrive incomplete. I\u2019ll try anyway: if you\u2019re not happy with it, you can still delete it.`)}</span>
     <br><a href="https://www.google.com/search?q=${encodeURIComponent(cerca)}" target="_blank" rel="noopener">\u{1F50D} ${L("Cerca questa ricetta nei siti consigliati","Look for this recipe on the recommended sites")}</a></div>`;
 }
 function linkWebHTML(q){
@@ -3928,7 +3928,7 @@ function apriMie(){
         <li>${L("Apri la ricetta e tocca i <b>tre puntini \u22EE</b> in alto a destra, poi <b>Condividi</b> \u2192 <b>Che cucino?</b>. Arriva qui da sola.","Open the recipe and tap the <b>three dots \u22EE</b> at the top right, then <b>Share</b> \u2192 <b>Che cucino?</b>. It comes here on its own.")}</li>
         <li>${L("Controlla ingredienti e procedimento e salva: puoi correggerli a mano.","Check ingredients and method and save: you can correct them by hand.")}</li>
       </ol>
-      <p class="mini" style="color:#fff">${L("Se la ricetta viene da un altro sito ti avviso: pu\u00f2 arrivare incompleta. Su iPhone, dove Condividi non arriva all\u2019app, copia il link e usa \u00abIncolla una ricetta dal web\u00bb.","If the recipe comes from another site I\u2019ll warn you: it may arrive incomplete. On iPhone, where Share can\u2019t reach the app, copy the link and use \u201cPaste a recipe from the web\u201d.")}</p></details>
+      <p class="mini" style="color:#fff">${L("Se la ricetta viene da un altro sito ti avviso: pu\u00f2 arrivare incompleta, e puoi comunque eliminarla. Su iPhone, dove Condividi non arriva all\u2019app, copia il link e usa \u00abIncolla una ricetta dal web\u00bb.","If the recipe comes from another site I\u2019ll warn you: it may arrive incomplete, and you can still delete it. On iPhone, where Share can\u2019t reach the app, copy the link and use \u201cPaste a recipe from the web\u201d.")}</p></details>
     ${S.mie.length ? `<ul class="spesa-l">${S.mie.map(r=>
       `<li><span><span data-no-tr>${esc(nomeR(r))}</span> <span class="mini">${esc(r.cat)} \u00b7 ${r.tempo} min</span></span>
         <button class="chiudi" data-mia="mod" data-id="${r.id}">Modifica</button>
@@ -4044,7 +4044,8 @@ function apriEditor(r, tolte){
   apriVelo("editor", `
     <div class="velo-top"><h2>${nuovo ? "Nuova ricetta" : "Modifica ricetta"}</h2>
       <button class="chiudi" data-ed="chiudi">Chiudi</button></div>
-    ${v._nonStd ? `<div class="ed-avviso">\u26A0\uFE0F ${L("Questa ricetta viene da un sito non fra quelli consigliati: controlla bene ingredienti e procedimento prima di salvare, potrebbero essere incompleti.","This recipe comes from a site that isn\u2019t recommended: check ingredients and method carefully before saving, they may be incomplete.")}</div>` : ""}
+    ${v._nonStd ? `<div class="ed-avviso">\u26A0\uFE0F ${L("Questa ricetta viene da un sito non fra quelli consigliati: controlla bene ingredienti e procedimento prima di salvare, potrebbero essere incompleti. Se non ti convince, puoi comunque eliminarla.","This recipe comes from a site that isn\u2019t recommended: check ingredients and method carefully before saving, they may be incomplete. If you\u2019re not happy with it, you can still delete it.")}
+      <div style="margin-top:8px"><button class="btn small ghost" data-ed-scarta>\u{1F5D1}\uFE0F ${L("Elimina questa ricetta","Delete this recipe")}</button></div></div>` : ""}
     ${tolte && tolte.length ? `<div class="imp-tolte"><b data-no-tr>\u{1F9F9} ${L(`Ho tolto ${tolte.length} ${tolte.length===1?"riga che non sembrava un ingrediente":"righe che non sembravano ingredienti"}`, `I removed ${tolte.length} ${tolte.length===1?"line that didn\u2019t look like an ingredient":"lines that didn\u2019t look like ingredients"}`)}</b>
       <ul data-no-tr>${tolte.slice(0,12).map(i=>`<li>${esc(((i.q && i.q!=="q.b." ? i.q + " " : "") + i.n).slice(0,90))}</li>`).join("")}</ul>
       <p class="mini">Se una era davvero un ingrediente, riscrivila nell\u2019elenco qui sotto.</p></div>` : ""}
@@ -4088,6 +4089,12 @@ function apriEditor(r, tolte){
     </div>`);
   velo.querySelectorAll("[data-tag],[data-all]").forEach(b=>b.onclick = ()=>b.classList.toggle("on"));
 }
+/* ricetta importata da un sito non consigliato: la scarto senza salvarla */
+document.addEventListener("click", e=>{
+  if(!e.target.closest("[data-ed-scarta]")) return;
+  if(!confirm(L("Elimino questa ricetta senza salvarla?","Delete this recipe without saving it?"))) return;
+  apriMie();
+});
 document.addEventListener("click", e=>{
   const b = e.target.closest("[data-ed]");
   if(!b) return;
@@ -4237,7 +4244,7 @@ const PERCHE_EN = `<div class="perche">
     <p>If you already know what you want to make, the app checks whether you have all the ingredients. If something is missing, it suggests a substitute from what you already have, or adds the rest to the shopping list.</p>
     <p>If the recipe isn't in the archive, tap <strong>“Search Google on recommended sites”</strong>: the search is limited to BBC Good Food, Allrecipes, Serious Eats and Simply Recipes, which publish recipes in a standard format the app reads in full.</p>
     <p>Open the recipe you like, tap the <strong>three dots ⋮</strong> at the top right, then <strong>Share</strong> → <strong>Che cucino?</strong>: the recipe arrives on its own. Check ingredients and method and save.</p>
-    <p>If you pick a different site the app still tries, but warns you the recipe may arrive incomplete and suggests looking on the recommended sites. (On iPhone Share can't reach the app: copy the link and paste it in <strong>Extras → My recipes</strong>.)</p>
+    <p>If you pick a different site the app still tries, but warns you the recipe may arrive incomplete and suggests looking on the recommended sites. If you're not happy with it, you can still delete it. (On iPhone Share can't reach the app: copy the link and paste it in <strong>Extras → My recipes</strong>.)</p>
     <p>Now you have a new recipe in the archive.</p>
     <div class="sez"><strong>Want an idea?</strong></div>
     <p>Let the app choose: <strong>"What’s cooking?"</strong> shows you the recipes you can make 100% with what you have, then those at 90% and so on, so you always have dozens of recipes to pick from: some ready right away, others one ingredient away.</p>
@@ -4281,7 +4288,7 @@ function apriPerche(){
     <p>Scrivi quello che vuoi preparare, l'app controlla se hai tutti gli ingredienti. Se ti manca qualcosa non preoccuparti, <strong>"Che cucino?"</strong> ti propone una sostituzione con quello che hai già, oppure aggiunge quel che manca alla lista della spesa.</p>
     <p>Se la ricetta non è nell'archivio, tocca <strong>«Cerca su Google nei siti consigliati»</strong>: la ricerca si limita a GialloZafferano, Fatto in casa da Benedetta, Misya, Ricette della Nonna e Cookaround, che pubblicano le ricette in un formato standard che l'app legge per intero.</p>
     <p>Apri la ricetta che ti piace, tocca i <strong>tre puntini ⋮</strong> in alto a destra, poi <strong>Condividi</strong> → <strong>Che cucino?</strong>: la ricetta arriva da sola. Controlla ingredienti e procedimento e salva.</p>
-    <p>Se scegli un sito diverso l'app ci prova lo stesso, ma ti avvisa che la ricetta potrebbe arrivare incompleta e ti invita a cercarla nei siti consigliati. (Su iPhone Condividi non arriva all'app: copia il link e incollalo in <strong>Extra → Le mie ricette</strong>.)</p>
+    <p>Se scegli un sito diverso l'app ci prova lo stesso, ma ti avvisa che la ricetta potrebbe arrivare incompleta e ti invita a cercarla nei siti consigliati. Se non ti convince, puoi comunque eliminarla. (Su iPhone Condividi non arriva all'app: copia il link e incollalo in <strong>Extra → Le mie ricette</strong>.)</p>
     <p>Ora hai una nuova ricetta in archivio.</p>
     <div class="sez"><strong>Vuoi un'idea di cosa mangiare?</strong></div>
     <p>Lascia scegliere all'app: <strong>"Che cucino?"</strong> ti mostra le ricette fattibili al 100% con quello che hai, poi quelle al 90% e via via a scalare, così hai sempre decine di ricette fra cui scegliere: alcune pronte subito, altre a un ingrediente di distanza.</p>
