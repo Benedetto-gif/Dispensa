@@ -435,6 +435,20 @@ body[data-filigrana="1"]::before{
 .riga-add{display:flex;gap:8px;margin-top:12px}
 .riga-add input{flex:1}
 .tag.fatta{background:var(--superficie2);color:var(--inchiostro-soft);font-weight:700}
+.tag.voto{background:color-mix(in srgb,#E8A400 20%,transparent);color:#9A6A00;font-weight:800;letter-spacing:.05em}
+:root[data-scuro] .tag.voto{color:#FFC94A}
+.mia-nota{margin:10px 0;padding:10px 14px;border-radius:14px;background:#FFF3CD;color:#5C4400;border:1px solid #E8C25A;line-height:1.45}
+.stelle-scelta{display:flex;gap:4px;margin:6px 0 10px}
+.stelle-scelta .stella{border:0;background:none;font-size:2rem;line-height:1;color:#C9C2B4;cursor:pointer;padding:2px}
+.stelle-scelta .stella.on{color:#E8A400}
+.ms-riga{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--linea);flex-wrap:wrap}
+.ms-riga .ms-nome{flex:1;min-width:140px;font-weight:700}
+.ms-dosi{display:inline-flex;align-items:center;gap:6px}
+.ms-dosi button{width:30px;height:30px;border-radius:50%;border:1px solid var(--linea);background:var(--superficie);font-weight:800;cursor:pointer;color:var(--inchiostro)}
+.spesa-rep{font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;opacity:.75;margin:14px 0 2px}
+.ric-ricevuta{margin:10px 0;padding:12px 14px;border-radius:14px;background:var(--superficie2)}
+.ric-ricevuta ul,.ric-ricevuta ol{margin:6px 0;padding-left:1.2em}
+.foto-ricetta{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px}
 .tag.pref{background:color-mix(in srgb,var(--senape) 16%,transparent);color:var(--senape);font-weight:700}
 
 /* radio */
@@ -694,7 +708,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v141</div>
+  <div class="ver-splash" data-no-tr>v142</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -705,7 +719,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v141</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v142</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -1418,6 +1432,7 @@ const CRITERI_ORDINE = [
   {key:"ingredienti",  label:"N. ingredienti",val:o=>o.r.ing.length,                                 def:"asc"},
   {key:"mancanti",     label:"Ingredienti mancanti", val:o=>o.mancanti.length,                       def:"asc"},
   {key:"posseduti",    label:"Ingredienti che hai",  val:o=>o.r.ing.length-o.mancanti.length-o.sostituibili.length, def:"desc"},
+  {key:"voto",         label:"Il mio voto",          val:o=>(giudizio(o.r.id)||{}).s||0,             def:"desc"},
   {key:"nonfatta",     label:"Da più tempo non fatta", val:o=>S.cucinate[o.r.id]||0,                 def:"asc"},
   {key:"regione",      label:"Della tua regione",    val:o=>o.zona?1:0,                                 def:"desc"},
   {key:"alfabetico",   label:"Alfabetico",           cmp:(a,b)=>nomeR(a.r).localeCompare(nomeR(b.r),L("it","en")),       def:"asc"},
@@ -2583,10 +2598,11 @@ function scheda(o){
         : o.sostituibili.length ? `Ci siamo, con ${o.sostituibili.length===1?"una sostituzione":"qualche sostituzione"}`
         : "Hai tutto il necessario"}</div>
       ${o.usa?.length?`<div class="mini" style="margin-top:4px">Consuma: ${esc(o.usa.join(", "))}</div>`:""}
-      <div>${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag.in?`<span class="tag stag">\u{1F5D3}\uFE0F ${o.stag.in} ${o.stag.in===1?"ingrediente":"ingredienti"} di stagione</span>`:""}${(r.att||[]).some(a=>D.attrezzi[a])?`<span class="tag">\u{1F6E0}\ufe0f attrezzo speciale</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
+      <div>${(giudizio(r.id)||{}).s?`<span class="tag voto" title="${L("Il tuo voto","Your rating")}">${stelleTesto(giudizio(r.id).s)}</span>`:""}${(giudizio(r.id)||{}).nota?`<span class="tag">\u{1F4DD} ${L("con la tua nota","with your note")}</span>`:""}${nelMenu(r.id)?`<span class="tag">\u{1F4C5} ${L("nel menu della settimana","in this week’s menu")}</span>`:""}${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag.in?`<span class="tag stag">\u{1F5D3}\uFE0F ${o.stag.in} ${o.stag.in===1?"ingrediente":"ingredienti"} di stagione</span>`:""}${(r.att||[]).some(a=>D.attrezzi[a])?`<span class="tag">\u{1F6E0}\ufe0f attrezzo speciale</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
       ${esclusi.length?`<div class="avviso">Non va bene per ${esclusi.map(c=>esc(c.nome)).join(" e ")}</div>`:""}
     </summary>
     <div class="dett">
+      ${(giudizio(r.id)||{}).nota?`<div class="mia-nota" data-no-tr>\u{1F4DD} <b>${L("La tua nota","Your note")}:</b> ${esc(giudizio(r.id).nota)}</div>`:""}
       ${rigaDosi(r)}
       <ul class="ing-l">${r.ing.map(i=>{
         const q = `<em data-q="${esc(i.q)}" data-p="${porzioniDi(r)}">${esc(scalaQ(i.q, fattoreDosi(r)))}</em>`;
@@ -2624,7 +2640,10 @@ function scheda(o){
         <button class="btn small" data-azione="cucina" data-id="${r.id}">Cuciniamo</button>
         ${o.mancanti.length?`<button class="btn ghost small" data-azione="spesa" data-id="${r.id}">Aggiungi alla spesa</button>`:""}
         <button class="btn ghost small" data-azione="fatta" data-id="${r.id}">L\u2019ho cucinata</button>
-        <button class="btn ghost small" data-azione="pref" data-id="${r.id}">${o.pref?"\u2605":"\u2606"} Preferita</button>
+        <button class="btn ghost small" data-azione="pref" data-id="${r.id}">${o.pref?"★":"☆"} Preferita</button>
+        <button class="btn ghost small" data-azione="menu" data-id="${r.id}">${nelMenu(r.id)?"✓ "+L("Nel menu della settimana","In this week’s menu"):"\u{1F4C5} "+L("Nel menu della settimana","Add to this week’s menu")}</button>
+        <button class="btn ghost small" data-azione="giudizio" data-id="${r.id}">\u{1F4DD} ${L("Voto e nota","Rating and note")}</button>
+        <button class="btn ghost small" data-azione="manda" data-id="${r.id}">\u{1F4E4} ${L("Manda a un amico","Send to a friend")}</button>
         ${r.id<0
           ? `<button class="btn ghost small" data-azione="modifica" data-id="${r.id}">Modifica</button>
              <button class="btn ghost small" data-azione="elimina" data-id="${r.id}">Elimina</button>`
@@ -3090,6 +3109,7 @@ function disegnaCucina(){
     </div>
     ${cucina.ascolta ? `<div class="voce-aiuto ascolto">${L("Ti ascolto. D\u00ec: <b>avanti</b>, <b>indietro</b>, <b>ripeti</b>, <b>timer</b>, <b>ferma</b>, <b>ingredienti</b>.","I'm listening. Say: <b>next</b>, <b>back</b>, <b>repeat</b>, <b>timer</b>, <b>stop</b>, <b>ingredients</b>.")}<div class="voce-sentito" id="voceSentito"></div></div>` : ""}
     <div class="passo-n">Passo ${cucina.i+1} di ${n}</div>
+    ${cucina.i === 0 && (giudizio(r.id)||{}).nota ? `<div class="mia-nota" data-no-tr>\u{1F4DD} <b>${L("La tua nota","Your note")}:</b> ${esc(giudizio(r.id).nota)}</div>` : ""}
     <div class="passo-g" data-no-tr>${passoT}</div>
     ${blocco}
     <details class="gruppo"><summary>Ingredienti <em>per ${dosiAttuali()} a tavola</em></summary>
@@ -3140,6 +3160,12 @@ function apriFine(r){
       <button class="chiudi" data-fine="annulla">Chiudi</button>
     </div>
     <p>La segno fra le cucinate: per tre settimane le lascio il posto ad altre.</p>
+    <div class="card">
+      <b>\u{1F4DD} ${L("Com’è venuta?","How did it turn out?")}</b>
+      ${htmlStelleScelta((giudizio(r.id) || {}).s)}
+      <label class="campo" style="margin-bottom:0"><span>${L("Una nota per la prossima volta (facoltativa)","A note for next time (optional)")}</span>
+        <textarea id="fineNota" rows="2" placeholder="${L("es. meno sale, cuocere 5 minuti in più","e.g. less salt, cook 5 minutes longer")}">${esc((giudizio(r.id) || {}).nota || "")}</textarea></label>
+    </div>
     ${usati.length ? `
       <div class="card">
         <b>Cosa tolgo dalla dispensa</b>
@@ -3166,6 +3192,9 @@ document.addEventListener("click", e=>{
   const r = trovaRicetta(+b.dataset.id);
   if(!r) return;
   S.cucinate[r.id] = Date.now();
+  { const box = velo.querySelector(".stelle-scelta"), nt = document.getElementById("fineNota");
+    if(box || nt) salvaGiudizio(r.id, +(box && box.dataset.n || 0), nt ? nt.value : ""); }
+  S.menuSett = (S.menuSett || []).filter(x=>x.id !== r.id);
   const inSpesa = document.getElementById("fineSpesa");
   const tolti = [...document.querySelectorAll("[data-usato]:checked")].map(c=>c.dataset.usato);
   if(tolti.length){
@@ -3182,6 +3211,121 @@ document.addEventListener("click", e=>{
 });
 
 /* ===========================================================
+   Il mio voto e la mia nota su una ricetta (S.giudizi = {id: {s, nota, d}})
+   =========================================================== */
+function giudizio(id){ return (S.giudizi || {})[id] || null; }
+function stelleTesto(n){ return "★".repeat(n) + "☆".repeat(5 - n); }
+function htmlStelleScelta(n){
+  return `<div class="stelle-scelta" data-n="${n||0}" role="group" aria-label="${L("Il tuo voto","Your rating")}">${[1,2,3,4,5].map(i=>
+    `<button type="button" class="stella ${i <= (n||0) ? "on" : ""}" data-stella="${i}" aria-label="${i} ${L(i===1?"stella":"stelle", i===1?"star":"stars")}">★</button>`).join("")}</div>`;
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-stella]"); if(!b) return;
+  const box = b.closest(".stelle-scelta"), n = +b.dataset.stella === +box.dataset.n ? 0 : +b.dataset.stella;
+  box.dataset.n = n;
+  box.querySelectorAll("[data-stella]").forEach(x=>x.classList.toggle("on", +x.dataset.stella <= n));
+});
+function salvaGiudizio(id, n, nota){
+  S.giudizi = S.giudizi || {};
+  nota = (nota || "").trim();
+  if(!n && !nota) delete S.giudizi[id];
+  else S.giudizi[id] = {s: n || 0, nota, d: Date.now()};
+  salva();
+}
+function apriGiudizio(r){
+  const g = giudizio(r.id) || {};
+  apriVelo("giudizio", `
+    <div class="velo-top"><h2 data-no-tr>\u{1F4DD} ${esc(nomeR(r))}</h2>
+      <button class="chiudi" data-giu="chiudi">${L("Chiudi","Close")}</button></div>
+    <p class="mini">${L("Il tuo voto e una nota per la prossima volta: li ritrovi sulla scheda della ricetta e quando la cucini.","Your rating and a note for next time: you’ll find them on the recipe card and when you cook it.")}</p>
+    ${htmlStelleScelta(g.s)}
+    <label class="campo"><span>${L("La tua nota","Your note")}</span>
+      <textarea id="giuNota" rows="4" placeholder="${L("es. la prossima volta meno sale; agli ospiti è piaciuta molto","e.g. less salt next time; the guests loved it")}">${esc(g.nota || "")}</textarea></label>
+    <div class="azioni"><button class="btn" data-giu="salva" data-id="${r.id}">${L("Salva","Save")}</button>
+      <button class="btn ghost" data-giu="chiudi">${L("Annulla","Cancel")}</button></div>`);
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-giu]"); if(!b) return;
+  if(b.dataset.giu === "salva"){
+    const box = velo.querySelector(".stelle-scelta");
+    salvaGiudizio(+b.dataset.id, +(box && box.dataset.n || 0), document.getElementById("giuNota").value);
+  }
+  chiudiVelo();
+  if(passo === 4) tappaRicette();
+});
+
+/* ===========================================================
+   Manda una ricetta a un amico: testo leggibile + link che la importa
+   (la ricetta viaggia dentro il link, compressa: niente server)
+   =========================================================== */
+async function codificaRicetta(r){
+  const d = {n: nomeR(r), c: r.cat, t: r.tempo, f: r.diff, p: porzioniDi(r), i: r.ing.map(x=>[x.q, x.n]),
+             s: procR(r).map(x=>testoPiano(pulito(x))), o: r.nota ? testoPiano(pulito(notaR(r))) : "", l: r.luogo || "",
+             g: r.tags || [], a: r.all || [], u: r.unico ? 1 : 0, e: r.estero ? 1 : 0};
+  let bytes = new TextEncoder().encode(JSON.stringify(d)), pre = "j";
+  if(window.CompressionStream){
+    try{ const cs = new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+         bytes = new Uint8Array(await new Response(cs).arrayBuffer()); pre = "z"; }catch(e){}
+  }
+  let bin = ""; bytes.forEach(b=>{ bin += String.fromCharCode(b); });
+  return pre + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+async function decodificaRicetta(c){
+  const pre = c[0]; let b64 = c.slice(1).replace(/-/g, "+").replace(/_/g, "/");
+  while(b64.length % 4) b64 += "=";
+  let bytes = Uint8Array.from(atob(b64), ch=>ch.charCodeAt(0));
+  if(pre === "z"){ const ds = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+                   bytes = new Uint8Array(await new Response(ds).arrayBuffer()); }
+  const d = JSON.parse(new TextDecoder().decode(bytes));
+  const ing = (d.i || []).map(([q, n])=>({n: String(n || "").toLowerCase(), q: q || "q.b.", k: chiaveDi(String(n || ""))})).filter(x=>x.n);
+  return {id: 0, n: String(d.n || ""), cat: PORTATE.includes(d.c) ? d.c : "Primi", tempo: +d.t || 40, diff: d.f || "facile",
+          porz: +d.p || PORZIONI, ing, proc: d.s || [], nota: d.o || "", luogo: d.l || "", estero: !!d.e,
+          tags: d.g || [], all: d.a || [], unico: !!d.u, nvoci: ing.length, minimo: false, leggero: false, att: [], att_opz: []};
+}
+async function mandaRicetta(r, bottone){
+  const codice = await codificaRicetta(r);
+  const link = location.origin + location.pathname + "?ric=" + codice;
+  const p = porzioniDi(r);
+  const testo = `\u{1F37D}️ *${nomeR(r)}*\n` +
+    L(`Per ${p} porzioni · ${r.tempo} minuti`, `Serves ${p} · ${r.tempo} minutes`) + "\n\n" +
+    `*${L("Ingredienti","Ingredients")}*\n` + r.ing.map(i=>"• " + (i.q && i.q !== "q.b." ? i.q + " " : "") + i.n + (i.q === "q.b." ? " " + L("q.b.","to taste") : "")).join("\n") + "\n\n" +
+    `*${L("Procedimento","Method")}*\n` + procR(r).map((x, i)=>(i + 1) + ". " + testoPiano(pulito(x))).join("\n") +
+    (r.nota ? "\n\n" + testoPiano(pulito(notaR(r))) : "") +
+    "\n\n\u{1F4F2} " + L("Aggiungila alle tue ricette di Che cucino? con un tocco:", "Add it to your Che cucino? recipes with one tap:") + "\n" + link;
+  try{
+    if(navigator.share){ await navigator.share({title: nomeR(r), text: testo}); return; }
+  }catch(e){ if(e && e.name === "AbortError") return; }
+  try{ await navigator.clipboard.writeText(testo); if(bottone) bottone.textContent = "✅ " + L("Copiata: incollala dove vuoi","Copied: paste it anywhere"); }
+  catch(e){ prompt(L("Copia la ricetta:","Copy the recipe:"), testo); }
+}
+/* chi apre il link ricevuto: vede la ricetta e la aggiunge alle sue */
+function apriRicevuta(r){
+  apriVelo("ricevuta", `
+    <div class="velo-top"><h2>\u{1F4E9} ${L("Ti hanno mandato una ricetta","Someone sent you a recipe")}</h2>
+      <button class="chiudi" data-rv="chiudi">${L("Chiudi","Close")}</button></div>
+    <div class="ric-ricevuta" data-no-tr>
+      <b style="font-size:1.15rem">${esc(r.n)}</b>
+      <div class="mini">${esc(r.cat)} · ${r.tempo} min · ${L("per","serves")} ${r.porz}</div>
+      <ul>${r.ing.map(i=>`<li>${esc((i.q && i.q !== "q.b." ? i.q + " " : "") + i.n)}</li>`).join("")}</ul>
+      <ol>${r.proc.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>
+    </div>
+    <div class="azioni"><button class="btn" data-rv="aggiungi">➕ ${L("Aggiungila alle mie ricette","Add it to my recipes")}</button>
+      <button class="btn ghost" data-rv="chiudi">${L("No, grazie","No, thanks")}</button></div>`);
+  velo._ricevuta = r;
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-rv]"); if(!b) return;
+  if(b.dataset.rv === "aggiungi" && velo._ricevuta){ const r = velo._ricevuta; r.nota = (r.nota ? r.nota + " " : "") + L("Ricevuta da un amico.","Sent by a friend."); apriEditor(r); return; }
+  chiudiVelo();
+});
+(function(){
+  const q = new URLSearchParams(location.search), c = q.get("ric");
+  if(!c) return;
+  try{ history.replaceState(null, "", location.pathname); }catch(e){}
+  setTimeout(()=>{ decodificaRicetta(c).then(apriRicevuta).catch(()=>alert(L("Il link della ricetta non è completo: chiedi di rimandarlo.","The recipe link is incomplete: ask for it to be sent again."))); }, 600);
+})();
+
+/* ===========================================================
    Lista della spesa
    =========================================================== */
 function metti(k, nome, quanto){
@@ -3196,6 +3340,101 @@ function aggiungiSpesa(r){
   });
   salva();
 }
+/* ---------- Menu della settimana: S.menuSett = [{id, dosi}] ---------- */
+function menuSett(){ return S.menuSett = (S.menuSett || []).filter(x=>trovaRicetta(x.id)); }
+function nelMenu(id){ return (S.menuSett || []).some(x=>x.id === id); }
+function toggleMenu(r){
+  const m = menuSett(), i = m.findIndex(x=>x.id === r.id);
+  if(i < 0) m.push({id: r.id, dosi: dosiAttuali()}); else m.splice(i, 1);
+  salva();
+}
+/* quantita' in numero + unita' confrontabile: kg->g, l/cl->ml; "2 cucchiai" -> 2 "cucchiai" */
+function quantitaDi(q){
+  const t = String(q || "").trim().toLowerCase();
+  let m = t.match(/^(\d+)\s*\/\s*(\d+)\s*(.*)$/), v, resto;
+  if(m){ v = (+m[1]) / (+m[2]); resto = m[3]; }
+  else{ m = t.match(/^(\d+(?:[.,]\d+)?)\s*(.*)$/); if(!m) return null; v = parseFloat(m[1].replace(",", ".")); resto = m[2]; }
+  let u = (resto.match(/^[a-zà-ú]+\.?/) || [""])[0].replace(/\.$/, "");
+  if(/^(g|gr|grammi|grammo)$/.test(u)) u = "g";
+  else if(u === "kg"){ v *= 1000; u = "g"; }
+  else if(/^(l|lt|litri|litro)$/.test(u)){ v *= 1000; u = "ml"; }
+  else if(u === "cl"){ v *= 10; u = "ml"; }
+  else if(u === "dl"){ v *= 100; u = "ml"; }
+  else if(u === "ml"){}
+  else if(/^(cucchiai|cucchiaio)$/.test(u)) u = "cucchiai";
+  else if(/^(cucchiaini|cucchiaino)$/.test(u)) u = "cucchiaini";
+  else if(/^(spicchi|spicchio)$/.test(u)) u = "spicchi";
+  else if(/^(fette|fetta)$/.test(u)) u = "fette";
+  else if(/^(bicchieri|bicchiere)$/.test(u)) u = "bicchieri";
+  else if(/^(pizzichi|pizzico)$/.test(u)) u = "pizzichi";
+  else u = "";
+  return {v, u};
+}
+function testoQuantita(v, u){
+  const n = x=>(Math.round(x * 10) / 10).toString().replace(".", ",");
+  if(u === "g") return v >= 1000 ? n(v / 1000) + " kg" : Math.round(v) + " g";
+  if(u === "ml") return v >= 1000 ? n(v / 1000) + " l" : Math.round(v) + " ml";
+  return n(v) + (u ? " " + u : "");
+}
+/* tutte le ricette del menu: cosa manca, sommando le quantita' dello stesso ingrediente */
+function spesaDelMenu(){
+  const tot = new Map();
+  menuSett().forEach(x=>{
+    const r = trovaRicetta(x.id); if(!r) return;
+    const p = porzioniDi(r), f = p >= 8 && x.dosi <= p ? 1 : x.dosi / p;
+    r.ing.forEach(i=>{
+      if(!i.k || possiedo(i.k) || sostituto(i.k)) return;
+      const g = tot.get(i.k) || {k: i.k, nome: i.n, somme: {}, altro: [], ricette: new Set()};
+      const qq = quantitaDi(scalaQ(i.q, f));
+      if(qq) g.somme[qq.u] = (g.somme[qq.u] || 0) + qq.v;
+      else if(i.q && i.q !== "q.b." && !g.altro.includes(i.q)) g.altro.push(i.q);
+      g.ricette.add(nomeR(r));
+      tot.set(i.k, g);
+    });
+  });
+  return [...tot.values()].map(g=>{
+    const parti = Object.entries(g.somme).map(([u, v])=>testoQuantita(v, u)).concat(g.altro);
+    return {k: g.k, t: g.nome + (parti.length ? " — " + parti.join(" + ") : ""), n: g.ricette.size};
+  });
+}
+function apriMenuSett(){
+  const m = menuSett();
+  const manca = m.length ? spesaDelMenu() : [];
+  apriVelo("menusett", `
+    <div class="velo-top"><h2>\u{1F4C5} ${L("Menu della settimana","This week’s menu")}</h2>
+      <button class="chiudi" data-ms="chiudi">${L("Chiudi","Close")}</button></div>
+    ${m.length ? `<p class="mini">${L("Le ricette che vuoi cucinare nei prossimi giorni. Quando ne cucini una e tocchi «Ho finito», esce dal menu da sola.","The recipes you want to cook in the next few days. When you cook one and tap “I’m done”, it leaves the menu by itself.")}</p>
+      ${m.map((x, i)=>{ const r = trovaRicetta(x.id);
+        return `<div class="ms-riga"><span class="ms-nome" data-no-tr>${eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"")} ${esc(nomeR(r))}</span>
+          <span class="ms-dosi"><button data-ms="meno" data-i="${i}" aria-label="${L("Meno persone","Fewer people")}">−</button><b>${x.dosi}</b><button data-ms="piu" data-i="${i}" aria-label="${L("Più persone","More people")}">+</button> <span class="mini">${L("a tavola","at the table")}</span></span>
+          <button class="btn small" data-ms="cucina" data-i="${i}">${L("Cuciniamo","Let’s cook")}</button>
+          <button class="btn small ghost" data-ms="via" data-i="${i}" aria-label="${L("Togli dal menu","Remove from menu")}">✕</button></div>`; }).join("")}
+      <div class="card" style="margin-top:14px">
+        <b>\u{1F6D2} ${L("Spesa unica per tutto il menu","One shopping list for the whole menu")}</b>
+        <p class="mini">${manca.length
+          ? L(`Ti mancano ${manca.length} ingredienti: sommo le quantità delle varie ricette, salto quello che hai già in dispensa e li metto nella lista divisi per reparto.`, `You’re missing ${manca.length} ingredients: I add up the quantities from the recipes, skip what you already have and put them in the list by department.`)
+          : L("Hai già tutto quello che serve per il menu.","You already have everything the menu needs.")}</p>
+        ${manca.length ? `<button class="btn" data-ms="spesa">\u{1F6D2} ${L("Metti tutto nella lista della spesa","Put it all on the shopping list")}</button>` : ""}
+      </div>`
+    : `<div class="vuoto"><p>${L("Il menu è vuoto.","The menu is empty.")}</p>
+       <p class="mini">${L("Apri una ricetta e tocca «\u{1F4C5} Nel menu della settimana». Quando ne hai scelte alcune, qui fai una spesa sola per tutte.","Open a recipe and tap “\u{1F4C5} Add to this week’s menu”. When you’ve picked a few, make one shopping list for all of them here.")}</p></div>`}`);
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-ms]"); if(!b) return;
+  const a = b.dataset.ms, m = menuSett(), x = m[+b.dataset.i];
+  if(a === "chiudi"){ chiudiVelo(); if(passo === 5) tappaHome(); return; }
+  if(a === "meno" && x){ x.dosi = Math.max(1, x.dosi - 1); salva(); apriMenuSett(); return; }
+  if(a === "piu" && x){ x.dosi = Math.min(40, x.dosi + 1); salva(); apriMenuSett(); return; }
+  if(a === "via" && x){ m.splice(+b.dataset.i, 1); salva(); apriMenuSett(); return; }
+  if(a === "cucina" && x){ dosiPer = x.dosi; apriCucina(trovaRicetta(x.id)); return; }
+  if(a === "spesa"){
+    spesaDelMenu().forEach(v=>{
+      const c = S.spesa.find(y=>y.k === v.k && !y.presa);
+      if(c) c.t = v.t; else S.spesa.push({k: v.k, t: v.t, presa: false});
+    });
+    salva(); apriSpesa(); return;
+  }
+});
 function apriSpesa(){
   const l = S.spesa;
   apriVelo("spesa", `
@@ -3203,9 +3442,14 @@ function apriSpesa(){
       <h2>Lista della spesa</h2>
       <button class="chiudi" data-spesa="chiudi">Chiudi</button>
     </div>
-    ${l.length ? `<ul class="spesa-l">${l.map((x,i)=>
-      `<li class="${x.presa?"presa":""}"><input type="checkbox" data-presa="${i}" ${x.presa?"checked":""}>
-       <span>${esc(x.t)}</span></li>`).join("")}</ul>`
+    ${l.length ? (()=>{
+      const ordine = Object.keys(CAT_DISP), gruppi = {};
+      l.forEach((x, i)=>{ const c = categoriaDi(x.k) || L("Altro","Other"); (gruppi[c] = gruppi[c] || []).push([x, i]); });
+      const nomi = Object.keys(gruppi).sort((a, b)=>(ordine.indexOf(a) < 0 ? 99 : ordine.indexOf(a)) - (ordine.indexOf(b) < 0 ? 99 : ordine.indexOf(b)));
+      const una = nomi.length === 1;
+      return nomi.map(c=>`${una ? "" : `<div class="spesa-rep">${esc(c)}</div>`}<ul class="spesa-l">${gruppi[c].map(([x,i])=>
+        `<li class="${x.presa?"presa":""}"><input type="checkbox" data-presa="${i}" ${x.presa?"checked":""}>
+         <span>${esc(x.t)}</span></li>`).join("")}</ul>`).join(""); })()
       : `<div class="vuoto"><p>La lista è vuota.</p>
          <p class="mini">Aprendo una ricetta trovi il tasto per aggiungere quello che ti manca.</p></div>`}
     <div class="riga-add">
@@ -3331,6 +3575,11 @@ document.addEventListener("click", e=>{
     case "nascondi": if(!S.nascoste.includes(r.id)) S.nascoste.push(r.id);
                      salva(); tappaRicette(); break;
     case "nutrizione": apriNutrizione(r); break;
+    case "giudizio": apriGiudizio(r); break;
+    case "manda": mandaRicetta(r, t); break;
+    case "menu": toggleMenu(r);
+                 t.textContent = nelMenu(r.id) ? "✓ " + L("Nel menu della settimana","In this week’s menu") : "\u{1F4C5} " + L("Nel menu della settimana","Add to this week’s menu");
+                 break;
     case "modifica": apriEditor(r); break;
     case "elimina":  if(confirm("Elimino «" + r.n + "» dalle tue ricette?")){
                        S.mie = S.mie.filter(x=>x.id !== r.id); salva(); tappaRicette();
@@ -3766,7 +4015,42 @@ function leggiTestoEtichetta(testo, righe){
            vitigno: vitignoNelTesto(testo), annata: annataNelTesto(testo) };
 }
 let _tessWorker = null;
+/* il lettore di testo e' uno solo: chi lo usa dice dove mostrare l'avanzamento */
+let ocrLog = ()=>{};
+async function lettoreTesto(){
+  await caricaScript(CDN_TESS + "tesseract.min.js");
+  if(!_tessWorker) _tessWorker = await Tesseract.createWorker("ita", 1, {
+    workerPath: CDN_TESS + "worker.min.js",
+    corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",
+    langPath: "https://cdn.jsdelivr.net/npm/@tesseract.js-data/ita@1.0.0/4.0.0_best_int",
+    logger: m=>ocrLog(m)
+  });
+  return _tessWorker;
+}
+async function leggiFotoRicetta(file){
+  const esito = document.getElementById("impEsito"), dire = t=>{ if(esito) esito.textContent = t; };
+  try{
+    dire("⏳ " + L("Preparo la lettura del testo (la prima volta scarica circa 4 MB)…","Getting the text reader ready (about 4 MB the first time)…"));
+    ocrLog = m=>{ if(m.status === "recognizing text") dire("\u{1F50D} " + L("Leggo la ricetta… ","Reading the recipe… ") + Math.round((m.progress || 0) * 100) + "%"); };
+    const w = await lettoreTesto();
+    await w.setParameters({tessedit_pageseg_mode: "3"});
+    const testo = ((await w.recognize(await immagineRidotta(file, 2200))).data.text || "")
+      .split(/\n/).map(x=>x.replace(/\s+/g, " ").trim()).filter(x=>x && /[a-zà-ú]{2}/i.test(x)).join("\n");
+    if(testo.replace(/[^a-z]/gi, "").length < 20){ dire("⚠️ " + L("Non riesco a leggere il testo: riprova con la pagina dritta, ben illuminata e senza ombre.","I can’t read the text: try again with the page straight, well lit and without shadows.")); return; }
+    const box = document.getElementById("impTesto");
+    if(box){ box.value = (box.value.trim() ? box.value.trim() + "\n" : "") + testo; box.scrollIntoView({block:"center", behavior:"smooth"}); }
+    dire("✅ " + L("Ho letto la foto: controlla il testo qui sotto e correggi gli errori. Se la ricetta continua su un’altra pagina, fotografa anche quella. Poi tocca «Prepara la ricetta».","I read the photo: check the text below and fix any mistakes. If the recipe continues on another page, photograph that too. Then tap “Prepare the recipe”."));
+  }catch(e){ dire("⚠️ " + L("Non sono riuscito a leggere la foto: serve la connessione la prima volta.","I couldn’t read the photo: a connection is needed the first time.")); }
+  finally{ ocrLog = ()=>{}; }
+}
+document.addEventListener("click", e=>{
+  if(!e.target.closest("[data-imp-foto]")) return;
+  const inp = document.getElementById("impFotoIn"); if(!inp) return;
+  inp.value = ""; inp.onchange = ()=>{ const f = inp.files && inp.files[0]; if(f) leggiFotoRicetta(f); };
+  inp.click();
+});
 async function leggiFotoEtichetta(file, k){
+  ocrLog = m=>{ if(m.status === "recognizing text") statoCantina("\u{1F50D} " + L("Leggo l’etichetta… ","Reading the label… ") + Math.round((m.progress || 0) * 100) + "%"); };
   try{
     statoCantina("⏳ " + L("Preparo la lettura del testo (la prima volta scarica circa 4 MB)…","Getting the text reader ready (about 4 MB the first time)…"));
     await caricaScript(CDN_TESS + "tesseract.min.js");
@@ -3774,7 +4058,7 @@ async function leggiFotoEtichetta(file, k){
       workerPath: CDN_TESS + "worker.min.js",
       corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1",
       langPath: "https://cdn.jsdelivr.net/npm/@tesseract.js-data/ita@1.0.0/4.0.0_best_int",
-      logger: m=>{ if(m.status === "recognizing text") statoCantina("\u{1F50D} " + L("Leggo l’etichetta… ","Reading the label… ") + Math.round((m.progress || 0) * 100) + "%"); }
+      logger: m=>ocrLog(m)
     });
     statoCantina("\u{1F50D} " + L("Leggo l’etichetta…","Reading the label…"));
     /* pagina "automatica": un'etichetta ha scritte sparse, non un unico blocco di testo come vorrebbe Tesseract di suo */
@@ -4261,6 +4545,7 @@ function apriMie(){
     <div class="azioni">
       <button class="btn small" data-mia="nuova">\u270F\uFE0F Scrivi una ricetta</button>
       <button class="btn small btn-web" data-mia="web">\u{1F517} Incolla una ricetta dal web</button>
+      <button class="btn small" data-mia="foto">\u{1F4F7} ${L("Da una foto","From a photo")}</button>
     </div>
     <details class="mie-come"><summary>\u{1F4D6} ${L("Come prendere una ricetta dal web","How to take a recipe from the web")}</summary>
       <ol class="passi">
@@ -4283,6 +4568,7 @@ document.addEventListener("click", e=>{
   if(a === "chiudi"){ chiudiVelo(); return; }
   if(a === "nuova"){ apriEditor(null); return; }
   if(a === "web"){ apriImport(); return; }
+  if(a === "foto"){ apriImport(); setTimeout(()=>{ const x = document.querySelector("[data-imp-foto]"); if(x) x.click(); }, 50); return; }
   const r = trovaRicetta(+b.dataset.id);
   if(!r) return;
   if(a === "mod") apriEditor(r);
@@ -4304,6 +4590,11 @@ function apriImport(){
     <div class="imp-prog" id="impProg" hidden><div class="imp-prog-bar"><i id="impProgFill"></i></div><span id="impProgPct">0%</span></div>
     <p class="mini" id="impEsito" aria-live="polite"></p>
     <div id="impEsame"></div>
+    <div class="foto-ricetta">
+      <button type="button" class="btn small" data-imp-foto>\u{1F4F7} ${L("Fotografa una ricetta scritta","Photograph a written recipe")}</button>
+      <input type="file" id="impFotoIn" accept="image/*" capture="environment" hidden>
+    </div>
+    <p class="mini" style="margin-top:0">${L("Una pagina di un libro di cucina o un vecchio quaderno di ricette: leggo il testo e lo metto qui sotto.","A page from a cookbook or an old recipe notebook: I read the text and put it below.")}</p>
     <label class="campo" style="margin-top:10px"><span>Oppure incolla qui il testo</span>
       <textarea id="impTesto" rows="10" placeholder="Nome del piatto&#10;Ingredienti&#10;320 gr di pasta&#10;2 melanzane&#10;Procedimento&#10;Taglia le melanzane\u2026"></textarea></label>
     <div class="azioni"><button class="btn" data-imp="leggi">Prepara la ricetta</button></div>`);
@@ -4607,6 +4898,13 @@ const PERCHE_EN = `<div class="perche">
     <p>Every now and then it pays to use up what is about to expire: an omelette or a leftovers dish is a classic. Look up the ingredient you want to use up and the app suggests a recipe you can make from it and from what you have.</p>
     <p>You can also mark when fresh food expires: in the pantry press and hold an ingredient, or tap <strong>⏳ Use-by dates of fresh food</strong>. When something is about to expire you'll find it at the top of the home page, with the <strong>“What can I cook with these?”</strong> button showing recipes to use it up.</p>
 
+    <div class="sez"><strong>The week at the table</strong></div>
+    <p>On any recipe card tap <strong>📅 Add to this week's menu</strong>. On the home page, in <strong>This week's menu</strong>, you'll find the recipes you picked, can change how many are at the table for each, and with one tap put everything missing on the shopping list: quantities from the recipes add up, what you already have stays out and the list is split by department.</p>
+
+    <div class="sez"><strong>Your recipes, your memories</strong></div>
+    <p>Have a cookbook or an old family recipe notebook? In <strong>My recipes</strong> tap <strong>📷 From a photo</strong>: the app reads the page and transcribes it, you correct and save.</p>
+    <p>When you finish cooking you can rate the dish and write a note for next time (“less salt”, “the guests loved it”): you'll find it on the card and at the start of the recipe when you make it again. And with <strong>📤 Send to a friend</strong> the recipe goes out on WhatsApp, readable by anyone; if your friend has Che cucino?, one tap on the link adds it to their recipes.</p>
+
     <div class="sez"><strong>Finally</strong></div>
     <p>For every recipe you can see the calories per serving and also the nutrition profile, by tapping the <span class="ico-in ico-nutri" aria-label="nutrition button">\u{1F4CA}</span> button.</p>
     <p>And every recipe comes with a suggestion of what to drink to go with your dish.</p>
@@ -4652,6 +4950,13 @@ function apriPerche(){
     <div class="sez"><strong>Vuoi svuotare il frigo?</strong></div>
     <p>Ogni tanto conviene smaltire quello che sta per scadere: una frittata o piatti di recupero in questo caso sono un classico. Scrivi l'ingrediente che vuoi consumare e l'app ti suggerisce una ricetta fattibile a partire da quello che desideri smaltire e quello che hai.</p>
     <p>Puoi anche segnare quando scadono i freschi: in dispensa tieni premuto un ingrediente, oppure tocca <strong>⏳ Scadenze dei freschi</strong>. Quando qualcosa sta per scadere lo trovi in cima alla pagina iniziale, con il tasto <strong>«Cosa cucino con questi?»</strong> che ti mostra le ricette per consumarlo.</p>
+
+    <div class="sez"><strong>La settimana in tavola</strong></div>
+    <p>Sulla scheda di ogni ricetta tocca <strong>📅 Nel menu della settimana</strong>. Nella pagina iniziale, in <strong>Menu della settimana</strong>, trovi le ricette scelte, puoi cambiare quanti siete a tavola per ognuna e con un tocco metti nella lista della spesa tutto quello che manca: le quantità delle varie ricette si sommano, quello che hai già in dispensa resta fuori e la lista è divisa per reparto.</p>
+
+    <div class="sez"><strong>Le tue ricette, i tuoi ricordi</strong></div>
+    <p>Hai un libro di cucina o un vecchio quaderno di ricette di famiglia? In <strong>Le mie ricette</strong> tocca <strong>📷 Da una foto</strong>: l'app legge la pagina e la trascrive, tu correggi e salvi.</p>
+    <p>Quando finisci di cucinare puoi dare un voto e scrivere una nota per la prossima volta («meno sale», «agli ospiti è piaciuta»): la ritrovi sulla scheda e all'inizio della ricetta quando la rifai. E con <strong>📤 Manda a un amico</strong> la ricetta parte su WhatsApp, leggibile da chiunque; se l'amico ha Che cucino?, con un tocco sul link entra nelle sue ricette.</p>
 
     <div class="sez"><strong> Per finire</strong></div>
     <p>Di tutte le ricette puoi conoscere, oltre all'apporto calorico per porzione, anche il profilo nutrizionale toccando il tasto <span class="ico-in ico-nutri" aria-label="tasto valori nutrizionali">\u{1F4CA}</span>.</p>
@@ -5151,6 +5456,16 @@ function tappaHome(){
         <b>Cosa vuoi mangiare?</b>
         <small>Un'idea precisa, lascia scegliere all'app, smaltisci un avanzo, o un menu a tema</small>
       </div>
+      <div class="bcella c-menta" id="hMenu">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="7" y="10" width="30" height="27" rx="4" stroke="currentColor" stroke-width="2.2"/>
+  <path d="M7 18h30M15 6v7M29 6v7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M13 24h5M21 24h5M29 24h2M13 30h5M21 30h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+</svg>
+        ${menuSett().length?`<span class="badge">${menuSett().length}</span>`:""}
+        <b>${L("Menu della settimana","This week’s menu")}</b>
+        <small data-no-tr>${menuSett().length ? menuSett().slice(0,3).map(x=>esc(nomeR(trovaRicetta(x.id)))).join(" · ") + (menuSett().length > 3 ? " …" : "") : L("Scegli le ricette dei prossimi giorni e fai una spesa sola","Pick the recipes for the next few days and do one shopping trip")}</small>
+      </div>
       <div class="bcella c-auto" id="hScuola">
         <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M22 12c-4-3-9-4-14-3v23c5-1 10 0 14 3 4-3 9-4 14-3V9c-5-1-10 0-14 3z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
@@ -5199,6 +5514,7 @@ function tappaHome(){
   document.getElementById("hOsp").onclick   = ()=>vai(1);
   document.getElementById("hVoglia").onclick = ()=>vai(3);
   document.getElementById("hScuola").onclick = ()=>apriScuola();
+  document.getElementById("hMenu").onclick = ()=>apriMenuSett();
   const ps = document.getElementById("promSalva"); if(ps) ps.onclick = ()=>esportaDati();
   const pd = document.getElementById("promDopo"); if(pd) pd.onclick = ()=>{ S.promemoriaDopo = Date.now() + 7 * GIORNO_MS; salva(); tappaHome(); };
   document.getElementById("hStag").onclick = ()=>{ stagMese = new Date().getMonth()+1; stagVista = "mese"; apriStagioni(); centraMese(); };
