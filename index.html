@@ -138,6 +138,12 @@ body[data-filigrana="1"]::before{
 .ric-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:12px}
 .ws-links{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .ws-links.q4{grid-template-columns:repeat(2,1fr)}
+.ws-links.ws-google{grid-template-columns:1fr}
+.ws-links.ws-google a:first-child{background:#2E7D4F;color:#fff;border-color:#2E7D4F;font-size:1.02rem;padding:14px 8px}
+.ws-guida{margin-top:12px;padding:10px 14px;border-radius:14px;background:#1F6F8B;color:#fff;line-height:1.5}
+.ws-guida ol{margin:6px 0 0;padding-left:1.2em}
+.ws-guida li{margin-bottom:4px}
+.ws-guida b{color:#fff}
 .ws-links.q4 a:first-child{grid-column:1/-1}
 .cerco-altro{margin:18px 0 6px;text-align:center}
 .cerco-altro>.btn{width:100%}
@@ -665,7 +671,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v134</div>
+  <div class="ver-splash" data-no-tr>v135</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -676,7 +682,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v134</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v135</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -2734,19 +2740,27 @@ document.addEventListener("click", e=>{
 }, true);
 
 /* link per cercare la ricetta sui siti di cucina + tasto per importare il link copiato */
+/* siti consigliati: pubblicano le ricette nel formato standard (scheda ordinata con ingredienti
+   e passaggi), quindi Condividi -> Che cucino? le importa complete */
+const SITI_OK_IT = [["giallozafferano.it","GialloZafferano"],["fattoincasadabenedetta.it","Fatto in casa da Benedetta"],["misya.info","Misya"],["ricettedellanonna.net","Ricette della Nonna"],["cookaround.com","Cookaround"]];
+const SITI_OK_EN = [["bbcgoodfood.com","BBC Good Food"],["allrecipes.com","Allrecipes"],["seriouseats.com","Serious Eats"],["simplyrecipes.com","Simply Recipes"]];
 function linkWebHTML(q){
-  return `<div class="ws-links${IN_INGLESE?"":" q4"}">
-            <a href="https://www.google.com/search?q=${encodeURIComponent(L("ricetta ","recipe ")+q)}" target="_blank" rel="noopener">\u{1F50D} Google</a>
-            ${IN_INGLESE ? `
-            <a href="https://www.bbcgoodfood.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">\u{1F7E2} BBC Good Food</a>
-            <a href="https://www.allrecipes.com/search?q=${encodeURIComponent(q)}" target="_blank" rel="noopener">\u{1F944} Allrecipes</a>` : `
-            <a href="https://www.giallozafferano.it/ricerca-ricette/${encodeURIComponent(q)}" target="_blank" rel="noopener">\u{1F7E1} GialloZafferano</a>
-            <a href="https://www.google.com/search?q=${encodeURIComponent("site:cucchiaio.it ricetta "+q)}" target="_blank" rel="noopener">\u{1F944} Cucchiaio</a>
-            <a href="https://www.google.com/search?q=${encodeURIComponent("site:casapappagallo.it "+q)}" target="_blank" rel="noopener">\u{1F99C} Casa Pappagallo</a>
-            <a href="https://www.google.com/search?q=${encodeURIComponent("site:cookaround.com/ricetta "+q)}" target="_blank" rel="noopener">\u{1F468}\u200D\u{1F373} Cookaround</a>`}
+  const siti = IN_INGLESE ? SITI_OK_EN : SITI_OK_IT;
+  const parola = L("ricetta ","recipe ");
+  const consigliati = parola + q + " (" + siti.map(([d])=>"site:" + d).join(" OR ") + ")";
+  return `<div class="ws-links ws-google">
+            <a href="https://www.google.com/search?q=${encodeURIComponent(consigliati)}" target="_blank" rel="noopener">\u{1F50D} ${L("Cerca su Google nei siti consigliati","Search Google on recommended sites")}</a>
+            <a href="https://www.google.com/search?q=${encodeURIComponent(parola + q)}" target="_blank" rel="noopener">\u{1F310} ${L("Cerca su tutto Google","Search all of Google")}</a>
           </div>
-          <button class="btn btn-web" style="margin-top:14px" data-importa-copiato>\u{1F4CB} Ho copiato il link: importa la ricetta</button>
-          <p class="mini" style="margin-top:8px">${L("Pi\u00f9 semplice: sulla pagina della ricetta tocca <b>Condividi</b> e scegli <b>Che cucino?</b> \u2014 la ricetta arriva qui da sola, senza copiare niente.","Easier: on the recipe page tap <b>Share</b> and choose <b>Che cucino?</b> \u2014 the recipe comes straight here, no copying needed.")}</p>`;
+          <div class="ws-guida">
+            <b>${L("Come fare","How to")}</b>
+            <ol>
+              <li>${L("Scegli fra i risultati una ricetta di","Pick from the results a recipe from")} <span data-no-tr>${siti.map(([,n])=>n).join(", ")}</span>: ${L("questi siti la pubblicano in formato standard e arriva completa.","these sites publish it in a standard format, so it arrives complete.")}</li>
+              <li>${L("Aprila e tocca <b>Condividi \u2192 Che cucino?</b>: la ricetta arriva qui da sola.","Open it and tap <b>Share \u2192 Che cucino?</b>: the recipe comes here on its own.")}</li>
+              <li>${L("Su iPhone copia il link e usa il tasto qui sotto.","On iPhone copy the link and use the button below.")}</li>
+            </ol>
+          </div>
+          <button class="btn btn-web" style="margin-top:14px" data-importa-copiato>\u{1F4CB} Ho copiato il link: importa la ricetta</button>`;
 }
 function apriVelo(nome, html){
   veloAperto = nome;
@@ -3888,11 +3902,11 @@ function apriMie(){
     </div>
     <details class="mie-come"><summary>\u{1F4D6} ${L("Come prendere una ricetta dal web","How to take a recipe from the web")}</summary>
       <ol class="passi">
-        <li>${L("Cerca la ricetta con i tasti dei siti di cucina (in \u00abHo in mente un piatto\u00bb) o per conto tuo.","Search for the recipe with the recipe-site buttons (in \u201cI have a dish in mind\u201d) or on your own.")}</li>
-        <li>${L("Il Cucchiaio d\u2019Argento, Casa Pappagallo e Cookaround non accettano ricerche da altre app (rispondono \u00abForbidden\u00bb): per loro il tasto apre una ricerca Google solo dentro quel sito. Tocca il risultato giusto e si apre la ricetta vera.","Cucchiaio d\u2019Argento, Casa Pappagallo and Cookaround refuse searches from other apps (they answer \u201cForbidden\u201d): for them the button opens a Google search limited to that site. Tap the right result and the real recipe opens.")}</li>
-        <li>${L("Sulla pagina della ricetta tocca <b>Condividi</b> e scegli <b>Che cucino?</b> (Android, con l\u2019app installata): la ricetta arriva qui da sola.","On the recipe page tap <b>Share</b> and choose <b>Che cucino?</b> (Android, with the app installed): the recipe comes here on its own.")}</li>
-        <li>${L("Su iPhone, o se Che cucino? non compare fra le app di Condividi: copia il link, torna qui, tocca <b>\u00abIncolla una ricetta dal web\u00bb</b> e incollalo.","On iPhone, or if Che cucino? doesn\u2019t appear among the Share apps: copy the link, come back here, tap <b>\u201cPaste a recipe from the web\u201d</b> and paste it.")}</li>
-        <li>${L("Se il sito non si lascia leggere, copia il testo della ricetta dalla pagina e incollalo nella casella del testo, sotto quella del link.","If the site can\u2019t be read, copy the recipe text from the page and paste it into the text box, below the link box.")}</li>
+        <li>${L("In \u00abHo in mente un piatto\u00bb tocca <b>\u00abCerca su Google nei siti consigliati\u00bb</b>, oppure cerca su Google per conto tuo.","In \u201cI have a dish in mind\u201d tap <b>\u201cSearch Google on recommended sites\u201d</b>, or search Google on your own.")}</li>
+        <li>${L("Preferisci le ricette di GialloZafferano, Fatto in casa da Benedetta, Misya, Ricette della Nonna e Cookaround: pubblicano le ricette in formato standard, con ingredienti e procedimento leggibili dall\u2019app. Altri siti, come il Cucchiaio d\u2019Argento, a volte arrivano incompleti.","Prefer recipes from BBC Good Food, Allrecipes, Serious Eats and Simply Recipes: they publish recipes in a standard format the app can read. Other sites sometimes arrive incomplete.")}</li>
+        <li>${L("Apri la ricetta e tocca <b>Condividi</b> \u2192 <b>Che cucino?</b> (Android, con l\u2019app installata): arriva qui da sola.","Open the recipe and tap <b>Share</b> \u2192 <b>Che cucino?</b> (Android, with the app installed): it comes here on its own.")}</li>
+        <li>${L("Su iPhone, o se Che cucino? non compare in Condividi: copia il link, torna qui, tocca <b>\u00abIncolla una ricetta dal web\u00bb</b> e incollalo.","On iPhone, or if Che cucino? doesn\u2019t appear in Share: copy the link, come back here, tap <b>\u201cPaste a recipe from the web\u201d</b> and paste it.")}</li>
+        <li>${L("Controlla sempre ingredienti e procedimento prima di salvare: puoi correggerli a mano.","Always check ingredients and method before saving: you can correct them by hand.")}</li>
       </ol></details>
     ${S.mie.length ? `<ul class="spesa-l">${S.mie.map(r=>
       `<li><span><span data-no-tr>${esc(nomeR(r))}</span> <span class="mini">${esc(r.cat)} \u00b7 ${r.tempo} min</span></span>
@@ -4198,9 +4212,8 @@ const PERCHE_EN = `<div class="perche">
 
     <div class="sez"><strong>Already have an idea?</strong></div>
     <p>If you already know what you want to make, the app checks whether you have all the ingredients. If something is missing, it suggests a substitute from what you already have, or adds the rest to the shopping list.</p>
-    <p>If the recipe isn't in the archive, search the web with the buttons for a few recipe sites, or find it yourself, copy the link, then go to <strong>Extras → My recipes</strong>, tap <strong>«Paste a recipe from the web»</strong> and paste the link in the box: the app tries to read it and saves it.</p>
-    <p>Even simpler, on an Android phone with the app installed: on the recipe page tap <strong>Share</strong> and choose <strong>Che cucino?</strong>. The link arrives on its own, no copying needed.</p>
-    <p>Some sites (Cucchiaio d'Argento, Casa Pappagallo, Cookaround) refuse searches coming from other apps and answer “Forbidden”. For these, the button opens a Google search limited to that site: tap the result you want, the real recipe opens, and from there you share it with <strong>Che cucino?</strong> or copy its link, as with the other sites. If a site still can't be read, copy the recipe text and paste it into <strong>My recipes</strong>.</p>
+    <p>If the recipe isn't in the archive, tap <strong>“Search Google on recommended sites”</strong>: the search is limited to sites such as BBC Good Food, Allrecipes, Serious Eats and Simply Recipes, which publish recipes in a standard format the app can read in full, ingredients and method. You can also search all of Google, but with other sites the recipe sometimes arrives incomplete.</p>
+    <p>Open the recipe you like and tap <strong>Share</strong> → <strong>Che cucino?</strong> (Android, with the app installed): it arrives on its own. On iPhone copy the link and paste it in <strong>Extras → My recipes → “Paste a recipe from the web”</strong>. Before saving, check ingredients and method: you can correct them by hand.</p>
     <p>Now you have a new recipe in the archive.</p>
     <div class="sez"><strong>Want an idea?</strong></div>
     <p>Let the app choose: <strong>"What’s cooking?"</strong> shows you the recipes you can make 100% with what you have, then those at 90% and so on, so you always have dozens of recipes to pick from: some ready right away, others one ingredient away.</p>
@@ -4242,10 +4255,8 @@ function apriPerche(){
 
     <div class="sez"><strong>Forse hai già un'idea?</strong></div>
     <p>Scrivi quello che vuoi preparare, l'app controlla se hai tutti gli ingredienti. Se ti manca qualcosa non preoccuparti, <strong>"Che cucino?"</strong> ti propone una sostituzione con quello che hai già, oppure aggiunge quel che manca alla lista della spesa.</p>
-    <p>Se la ricetta non è nell'archivio cercala nel web con i tasti dedicati indirizzati ad alcuni siti, o cercala autonomamente.</p>
-    <p>Se la trovi sul web, copia il link e poi vai su <strong>Extra → Le mie ricette</strong>, tocca <strong>«Incolla una ricetta dal web»</strong> e incolla il link nella casella: l'app prova a leggerla, la elabora e, se è in un formato standard, la salva.</p>
-    <p>Ancora più semplice, sul telefono Android con l'app installata: dalla pagina della ricetta tocca <strong>Condividi</strong> e scegli <strong>Che cucino?</strong>. Il link arriva da solo, senza copiarlo.</p>
-    <p>Alcuni siti (il Cucchiaio d'Argento, Casa Pappagallo, Cookaround) non accettano ricerche che arrivano da altre app e rispondono «Forbidden». Per questi il tasto apre una ricerca Google fatta solo dentro quel sito: tocca il risultato che ti interessa, si apre la ricetta vera e da lì la condividi con <strong>Che cucino?</strong> o ne copi il link, come per gli altri siti. Se un sito non si lascia leggere nemmeno così, copia il testo della ricetta e incollalo in <strong>Le mie ricette</strong>.</p>
+    <p>Se la ricetta non è nell'archivio, tocca <strong>«Cerca su Google nei siti consigliati»</strong>: la ricerca si limita a siti come GialloZafferano, Fatto in casa da Benedetta, Misya, Ricette della Nonna e Cookaround, che pubblicano le ricette in un formato standard che l'app sa leggere per intero, ingredienti e procedimento. Puoi anche cercare su tutto Google, ma con altri siti la ricetta a volte arriva incompleta.</p>
+    <p>Apri la ricetta che ti piace e tocca <strong>Condividi</strong> → <strong>Che cucino?</strong> (Android, con l'app installata): arriva da sola. Su iPhone copia il link e incollalo in <strong>Extra → Le mie ricette → «Incolla una ricetta dal web»</strong>. Prima di salvare controlla ingredienti e procedimento: puoi correggerli a mano.</p>
     <p>Ora hai una nuova ricetta in archivio.</p>
     <div class="sez"><strong>Vuoi un'idea di cosa mangiare?</strong></div>
     <p>Lascia scegliere all'app: <strong>"Che cucino?"</strong> ti mostra le ricette fattibili al 100% con quello che hai, poi quelle al 90% e via via a scalare, così hai sempre decine di ricette fra cui scegliere: alcune pronte subito, altre a un ingrediente di distanza.</p>
