@@ -441,6 +441,7 @@ body[data-filigrana="1"]::before{
 .riga-add{display:flex;gap:8px;margin-top:12px}
 .riga-add input{flex:1}
 .tag.fatta{background:var(--superficie2);color:var(--inchiostro-soft);font-weight:700}
+.tag.fuori-clima{background:color-mix(in srgb,#8A8A8A 18%,transparent);color:var(--inchiostro-soft);font-weight:700}
 .tag.voto{background:color-mix(in srgb,#E8A400 20%,transparent);color:#9A6A00;font-weight:800;letter-spacing:.05em}
 :root[data-scuro] .tag.voto{color:#FFC94A}
 .mia-nota{margin:10px 0;padding:10px 14px;border-radius:14px;background:#FFF3CD;color:#5C4400;border:1px solid #E8C25A;line-height:1.45}
@@ -714,7 +715,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v148</div>
+  <div class="ver-splash" data-no-tr>v149</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -725,7 +726,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v148</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v149</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -1654,6 +1655,8 @@ function ordinaLista(out){
   const dir = ordinaDir || c.def;
   const segno = dir === "asc" ? 1 : -1;
   out.sort((a,b)=> (a.fatta?1:0)-(b.fatta?1:0)
+                 || (a.fuoriClima?1:0)-(b.fuoriClima?1:0)
+                 || (a.pesanteCena?1:0)-(b.pesanteCena?1:0)
                  || segno*(c.cmp ? c.cmp(a,b) : c.val(a)-c.val(b))
                  || b.pct-a.pct || (b.stag.in-a.stag.in) || (b.zona?1:0)-(a.zona?1:0)
                  || a.r.tempo-b.r.tempo);
@@ -1759,6 +1762,45 @@ function valuta(r){
           sost: Math.round(sostituibili.length/n*100),
           pct: Math.round((ho + sostituibili.length*0.6)/n*100)};
 }
+/* ===== Clima del piatto: estivo (si mangia freddo, d'estate), invernale (caldo, sostanzioso, delle feste) o di tutto l'anno ===== */
+const RE_ESTIVO_NOME = /\b(granit|gelat[oi]|sorbett|semifredd|ghiaccioli|gelo di|insalata di (riso|pasta|farro|orzo|mare|polpo)|pasta fredda|panzanella|gazpacho|salmorejo|caprese|vitello tonnato|cocomer|anguria|melone|frullat|smoothie|macedonia|te freddo|tè freddo|cous cous freddo|ceviche|tartare|carpaccio|pomodori ripieni freddi|insalata estiva|fredd[ao])\b/;
+const RE_NON_ESTIVO = /\btorta caprese\b/;
+const RE_ESTIVO_PROC = /(freezer|congelatore|gelatiera|ghiacciat)/;
+const RE_INVERNALE_NOME = /\b(zupp|minestr|ribollita|acquacotta|vellutat|brodo|bollito|lesso|brasat|stracott|spezzatin|stufat|polenta|cassoeula|pasta e fagioli|pasta e ceci|pasta e lenticchie|lenticchie|fagioli all|cotechino|zampone|castagn|caldarroste|marron|cioccolata calda|vin brul|fonduta|bagna cauda|ossobuc|arrosto\b|arrosti\b|cinghiale|lepre|peposo|trippa|pizzoccheri|canederli|panettone|pandoro|struffoli|cartellate|torrone|mostacciol|cassata|buccellato|zelten|sbrisolona|crauti|verza|cavolo nero|bourguignon|goulash|gulasch|chili con carne|ramen|risotto alla zucca|zucca|porcini|tartufo)/;
+function climaRicetta(r){
+  if(r._clima != null) return r._clima;
+  const nome = normTesto(r.n || ""), proc = normTesto((r.proc || []).join(" "));
+  let c = "";
+  if(RE_ESTIVO_NOME.test(nome) && !RE_NON_ESTIVO.test(nome)) c = "estivo";
+  else if(RE_INVERNALE_NOME.test(nome)) c = "invernale";
+  else if(RE_ESTIVO_PROC.test(proc) && r.cat === "Dolci") c = "estivo";
+  else{
+    /* dagli ortaggi e dalla frutta: se tutti quelli di stagione cadono d'estate, o tutti fra autunno e inverno */
+    const st = r.ing.map(i=>D.stagioni[i.k]).filter(m=>m && m.length < 9);
+    if(st.length >= 2){
+      const estate = st.filter(m=>m.every(x=>x >= 5 && x <= 9)).length, inverno = st.filter(m=>m.every(x=>x >= 10 || x <= 3)).length;
+      if(estate >= Math.ceil(st.length * .7)) c = "estivo";
+      else if(inverno >= Math.ceil(st.length * .7)) c = "invernale";
+    }
+  }
+  return r._clima = c;
+}
+/* fuori stagione: un piatto estivo da ottobre ad aprile, uno invernale da giugno a settembre */
+function fuoriClima(r){
+  const c = climaRicetta(r), m = meseStagione();
+  return (c === "estivo" && (m >= 10 || m <= 4)) || (c === "invernale" && m >= 6 && m <= 9);
+}
+/* ===== Pranzo o cena: la sera si mangia piu' leggero ===== */
+function pastoAttuale(){ return sess.pasto || (new Date().getHours() >= 16 ? "cena" : "pranzo"); }
+function pesante(r){
+  if(r._pesante != null) return r._pesante;
+  if(r._kcal == null) r._kcal = calorieRicetta(r);
+  const nome = normTesto(r.n || ""), proc = normTesto((r.proc || []).join(" "));
+  const fritto = /\b(fritt|frittur|cotolett|impanat|arancin|crocchè|crocche|supplì|suppli|panzerott)/.test(nome) || /\bfriggete|\bfriggi|\bfriggere/.test(proc);
+  const ricco = /\b(lasagn|parmigiana|carbonara|cassoeula|cotechino|zampone|timballo|pasta al forno|gattò|gatto|sartù|sartu|fonduta|bagna cauda|pizzoccheri|polenta concia|amatriciana|gricia|cacio e pepe|frittata di pasta|maiale|stinco)/.test(nome);
+  return r._pesante = r.cat !== "Dolci" && (fritto || ricco || (r._kcal || 0) > 700);
+}
+function leggeroPerCena(r){ if(r._kcal == null) r._kcal = calorieRicetta(r); return !pesante(r) && (r.leggero || ((r._kcal || 0) > 0 && r._kcal <= 450)); }
 function diStagione(r){
   const st = r.ing.map(i=>D.stagioni[i.k]).filter(Boolean);
   return {tot: st.length, in: st.filter(m=>m.includes(meseStagione())).length};
@@ -1906,6 +1948,10 @@ function filtraUnaVolta(){
     const q = S.cucinate[r.id];
     v.fatta = q ? (Date.now() - q) < GIORNI_RIPOSO*86400000 : false;
     if(sess.modo === "recupero") v.usa = sess.recupero.filter(k=>r.ing.some(i=>i.k===k || (EQUIV[i.k]||[]).includes(k)));
+    const cercato = parole.length && tutteTrovate(parole, nomeRicetta(r));
+    v.fuoriClima = !cercato && fuoriClima(r);
+    v.pesanteCena = !cercato && pastoAttuale() === "cena" && pesante(r);
+    v.leggeraCena = pastoAttuale() === "cena" && leggeroPerCena(r);
     return v;
   });
 
@@ -2362,6 +2408,15 @@ function tappaVoglia(){
           .map(([v,t2])=>`<button class="chip ${sess.tempo===v?"on":""}" data-v="${v}" style="font-size:.78rem">${t2}</button>`).join("")}
       </div>
     </div>
+    <div class="pcella full c-senape" style="cursor:default">
+      <svg viewBox="0 0 28 28" fill="none"><circle cx="10" cy="14" r="5" stroke="currentColor" stroke-width="2"/><path d="M10 5v2M10 21v2M3 14h2M15 14h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M24 17a6 6 0 0 1-7-8 6 6 0 1 0 7 8z" fill="currentColor"/></svg>
+      <b>${L("Pranzo o cena?","Lunch or dinner?")}</b>
+      <div class="chips" id="pasto" style="margin-top:8px">
+        <button class="chip ${pastoAttuale()==="pranzo"?"on":""}" data-v="pranzo" style="font-size:.8rem">☀️ ${L("pranzo","lunch")}</button>
+        <button class="chip ${pastoAttuale()==="cena"?"on":""}" data-v="cena" style="font-size:.8rem">\u{1F319} ${L("cena","dinner")}</button>
+      </div>
+      <small style="display:block;margin-top:6px;opacity:.9">${pastoAttuale()==="cena" ? L("La sera ti propongo prima i piatti più leggeri.","In the evening I suggest lighter dishes first.") : L("A pranzo vanno bene anche i piatti più sostanziosi.","At lunch heartier dishes are fine too.")}</small>
+    </div>
     <div class="pcella full c-verde" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><ellipse cx="14" cy="14" rx="8" ry="10" stroke="currentColor" stroke-width="2"/><path d="M6 14h16" stroke="currentColor" stroke-width="2"/></svg>
       <b>Come la prepariamo</b>
@@ -2436,6 +2491,7 @@ function tappaVoglia(){
   document.getElementById("swUnico").onclick=()=>{ sess.unico=!sess.unico; tappaVoglia(); };
   app.querySelectorAll("#stile .chip").forEach(b=>b.onclick=()=>{ sess.stile=b.dataset.v; tappaVoglia(); });
   app.querySelectorAll("#tempo .chip").forEach(b=>b.onclick=()=>{ sess.tempo=b.dataset.v; tappaVoglia(); });
+  app.querySelectorAll("#pasto .chip").forEach(b=>b.onclick=()=>{ sess.pasto=b.dataset.v; tappaVoglia(); });
   app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ sess.accordo=b.dataset.a; tappaVoglia(); });
 
   pulsanti("Indietro", "Vedi le ricette", ()=>vai(4), ()=>vai(2));
@@ -2804,7 +2860,7 @@ function scheda(o){
         : o.sostituibili.length ? `Ci siamo, con ${o.sostituibili.length===1?"una sostituzione":"qualche sostituzione"}`
         : "Hai tutto il necessario"}</div>
       ${o.usa?.length?`<div class="mini" style="margin-top:4px">Consuma: ${esc(o.usa.join(", "))}</div>`:""}
-      <div>${(giudizio(r.id)||{}).s?`<span class="tag voto" title="${L("Il tuo voto","Your rating")}">${stelleTesto(giudizio(r.id).s)}</span>`:""}${(giudizio(r.id)||{}).nota?`<span class="tag">\u{1F4DD} ${L("con la tua nota","with your note")}</span>`:""}${nelMenu(r.id)?`<span class="tag">\u{1F4C5} ${L("nel menu della settimana","in this week’s menu")}</span>`:""}${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag.in?`<span class="tag stag">\u{1F5D3}\uFE0F ${o.stag.in} ${o.stag.in===1?"ingrediente":"ingredienti"} di stagione</span>`:""}${(r.att||[]).some(a=>D.attrezzi[a])?`<span class="tag">\u{1F6E0}\ufe0f attrezzo speciale</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
+      <div>${o.fuoriClima?`<span class="tag fuori-clima">${climaRicetta(r)==="estivo"?"\u{1F31E} "+L("piatto estivo","summer dish"):"❄️ "+L("piatto invernale","winter dish")}</span>`:""}${o.leggeraCena?`<span class="tag">\u{1F319} ${L("leggero, adatto alla cena","light, good for dinner")}</span>`:""}${o.pesanteCena?`<span class="tag fuori-clima">☀️ ${L("più adatto a pranzo","better for lunch")}</span>`:""}${(giudizio(r.id)||{}).s?`<span class="tag voto" title="${L("Il tuo voto","Your rating")}">${stelleTesto(giudizio(r.id).s)}</span>`:""}${(giudizio(r.id)||{}).nota?`<span class="tag">\u{1F4DD} ${L("con la tua nota","with your note")}</span>`:""}${nelMenu(r.id)?`<span class="tag">\u{1F4C5} ${L("nel menu della settimana","in this week’s menu")}</span>`:""}${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag.in?`<span class="tag stag">\u{1F5D3}\uFE0F ${o.stag.in} ${o.stag.in===1?"ingrediente":"ingredienti"} di stagione</span>`:""}${(r.att||[]).some(a=>D.attrezzi[a])?`<span class="tag">\u{1F6E0}\ufe0f attrezzo speciale</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
       ${esclusi.length?`<div class="avviso">Non va bene per ${esclusi.map(c=>esc(c.nome)).join(" e ")}</div>`:""}
     </summary>
     <div class="dett">
@@ -5147,6 +5203,7 @@ const PERCHE_EN = `<div class="perche">
     <p>If you pick a different site the app still tries, but warns you the recipe may arrive incomplete and suggests looking on the recommended sites. If you're not happy with it, you can still delete it. (On iPhone Share can't reach the app: copy the link and paste it in <strong>Extras → My recipes</strong>.)</p>
     <p>Now you have a new recipe in the archive.</p>
     <div class="sez"><strong>Want an idea?</strong></div>
+    <p>The app also looks at the season and the time of day: in winter it won't put granitas and rice salads first, in summer soups and braises; and in the evening, if you choose <strong>🌙 dinner</strong>, lighter dishes come first and fried or hearty ones go to the bottom. They stay in the list, and if you search a dish by name you'll always find it.</p>
     <p>Let the app choose: <strong>"What’s cooking?"</strong> shows you the recipes you can make 100% with what you have, then those at 90% and so on, so you always have dozens of recipes to pick from: some ready right away, others one ingredient away.</p>
 
     <div class="sez"><strong>A complete themed menu</strong></div>
@@ -5200,6 +5257,7 @@ function apriPerche(){
     <p>Se scegli un sito diverso l'app ci prova lo stesso, ma ti avvisa che la ricetta potrebbe arrivare incompleta e ti invita a cercarla nei siti consigliati. Se non ti convince, puoi comunque eliminarla. (Su iPhone Condividi non arriva all'app: copia il link e incollalo in <strong>Extra → Le mie ricette</strong>.)</p>
     <p>Ora hai una nuova ricetta in archivio.</p>
     <div class="sez"><strong>Vuoi un'idea di cosa mangiare?</strong></div>
+    <p>L'app guarda anche la stagione e l'ora: d'inverno non ti propone per prime granite e insalate di riso, d'estate zuppe e brasati; e la sera, se scegli <strong>🌙 cena</strong>, mette avanti i piatti più leggeri e in fondo fritti e piatti sostanziosi. Restano comunque nell'elenco, e se cerchi un piatto per nome lo trovi sempre.</p>
     <p>Lascia scegliere all'app: <strong>"Che cucino?"</strong> ti mostra le ricette fattibili al 100% con quello che hai, poi quelle al 90% e via via a scalare, così hai sempre decine di ricette fra cui scegliere: alcune pronte subito, altre a un ingrediente di distanza.</p>
 
     <div class="sez"><strong>Un menu completo a tema</strong></div>
