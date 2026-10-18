@@ -715,7 +715,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v149</div>
+  <div class="ver-splash" data-no-tr>v150</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -726,7 +726,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v149</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v150</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -6207,9 +6207,9 @@ function trovaRegione(btn, esito){
     t = (+t >= 55) ? "15" : "80"; applica(+t);
     try{ localStorage.setItem("checucino.tono", t); }catch(e){}
   });
-  /* lingua: il tasto mostra la lingua attuale, il tocco passa all'altra */
+  /* lingua: il tasto mostra la lingua in cui passa toccandolo (in italiano la bandiera inglese, e viceversa) */
   const lb = document.getElementById("linguaBtn");
-  lb.innerHTML = IN_INGLESE ? "\u{1F1EC}\u{1F1E7}<span class=\"cod\"> EN</span>" : "\u{1F1EE}\u{1F1F9}<span class=\"cod\"> IT</span>";
+  lb.innerHTML = IN_INGLESE ? "\u{1F1EE}\u{1F1F9}<span class=\"cod\"> IT</span>" : "\u{1F1EC}\u{1F1E7}<span class=\"cod\"> EN</span>";
   lb.title = IN_INGLESE ? "Passa all\u2019italiano" : "Switch to English";
   lb.setAttribute("aria-label", lb.title);
   lb.onclick = ()=>cambiaLingua(IN_INGLESE ? "it" : "en");
