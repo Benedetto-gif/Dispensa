@@ -714,7 +714,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v147</div>
+  <div class="ver-splash" data-no-tr>v148</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -725,7 +725,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v147</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v148</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -4261,6 +4261,42 @@ async function leggiFotoRicetta(file){
   }catch(e){ dire("⚠️ " + L("Non sono riuscito a leggere la foto: serve la connessione la prima volta.","I couldn’t read the photo: a connection is needed the first time.")); }
   finally{ ocrLog = ()=>{}; }
 }
+/* Google Lens (Android): apro Lens; quando torni nell'app ti propongo di incollare il testo copiato */
+const ANDROID = /android/i.test(navigator.userAgent);
+let lensInAttesa = false;
+function bottoneIncollaLens(){
+  const box = document.getElementById("lensRitorno"); if(!box) return;
+  box.innerHTML = `<div class="mia-nota" style="margin:10px 0">\u{1F4CB} ${L("Hai copiato il testo da Google Lens?","Did you copy the text from Google Lens?")}
+    <div class="azioni" style="margin-top:8px"><button class="btn small" data-lens-incolla>${L("Incolla la ricetta","Paste the recipe")}</button></div></div>`;
+  box.scrollIntoView({block:"center", behavior:"smooth"});
+}
+document.addEventListener("click", e=>{
+  if(e.target.closest("[data-imp-lens]")){
+    lensInAttesa = true;
+    location.href = "intent://lens/#Intent;scheme=googleapp;package=com.google.android.googlequicksearchbox;S.browser_fallback_url=" + encodeURIComponent("https://lens.google.com/") + ";end";
+    setTimeout(()=>{ if(document.visibilityState === "visible") bottoneIncollaLens(); }, 2500);
+    return;
+  }
+  if(e.target.closest("[data-lens-incolla]")){
+    (async()=>{
+      const box = document.getElementById("impTesto"), esito = document.getElementById("impEsito");
+      try{
+        const t = (await navigator.clipboard.readText()).trim();
+        if(!t){ if(esito) esito.textContent = L("Gli appunti sono vuoti: in Lens tocca Testo → Seleziona tutto → Copia.","The clipboard is empty: in Lens tap Text → Select all → Copy."); return; }
+        box.value = (box.value.trim() ? box.value.trim() + "\n" : "") + t;
+        document.getElementById("lensRitorno").innerHTML = "";
+        if(esito) esito.textContent = "✅ " + L("Testo incollato: controllalo, correggi gli errori e tocca «Prepara la ricetta». Se la ricetta continua su un’altra pagina, rileggila con Lens e incolla di nuovo.","Text pasted: check it, fix any mistakes and tap “Prepare the recipe”. If the recipe continues on another page, read it with Lens and paste again.");
+        box.scrollIntoView({block:"center", behavior:"smooth"});
+      }catch(err){
+        box.focus();
+        if(esito) esito.textContent = L("Tieni premuto nella casella qui sotto e scegli «Incolla».","Press and hold in the box below and choose “Paste”.");
+      }
+    })();
+  }
+});
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible" && lensInAttesa && veloAperto === "import"){ lensInAttesa = false; bottoneIncollaLens(); }
+});
 document.addEventListener("click", e=>{
   if(!e.target.closest("[data-imp-foto]")) return;
   const inp = document.getElementById("impFotoIn"); if(!inp) return;
@@ -4814,10 +4850,14 @@ function apriImport(){
     <p class="mini" id="impEsito" aria-live="polite"></p>
     <div id="impEsame"></div>
     <div class="foto-ricetta">
-      <button type="button" class="btn small" data-imp-foto>\u{1F4F7} ${L("Fotografa una ricetta scritta","Photograph a written recipe")}</button>
+      ${ANDROID ? `<button type="button" class="btn small" data-imp-lens>\u{1F50D} ${L("Leggi con Google Lens","Read with Google Lens")}</button>` : ""}
+      <button type="button" class="btn small ghost" data-imp-foto>\u{1F4F7} ${L("Fotografa una pagina stampata","Photograph a printed page")}</button>
       <input type="file" id="impFotoIn" accept="image/*" capture="environment" hidden>
     </div>
-    <p class="mini" style="margin-top:0">${L("Una pagina di un libro di cucina o un vecchio quaderno di ricette: leggo il testo e lo metto qui sotto.","A page from a cookbook or an old recipe notebook: I read the text and put it below.")}</p>
+    <div id="lensRitorno"></div>
+    <p class="mini" style="margin-top:0">${ANDROID
+      ? L("<b>Scritta a mano?</b> Usa Google Lens: inquadra la pagina, tocca <b>Testo</b> → <b>Seleziona tutto</b> → <b>Copia</b>, poi torna qui e incolla. Il tasto della foto va bene per le pagine stampate dei libri.","<b>Handwritten?</b> Use Google Lens: frame the page, tap <b>Text</b> → <b>Select all</b> → <b>Copy</b>, then come back here and paste. The photo button is fine for printed book pages.")
+      : L("<b>Scritta a mano?</b> Apri la Fotocamera, inquadra la pagina e tocca l’icona del <b>testo</b> (Testo attivo): seleziona tutto, copia, poi torna qui e incolla. Il tasto della foto va bene per le pagine stampate dei libri.","<b>Handwritten?</b> Open the Camera, frame the page and tap the <b>text</b> icon (Live Text): select all, copy, then come back here and paste. The photo button is fine for printed book pages.")}</p>
     <label class="campo" style="margin-top:10px"><span>Oppure incolla qui il testo</span>
       <textarea id="impTesto" rows="10" placeholder="Nome del piatto&#10;Ingredienti&#10;320 gr di pasta&#10;2 melanzane&#10;Procedimento&#10;Taglia le melanzane\u2026"></textarea></label>
     <div class="azioni"><button class="btn" data-imp="leggi">Prepara la ricetta</button></div>`);
@@ -5125,7 +5165,7 @@ const PERCHE_EN = `<div class="perche">
     <p>On any recipe card tap <strong>📅 Add to this week's menu</strong>. On the home page, in <strong>This week's menu</strong>, you'll find the recipes you picked, can change how many are at the table for each, and with one tap put everything missing on the shopping list: quantities from the recipes add up, what you already have stays out and the list is split by department.</p>
 
     <div class="sez"><strong>Your recipes, your memories</strong></div>
-    <p>Have a cookbook or an old family recipe notebook? In <strong>My recipes</strong> tap <strong>📷 From a photo</strong>: the app reads the page and transcribes it, you correct and save.</p>
+    <p>Have a cookbook or an old family recipe notebook? In <strong>My recipes</strong> tap <strong>📷 From a photo</strong>. For handwritten recipes use <strong>🔍 Read with Google Lens</strong>: frame the page, copy the text and when you come back to the app paste it with one tap; you correct and save. The app's own photo reads printed pages too.</p>
     <p>When you finish cooking you can rate the dish and write a note for next time (“less salt”, “the guests loved it”): you'll find it on the card and at the start of the recipe when you make it again. And with <strong>📤 Send to a friend</strong> the recipe goes out on WhatsApp, readable by anyone; if your friend has Che cucino?, one tap on the link adds it to their recipes.</p>
 
     <div class="sez"><strong>Finally</strong></div>
@@ -5178,7 +5218,7 @@ function apriPerche(){
     <p>Sulla scheda di ogni ricetta tocca <strong>📅 Nel menu della settimana</strong>. Nella pagina iniziale, in <strong>Menu della settimana</strong>, trovi le ricette scelte, puoi cambiare quanti siete a tavola per ognuna e con un tocco metti nella lista della spesa tutto quello che manca: le quantità delle varie ricette si sommano, quello che hai già in dispensa resta fuori e la lista è divisa per reparto.</p>
 
     <div class="sez"><strong>Le tue ricette, i tuoi ricordi</strong></div>
-    <p>Hai un libro di cucina o un vecchio quaderno di ricette di famiglia? In <strong>Le mie ricette</strong> tocca <strong>📷 Da una foto</strong>: l'app legge la pagina e la trascrive, tu correggi e salvi.</p>
+    <p>Hai un libro di cucina o un vecchio quaderno di ricette di famiglia? In <strong>Le mie ricette</strong> tocca <strong>📷 Da una foto</strong>. Per le ricette scritte a mano usa <strong>🔍 Leggi con Google Lens</strong>: inquadri la pagina, copi il testo e tornando nell'app lo incolli con un tocco; tu correggi e salvi. Le pagine stampate le legge anche la foto dell'app.</p>
     <p>Quando finisci di cucinare puoi dare un voto e scrivere una nota per la prossima volta («meno sale», «agli ospiti è piaciuta»): la ritrovi sulla scheda e all'inizio della ricetta quando la rifai. E con <strong>📤 Manda a un amico</strong> la ricetta parte su WhatsApp, leggibile da chiunque; se l'amico ha Che cucino?, con un tocco sul link entra nelle sue ricette.</p>
 
     <div class="sez"><strong> Per finire</strong></div>
