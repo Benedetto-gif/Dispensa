@@ -665,7 +665,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v133</div>
+  <div class="ver-splash" data-no-tr>v134</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -676,7 +676,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v133</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v134</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -3570,8 +3570,13 @@ function leggiTesto(testo){
   const isIng   = x=>/^ingredient/i.test(x);
   const isProc  = x=>/^(procedimento|preparazione|esecuzione|come si prepara|istruzioni|metodo|method|directions|instructions|preparation|steps)/i.test(x);
   righe.forEach((x, i)=>{
-    if(isIng(x)){ zona = "i"; return; }
-    if(isProc(x)){ zona = "p"; return; }
+    const titolo = /^#{1,6}\s/.test(x), h = x.replace(/^#{1,6}\s*/, "").replace(/[*_]/g, "").trim();
+    if(zona === "fine") return;
+    if(h.length < 40 && isIng(h)){ zona = "i"; return; }
+    if(h.length < 40 && isProc(h)){ zona = "p"; return; }
+    /* un nuovo titolo dopo i passaggi chiude il procedimento (dopo ci sono ricette simili, commenti...) */
+    if(titolo && zona === "p" && proc.length){ zona = "fine"; return; }
+    if(titolo && zona !== "") return;
     if(!nome && zona === "" && x.length < 70 && !/^\d/.test(x)){ nome = x; return; }
     if(zona === "i"){ const g = leggiIng(x); if(g) ing.push(g); return; }
     /* "Per 4 persone", "Serves 4": e' la resa, non un passaggio */
@@ -3678,27 +3683,45 @@ function soloPassi(proc){
 }
 function procDaPagina(doc){
   if(!doc || !doc.body) return [];
-  const el = [...doc.body.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,strong,b,span,div")]
-    .filter(e=>!e.closest("nav,footer,header,aside,script,style,form"));
   const testo = e=>(e.textContent || "").replace(/\s+/g, " ").trim();
-  const titoli = [];
-  el.forEach((e, i)=>{ const t = testo(e).replace(/[:.]\s*$/, ""); if(t.length < 30 && TITOLO_PROC.test(t) && !/\d/.test(t) && !e.querySelector("p,li")) titoli.push(i); });
-  for(const iTit of titoli){ const p = soloPassi(passiDopo(el, iTit, testo)); if(p.length) return p; }
+  const titoli = [...doc.body.querySelectorAll("h1,h2,h3,h4,h5,h6,p,strong,b,span,div,dt")].filter(e=>{
+    if(e.closest("nav,footer,header,aside,form")) return false;
+    const t = testo(e).replace(/[:.]\s*$/, "");
+    return t.length < 30 && TITOLO_PROC.test(t) && !/\d/.test(t);
+  }).filter(e=>![...e.children].some(c=>TITOLO_PROC.test(testo(c))));
+  for(const tit of titoli){ const p = soloPassi(passiDopo(tit)); if(p.length) return p; }
   return [];
 }
-function passiDopo(el, iTit, testo){
-  const passi = [], visti = new Set();
-  for(let i = iTit + 1; i < el.length && passi.length < 30; i++){
-    const e = el[i], t = testo(e), tag = e.tagName;
-    if(/^H[1-6]$/.test(tag) && t){ if(passi.length) break; else continue; }
-    if(FINE_PROC.test(t) && t.length < 60){ if(passi.length) break; else continue; }
-    if(tag !== "P" && tag !== "LI") continue;
-    if(e.querySelector("p,li") || t.length < 20 || visti.has(t)) continue;
-    if(/(https?:|iscriviti|newsletter|cookie|pubblicit)/i.test(t)) continue;
-    visti.add(t); passi.push(t.replace(/^\d+[.)]\s*/, ""));
+/* scorre la pagina dopo il titolo: raccoglie il testo blocco per blocco e si ferma al primo
+   titolo che viene dopo i passaggi (o a un titolo grande prima di trovarne, per non sconfinare) */
+function passiDopo(tit){
+  const doc = tit.ownerDocument;
+  const w = doc.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+  w.currentNode = tit;
+  let n = w.nextNode();
+  while(n && tit.contains(n)) n = w.nextNode();
+  const pezzi = []; let ultimo = null, rompi = false;
+  for(; n; n = w.nextNode()){
+    if(n.nodeType === 1){
+      if(n.closest("script,style,noscript,nav,footer,aside,form,button,select")) continue;
+      if(n.tagName === "BR"){ rompi = true; continue; }
+      const m = n.tagName.match(/^H([1-6])$/);
+      if(m){ if(pezzi.length) break; if(+m[1] <= 3) break; continue; }
+      if(FINE_PROC.test(testo1(n)) && testo1(n).length < 60 && pezzi.length) break;
+      continue;
+    }
+    const p = n.parentElement;
+    if(!p || p.closest("script,style,noscript,nav,footer,aside,form,button,select")) continue;
+    const t = n.nodeValue.replace(/\s+/g, " ").trim(); if(!t) continue;
+    const b = p.closest("p,li,dd,td,blockquote,div,section,article") || p;
+    if(b !== ultimo || rompi || !pezzi.length){ if(pezzi.length >= 40) break; pezzi.push([]); }
+    pezzi[pezzi.length - 1].push(t); ultimo = b; rompi = false;
   }
-  return passi;
+  return pezzi.map(v=>v.join(" ").replace(/\s+([,.;:!?])/g, "$1").trim())
+    .filter(t=>t.length >= 20 && !/(https?:|iscriviti|newsletter|cookie|pubblicit)/i.test(t))
+    .map(t=>t.replace(/^\d+[.)]\s*/, ""));
 }
+function testo1(e){ return (e.textContent || "").replace(/\s+/g, " ").trim(); }
 function leggiRicettaNascosta(html, url){
   if(!html || !/schema\.org|ld\+json|recipeIngredient/i.test(html)) return null;
   const doc = new DOMParser().parseFromString(html, "text/html");
