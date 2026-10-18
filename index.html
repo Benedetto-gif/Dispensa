@@ -90,6 +90,19 @@ body[data-filigrana="1"]::before{
 .pcella.cat-ghiaccio{background:#E7F5FA;color:#1B3A44;border:1px solid #C7E3ED}
 .pcella.cat-cantina{background:#6E1E35;color:#fff}
 .cant-n{font-weight:800;font-size:.85em;opacity:.85;margin-left:2px}
+/* scadenze */
+.scad-b{display:inline-block;margin-left:4px;padding:1px 6px;border-radius:999px;font-size:.72em;font-weight:800;line-height:1.5;vertical-align:middle}
+.scad-rossa{background:#B3261E;color:#fff}.scad-arancio{background:#E8730C;color:#fff}.scad-ok{background:rgba(0,0,0,.18);color:inherit}
+.hscad{background:#8E1F1A;color:#fff;margin-top:10px;cursor:default}
+.hscad ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.hscad li{background:rgba(255,255,255,.2);border-radius:999px;padding:3px 10px;font-size:.84rem;font-weight:600}
+.hscad .azioni{margin-top:10px;gap:8px}
+.hscad .btn{background:#fff;color:#8E1F1A}.hscad .btn.ghost{background:transparent;color:#fff;border-color:#fff}
+.scad-riga{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--linea);flex-wrap:wrap}
+.scad-riga b{flex:1;min-width:110px}
+.scad-riga input[type=date]{padding:6px 8px;border-radius:10px;border:1px solid var(--linea);background:var(--superficie);color:var(--inchiostro);font:inherit}
+.scad-riga .chip{font-size:.75rem;padding:4px 9px}
+.scad-quick{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .cant-bott{border:1px solid var(--linea);border-left:5px solid #6E1E35;border-radius:12px;padding:12px 14px;margin:10px 0;background:var(--carta)}
 .cant-tit{font-weight:800;font-size:1.05rem}
 .cant-det{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:.92rem;color:var(--inchiostro-soft)}
@@ -396,6 +409,12 @@ body[data-filigrana="1"]::before{
 .perche p{font-size:1rem;line-height:1.55}
 .chiudi{flex:none;background:var(--superficie);border:1px solid var(--linea);border-radius:10px;
   padding:7px 12px;cursor:pointer;font-size:.88rem;color:inherit}
+.voce-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.voce-bar .chip{font-size:.85rem;padding:8px 12px}
+.voce-aiuto{margin:8px 0 0;padding:8px 12px;border-radius:12px;background:#1F6F8B;color:#fff;font-size:.88rem;line-height:1.45}
+.voce-aiuto.ascolto::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:#FF5A4E;margin-right:7px;animation:pulsaVoce 1.2s infinite}
+@keyframes pulsaVoce{50%{opacity:.25}}
+.voce-sentito{font-size:.8rem;opacity:.85;margin-top:4px;font-style:italic}
 .passo-n{font-size:.76rem;color:var(--inchiostro-soft);letter-spacing:.03em;margin-top:14px}
 .passo-g{font-size:1.3rem;line-height:1.5;margin:8px 0 18px;max-width:34ch}
 .timer{display:flex;align-items:center;gap:12px;margin:16px 0;padding:12px 14px;
@@ -675,7 +694,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v139</div>
+  <div class="ver-splash" data-no-tr>v140</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -686,7 +705,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v139</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v140</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -1119,6 +1138,68 @@ const CARNE = new Set(CAT_DISP["Carne e salumi"] || []);
 const PESCE = new Set(CAT_DISP["Pesce"] || []);
 const LATT  = new Set(CAT_DISP["Latticini e uova"] || []);
 const DEPERIBILI = ["Verdure e ortaggi","Frutta","Carne e salumi","Pesce","Latticini e uova","Surgelati e congelati"];
+/* ===== Scadenze dei freschi: S.scad = { ingrediente: "AAAA-MM-GG" } ===== */
+function isoData(d){ return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+function fraGiorni(n){ const d = new Date(); d.setDate(d.getDate() + n); return isoData(d); }
+function giorniA(iso){ const [y,m,g] = String(iso).split("-").map(Number); const o = new Date(); o.setHours(0,0,0,0); return Math.round((new Date(y, m-1, g) - o) / 86400000); }
+function scadenze(){
+  S.scad = S.scad || {};
+  Object.keys(S.scad).forEach(k=>{ if(!S.scad[k] || !S.dispensa.includes(k)) delete S.scad[k]; });
+  return S.scad;
+}
+function quandoScade(n){ return n < 0 ? L("scaduto","expired") : n === 0 ? L("scade oggi","expires today") : n === 1 ? L("scade domani","expires tomorrow") : L(`scade fra ${n} giorni`,`expires in ${n} days`); }
+function breveScad(n){ return n < 0 ? L("scaduto","expired") : n === 0 ? L("oggi","today") : n === 1 ? L("domani","tmrw") : n + L("g","d"); }
+function classeScad(n){ return n <= 0 ? "scad-rossa" : n <= 2 ? "scad-arancio" : "scad-ok"; }
+function badgeScad(k){ const d = (S.scad || {})[k]; if(!d || !S.dispensa.includes(k)) return ""; const n = giorniA(d);
+  return ` <span class="scad-b ${classeScad(n)}" title="${esc(quandoScade(n))}">\u23F3${breveScad(n)}</span>`; }
+function inScadenza(entro){ return Object.entries(scadenze()).map(([k, d])=>({k, n: giorniA(d)})).filter(x=>x.n <= entro).sort((a, b)=>a.n - b.n); }
+function segnaScadenza(k, iso){
+  scadenze();
+  if(iso){ S.scad[k] = iso; if(!S.dispensa.includes(k)){ S.dispensa.push(k); S.dispensaData = new Date().toLocaleDateString("it-IT"); } }
+  else delete S.scad[k];
+  salva();
+}
+function ridisegnaDopoScad(){ if(passo === 2) tappaDispensa(); else if(passo === 5) tappaHome(); }
+/* "cosa cucino con questi?": ricette che usano gli ingredienti in scadenza */
+function cucinaConInScadenza(){
+  const tutti = inScadenza(3), validi = tutti.filter(x=>x.n >= 0);
+  sess.modo = "recupero";
+  sess.recupero = (validi.length ? validi : tutti).map(x=>x.k);
+  vai(4);
+}
+/* pannello: tutti i freschi in dispensa con la loro scadenza */
+function apriScadenze(){
+  const freschi = S.dispensa.filter(k=>DEPERIBILI.includes(categoriaDi(k))).sort((a, b)=>{
+    const da = (S.scad||{})[a], db = (S.scad||{})[b];
+    return da && db ? da.localeCompare(db) : da ? -1 : db ? 1 : a.localeCompare(b, "it"); });
+  apriVelo("scadenze", `
+    <div class="velo-top"><h2>\u23F3 ${L("Scadenze","Use-by dates")}</h2>
+      <button class="chiudi" data-sc="chiudi">${L("Chiudi","Close")}</button></div>
+    <p class="mini">${L("Segna quando scadono i freschi che hai in casa. Quando uno sta per scadere te lo dico nella pagina iniziale e ti propongo le ricette per consumarlo.","Mark when the fresh food you have expires. When something is about to expire I\u2019ll tell you on the home page and suggest recipes to use it up.")}</p>
+    ${freschi.length ? freschi.map(k=>{ const d = (S.scad||{})[k] || "";
+      return `<div class="scad-riga" data-sck="${esc(k)}"><b data-no-tr>${esc(nomeIng(k))}${badgeScad(k)}</b>
+        <input type="date" value="${d}" data-scd="${esc(k)}" aria-label="${L("Data di scadenza","Use-by date")}">
+        <span class="scad-quick" style="margin:0">
+          <button class="chip" data-scg="1" data-k="${esc(k)}">${L("domani","tmrw")}</button>
+          <button class="chip" data-scg="3" data-k="${esc(k)}">+3</button>
+          <button class="chip" data-scg="7" data-k="${esc(k)}">+7</button>
+          ${d ? `<button class="chip" data-scg="x" data-k="${esc(k)}" aria-label="${L("Togli la scadenza","Remove the date")}">\u2715</button>` : ""}
+        </span></div>`; }).join("")
+      : `<p>${L("In dispensa non hai segnato freschi (verdure, frutta, carne, pesce, latticini, surgelati).","You haven\u2019t marked any fresh food in the pantry (vegetables, fruit, meat, fish, dairy, frozen).")}</p>`}
+    <div class="azioni"><button class="btn" data-sc="chiudi">${L("Fatto","Done")}</button></div>`);
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-sc],[data-scg]"); if(!b || veloAperto !== "scadenze") return;
+  if(b.dataset.sc === "chiudi"){ chiudiVelo(); ridisegnaDopoScad(); return; }
+  const g = b.dataset.scg, k = b.dataset.k;
+  segnaScadenza(k, g === "x" ? "" : fraGiorni(+g));
+  apriScadenze();
+});
+document.addEventListener("change", e=>{
+  const i = e.target.closest("[data-scd]"); if(!i) return;
+  segnaScadenza(i.dataset.scd, i.value || "");
+  if(veloAperto === "scadenze") apriScadenze();
+});
 
 /* un surgelato o una conserva valgono l'ingrediente fresco corrispondente */
 const EQUIV = {};
@@ -1857,7 +1938,7 @@ function htmlRepartiDisp(){
     const chip = i=>{ const mesi = D.stagioni[i];
           const stag = mesi ? (mesi.includes(meseStagione())?` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
           const nb = tit === "Cantina" ? nBottiglie(i) : 0;
-          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}</button>`; };
+          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}${badgeScad(i)}</button>`; };
     const sotto = sottoReparti(tit, vis);
     return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||presi?"open":""}>
       <summary>${tit} <em>${presi?presi+" segnati":lista.length+" voci"}</em></summary>
@@ -1916,7 +1997,7 @@ function collegaRepartiDisp(){
       if(b.closest(".cat-cantina")){ cantinaInModifica = -1; apriCantina(b.dataset.i); return; }
       const v=b.dataset.i, i=S.dispensa.indexOf(v);
       if(i<0){ S.dispensa.push(v); if(BASE.has(v)) S.spesa = S.spesa.filter(x=>x.k!==v); }
-      else{ S.dispensa.splice(i,1); if(BASE.has(v)) metti(v, v, ""); }
+      else{ S.dispensa.splice(i,1); if(BASE.has(v)) metti(v, v, ""); if(S.scad) delete S.scad[v]; const bs = b.querySelector(".scad-b"); if(bs) bs.remove(); }
       b.classList.toggle("on");
       S.dispensaData = new Date().toLocaleDateString("it-IT"); salva();
     };
@@ -1924,6 +2005,17 @@ function collegaRepartiDisp(){
 
 }
 /* --- 3. dispensa --- */
+function htmlCardScadenze(){
+  const tutte = Object.entries(scadenze()).map(([k, d])=>({k, n: giorniA(d)})).sort((a, b)=>a.n - b.n);
+  const vicine = tutte.filter(x=>x.n <= 3);
+  return `<div class="pcella full c-mattone" id="apriScad">
+    <svg viewBox="0 0 28 28" fill="none"><path d="M8 4h12M8 24h12M9 4c0 6 10 6 10 10S9 18 9 24M19 4c0 6-10 6-10 10s10 4 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <b>${L("Scadenze dei freschi","Use-by dates of fresh food")}</b>
+    <small data-no-tr>${tutte.length
+      ? (vicine.length ? vicine.slice(0,5).map(x=>esc(nomeIng(x.k)) + " " + breveScad(x.n)).join(" \u00b7 ") : L(`${tutte.length} segnate, nessuna a breve`,`${tutte.length} marked, none soon`))
+      : L("Tocca per segnare quando scadono verdure, carne, pesce, latticini\u2026","Tap to mark when vegetables, meat, fish, dairy\u2026 expire")}</small>
+  </div>`;
+}
 function tappaDispensa(){
   const n = S.dispensa.length, {q, trovato} = statoCercaDisp();
   app.innerHTML = `
@@ -1947,11 +2039,12 @@ function tappaDispensa(){
         </div></label>
       <datalist id="ingDatalist">${TUTTI_ING.map(i=>`<option value="${esc(i)}">`).join("")}</datalist>
       <div id="ingRisposta">${htmlRispostaDisp()}</div>
-      <p class="mini" style="margin-top:10px;opacity:.85">Tieni premuto un ingrediente qui sotto per spostarlo di reparto o toglierlo dall'elenco.</p>
+      <p class="mini" style="margin-top:10px;opacity:.85">Tieni premuto un ingrediente qui sotto per segnare la scadenza, spostarlo di reparto o toglierlo dall'elenco.</p>
       <p class="mini" style="margin-top:6px;opacity:.85" data-no-tr>\u{1F377} ${L("Nella Cantina tocca una bottiglia per aprire la sua scheda: etichetta, azienda, vitigno, annata.","In the Wine cellar, tap a bottle to open its card: label, producer, grape, vintage.")}</p>
       <p class="mini" style="margin-top:4px;opacity:.85" data-no-tr>${suEmisferoSud() ? L("\u{1F5D3}\uFE0F accanto a un ingrediente: \u00e8 di stagione ora dove vivi, nell\u2019emisfero sud; sbiadito: non \u00e8 la sua stagione.","\u{1F5D3}\uFE0F next to an ingredient: in season now where you live, in the southern hemisphere; faded: out of season.") : L("\u{1F5D3}\uFE0F accanto a un ingrediente: \u00e8 di stagione ora qui da noi, nell\u2019emisfero nord; sbiadito: non \u00e8 la sua stagione.","\u{1F5D3}\uFE0F next to an ingredient: in season now here, in the northern hemisphere; faded: out of season.")}</p>
     </div>
   </div>
+  <div class="pgrid" style="margin-top:2px">${htmlCardScadenze()}</div>
   <div class="pgrid" id="repartiDisp" style="margin-top:2px">${htmlRepartiDisp()}</div>`;
 
   const c = document.getElementById("cerca");
@@ -1964,6 +2057,7 @@ function tappaDispensa(){
   collegaRispostaDisp();
   document.getElementById("logoHome").onclick = ()=>{ if(S.profilo.fatto) vai(5); };
   collegaRepartiDisp();
+  const bsc = document.getElementById("apriScad"); if(bsc) bsc.onclick = ()=>apriScadenze();
 
   pulsanti("Indietro", "La dispensa è a posto", ()=>vai(3), ()=>vai(1));
 }
@@ -2794,8 +2888,8 @@ function chiudiVelo(){
 }
 window.chiudiVelo = chiudiVelo;
 /* vie di uscita extra, valide per qualunque pannello: tocco sullo sfondo fuori dal contenuto, tasto Esc */
-velo.addEventListener("click", e=>{ if(e.target === e.currentTarget || e.target.classList.contains("velo")) chiudiVelo(); });
-document.addEventListener("keydown", e=>{ if(e.key === "Escape" && veloAperto) chiudiVelo(); });
+velo.addEventListener("click", e=>{ if(e.target === e.currentTarget || e.target.classList.contains("velo")){ if(veloAperto === "cucina") spegniVoce(); chiudiVelo(); } });
+document.addEventListener("keydown", e=>{ if(e.key === "Escape" && veloAperto){ if(veloAperto === "cucina") spegniVoce(); chiudiVelo(); } });
 
 /* ===========================================================
    Modalita cucina: un passo per volta, timer, schermo acceso
@@ -2849,6 +2943,7 @@ function battito(){
   if(resta <= 0){
     clearInterval(timInt); timInt = null; timSuonato = true;
     sveglia();
+    if(cucina && (cucina.voce || cucina.ascolta)) setTimeout(()=>parla(L("Tempo scaduto!","Time's up!")), 1600);
     if(veloAperto === "cucina") disegnaCucina();
   }
 }
@@ -2867,8 +2962,105 @@ function sveglia(){
     setTimeout(()=>{ try{ ctx.close(); }catch(e){} }, 2500);
   }catch(e){}
 }
+/* ---------- Modalita cucina a voce ----------
+   leggo il passo ad alta voce; con i comandi a voce si va avanti senza toccare lo schermo.
+   Mentre parlo il microfono e' spento, cosi' non sento me stessa. */
+let voceRec = null, voceParla = false;
+function voceScelta(){
+  const voci = ("speechSynthesis" in window) ? speechSynthesis.getVoices() : [];
+  const lg = IN_INGLESE ? /^en/i : /^it/i;
+  return voci.find(v=>lg.test(v.lang) && /female|donna|femmin|alice|elsa|paola|samantha|karen|serena|victoria|zira|susan|kate/i.test(v.name))
+      || voci.find(v=>lg.test(v.lang)) || null;
+}
+function parla(testo){
+  if(!("speechSynthesis" in window) || !testo) return;
+  try{
+    fermaAscolto(true);
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(testo);
+    u.lang = L("it-IT","en-GB"); const v = voceScelta(); if(v) u.voice = v;
+    u.rate = 0.95;
+    voceParla = true;
+    u.onend = u.onerror = ()=>{ voceParla = false; if(cucina && cucina.ascolta && veloAperto === "cucina") avviaAscolto(); };
+    speechSynthesis.speak(u);
+  }catch(e){ voceParla = false; }
+}
+function testoPiano(html){ const d = document.createElement("div"); d.innerHTML = html; return (d.textContent || "").replace(/\s+/g, " ").trim(); }
+function leggiPasso(){
+  if(!cucina) return;
+  const r = cucina.r, n = r.proc.length, min = minutiPasso(r.proc[cucina.i]);
+  let t = L(`Passo ${cucina.i+1} di ${n}. `, `Step ${cucina.i+1} of ${n}. `) + testoPiano(pulito(procR(r)[cucina.i]));
+  if(min && timInt === null && !timSuonato) t += cucina.ascolta ? L(` C'\u00e8 un timer di ${min} minuti: d\u00ec timer per avviarlo.`, ` There's a ${min} minute timer: say timer to start it.`)
+                                                                : L(` C'\u00e8 un timer di ${min} minuti.`, ` There's a ${min} minute timer.`);
+  if(cucina.i === n - 1) t += L(" \u00c8 l'ultimo passo.", " This is the last step.");
+  cucina.detto = cucina.i;
+  parla(t);
+}
+function leggiIngredienti(){
+  const r = cucina.r, f = fattoreDosi(r);
+  parla(L("Ingredienti: ", "Ingredients: ") + r.ing.map(i=>{ const q = scalaQ(i.q, f); return (q && q !== "q.b." ? q + (!IN_INGLESE && /[a-z]\.?$/i.test(q) ? " di " : " ") : "") + (IN_INGLESE ? nomeIng(i.k || i.n) : i.n); }).join(", ") + ".");
+}
+function avviaAscolto(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR || !cucina || !cucina.ascolta || voceParla) return;
+  try{
+    if(!voceRec){
+      voceRec = new SR();
+      voceRec.lang = L("it-IT","en-GB"); voceRec.continuous = true; voceRec.interimResults = false;
+      voceRec.onresult = ev=>{
+        const t = ev.results[ev.results.length - 1][0].transcript.toLowerCase().trim();
+        const s2 = document.getElementById("voceSentito"); if(s2) s2.textContent = "\u00ab" + t + "\u00bb";
+        comandoVoce(t);
+      };
+      voceRec.onerror = ev=>{
+        if(ev.error === "not-allowed" || ev.error === "service-not-allowed"){
+          cucina && (cucina.ascolta = false);
+          alert(L("Per i comandi a voce serve il permesso di usare il microfono: puoi darlo dalle impostazioni del browser.","Voice commands need permission to use the microphone: you can grant it in the browser settings."));
+          if(veloAperto === "cucina") disegnaCucina();
+        }
+      };
+      voceRec.onend = ()=>{ voceRec.attivo = false;
+        if(cucina && cucina.ascolta && veloAperto === "cucina" && !voceParla) setTimeout(avviaAscolto, 250); };
+    }
+    if(!voceRec.attivo){ voceRec.start(); voceRec.attivo = true; }
+  }catch(e){}
+}
+function fermaAscolto(pausa){
+  try{ if(voceRec && voceRec.attivo){ voceRec.abort(); voceRec.attivo = false; } }catch(e){}
+  if(!pausa && voceRec){ voceRec.onend = null; voceRec = null; }
+}
+function spegniVoce(){
+  if(cucina){ cucina.ascolta = false; cucina.voce = false; }
+  fermaAscolto(false);
+  try{ speechSynthesis.cancel(); }catch(e){}
+  voceParla = false;
+}
+function comandoVoce(t){
+  if(!cucina) return;
+  const n = cucina.r.proc.length;
+  const ha = re=>re.test(t);
+  if(ha(/\b(ferma|stop|basta|spegni)\b/)){ if(timInt !== null || timSuonato){ fermaTimer(); disegnaCucina(); parla(L("Timer fermato.","Timer stopped.")); } return; }
+  if(ha(/\b(timer|avvia|via|parti|start)\b/)){
+    const min = minutiPasso(cucina.r.proc[cucina.i]);
+    if(min){ avviaTimer(min); parla(L(`Timer di ${min} minuti avviato.`, `${min} minute timer started.`)); }
+    else parla(L("In questo passo non c'\u00e8 un tempo da misurare.","There's no time to measure in this step."));
+    return;
+  }
+  if(ha(/\b(avanti|prossim\w*|successiv\w*|dopo|next|forward)\b/)){
+    if(cucina.i < n - 1){ cucina.i++; fermaTimer(); disegnaCucina(); }
+    else parla(L("Era l'ultimo passo. Quando hai finito tocca Ho finito.","That was the last step. When you're done, tap I'm done."));
+    return;
+  }
+  if(ha(/\b(indietro|precedente|torna|back|previous)\b/)){
+    if(cucina.i > 0){ cucina.i--; fermaTimer(); disegnaCucina(); } else parla(L("Sei al primo passo.","You're at the first step."));
+    return;
+  }
+  if(ha(/\b(ripeti|ancora|di nuovo|repeat|again)\b/)){ leggiPasso(); return; }
+  if(ha(/\bingredient/)){ leggiIngredienti(); return; }
+}
 function apriCucina(r){
-  cucina = {r, i:0};
+  spegniVoce();
+  cucina = {r, i:0, voce:false, ascolta:false, detto:-1};
   fermaTimer();
   tieniSchermo();
   disegnaCucina();
@@ -2892,6 +3084,11 @@ function disegnaCucina(){
       <h2 data-no-tr>${esc(nomeR(r))}</h2>
       <button class="chiudi" data-cuc="chiudi">Chiudi</button>
     </div>
+    <div class="voce-bar">
+      <button class="chip ${cucina.voce?"on":""}" data-cuc="voce">\u{1F50A} ${L("Leggi ad alta voce","Read aloud")}</button>
+      <button class="chip ${cucina.ascolta?"on":""}" data-cuc="ascolta">\u{1F399}\uFE0F ${L("Comandi a voce","Voice commands")}</button>
+    </div>
+    ${cucina.ascolta ? `<div class="voce-aiuto ascolto">${L("Ti ascolto. D\u00ec: <b>avanti</b>, <b>indietro</b>, <b>ripeti</b>, <b>timer</b>, <b>ferma</b>, <b>ingredienti</b>.","I'm listening. Say: <b>next</b>, <b>back</b>, <b>repeat</b>, <b>timer</b>, <b>stop</b>, <b>ingredients</b>.")}<div class="voce-sentito" id="voceSentito"></div></div>` : ""}
     <div class="passo-n">Passo ${cucina.i+1} di ${n}</div>
     <div class="passo-g" data-no-tr>${passoT}</div>
     ${blocco}
@@ -2906,17 +3103,27 @@ function disegnaCucina(){
       ${ultimo ? `<button class="btn" data-cuc="fine">Ho finito</button>`
                : `<button class="btn" data-cuc="su">Avanti</button>`}
     </div>`);
+  if((cucina.voce || cucina.ascolta) && cucina.detto !== cucina.i) leggiPasso();
 }
 document.addEventListener("click", e=>{
   const b = e.target.closest("[data-cuc]");
   if(!b || !cucina) return;
   const a = b.dataset.cuc;
-  if(a === "chiudi"){ chiudiVelo(); cucina = null; return; }
+  if(a === "chiudi"){ spegniVoce(); chiudiVelo(); cucina = null; return; }
+  if(a === "voce"){ cucina.voce = !cucina.voce; if(cucina.voce){ cucina.detto = -1; } else if(!cucina.ascolta){ try{ speechSynthesis.cancel(); }catch(e){} } disegnaCucina(); return; }
+  if(a === "ascolta"){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){ alert(L("I comandi a voce non sono disponibili su questo browser. Prova con Chrome.","Voice commands aren't available in this browser. Try Chrome.")); return; }
+    cucina.ascolta = !cucina.ascolta;
+    if(cucina.ascolta){ cucina.voce = true; cucina.detto = -1; disegnaCucina(); avviaAscolto(); }
+    else { fermaAscolto(false); disegnaCucina(); }
+    return;
+  }
   if(a === "su"){ cucina.i++; fermaTimer(); disegnaCucina(); return; }
   if(a === "giu"){ cucina.i--; fermaTimer(); disegnaCucina(); return; }
   if(a === "timer"){ avviaTimer(minutiPasso(cucina.r.proc[cucina.i])); return; }
   if(a === "reset"){ fermaTimer(); disegnaCucina(); return; }
-  if(a === "fine"){ const r = cucina.r; rilasciaSchermo(); apriFine(r); return; }
+  if(a === "fine"){ const r = cucina.r; spegniVoce(); rilasciaSchermo(); apriFine(r); return; }
 });
 
 /* ===========================================================
@@ -3281,6 +3488,20 @@ function apriIngOpz(k){
     <label class="campo"><span>Spostalo in</span>
       <select id="ioCat">${Object.keys(CAT_DISP).map(c=>
         `<option ${c===attuale?"selected":""}>${c}</option>`).join("")}</select></label>
+    ${DEPERIBILI.includes(attuale) ? `<div class="card" style="margin:12px 0">
+      <b>\u23F3 ${L("Scadenza","Use-by date")}</b>${badgeScad(k)}
+      <div class="scad-quick">
+        <button class="chip" data-io="sc" data-g="0" data-k="${esc(k)}">${L("oggi","today")}</button>
+        <button class="chip" data-io="sc" data-g="1" data-k="${esc(k)}">${L("domani","tomorrow")}</button>
+        <button class="chip" data-io="sc" data-g="3" data-k="${esc(k)}">${L("fra 3 giorni","in 3 days")}</button>
+        <button class="chip" data-io="sc" data-g="7" data-k="${esc(k)}">${L("fra una settimana","in a week")}</button>
+      </div>
+      <label class="campo"><span>${L("Oppure scegli la data","Or pick the date")}</span>
+        <input type="date" id="ioScad" value="${(S.scad||{})[k] || ""}"></label>
+      <div class="azioni" style="margin-top:6px">
+        <button class="btn small" data-io="scsalva" data-k="${esc(k)}">${L("Salva la scadenza","Save the date")}</button>
+        ${(S.scad||{})[k] ? `<button class="btn small ghost" data-io="scvia" data-k="${esc(k)}">${L("Togli la scadenza","Remove the date")}</button>` : ""}
+      </div></div>` : ""}
     <div class="azioni">
       <button class="btn" data-io="sposta" data-k="${esc(k)}">Sposta qui</button>
       <button class="btn ghost" data-io="del" data-k="${esc(k)}">Togli dall'elenco</button>
@@ -3293,6 +3514,10 @@ document.addEventListener("click", e=>{
   const a = b.dataset.io;
   if(a === "chiudi"){ chiudiVelo(); return; }
   const k = b.dataset.k;
+  if(a === "sc" || a === "scsalva" || a === "scvia"){
+    segnaScadenza(k, a === "sc" ? fraGiorni(+b.dataset.g) : a === "scvia" ? "" : (document.getElementById("ioScad").value || ""));
+    chiudiVelo(); ridisegnaDopoScad(); return;
+  }
   if(a === "sposta") spostaIngrediente(k, document.getElementById("ioCat").value);
   if(a === "del"){
     if(!confirm("Tolgo «" + k + "» dall'elenco della dispensa?")) return;
@@ -4260,10 +4485,12 @@ const PERCHE_EN = `<div class="perche">
 
     <div class="sez"><strong>While you cook</strong></div>
     <p>While you prepare the dish the screen stays on, so you can keep reading the method, and you can also listen to your favourite music by tapping the button with the note <span class="ico-in ico-musica" aria-label="music button">♪</span>: the app keeps you pleasant company.</p>
+    <p>Messy hands? Tap <strong>🔊 Read aloud</strong> and the app reads you one step at a time; with <strong>🎙️ Voice commands</strong> it listens, and you just say “next”, “back”, “repeat”, “ingredients”, or “timer” when the step has a time to measure and “stop” to turn it off. When time is up, it tells you.</p>
     <p>When it's ready, you can look for elegant plating photos on the web without leaving the app, for nice ideas on how to serve it.</p>
 
     <div class="sez"><strong>Want to clear out the fridge?</strong></div>
     <p>Every now and then it pays to use up what is about to expire: an omelette or a leftovers dish is a classic. Look up the ingredient you want to use up and the app suggests a recipe you can make from it and from what you have.</p>
+    <p>You can also mark when fresh food expires: in the pantry press and hold an ingredient, or tap <strong>⏳ Use-by dates of fresh food</strong>. When something is about to expire you'll find it at the top of the home page, with the <strong>“What can I cook with these?”</strong> button showing recipes to use it up.</p>
 
     <div class="sez"><strong>Finally</strong></div>
     <p>For every recipe you can see the calories per serving and also the nutrition profile, by tapping the <span class="ico-in ico-nutri" aria-label="nutrition button">\u{1F4CA}</span> button.</p>
@@ -4304,10 +4531,12 @@ function apriPerche(){
 
     <div class="sez"><strong>Mentre cucini</strong></div>
     <p>Mentre prepari il piatto lo schermo resta acceso, così puoi continuare a leggere la procedura; e se vuoi puoi ascoltare anche la tua musica preferita toccando il tasto con la croma <span class="ico-in ico-musica" aria-label="tasto musica">♪</span>: così l'app ti farà piacevole compagnia.</p>
+    <p>Hai le mani sporche? Tocca <strong>🔊 Leggi ad alta voce</strong> e l'app ti legge un passaggio alla volta; con <strong>🎙️ Comandi a voce</strong> ti ascolta, e basta dire «avanti», «indietro», «ripeti», «ingredienti», oppure «timer» quando il passaggio ha un tempo da misurare e «ferma» per spegnerlo. Allo scadere del tempo te lo dice lei.</p>
     <p> Quando sei pronto, puoi andare a cercare le foto di impiattamenti eleganti direttamente sul web senza uscire dall'app, belle idee di come servirlo.</p>
 
     <div class="sez"><strong>Vuoi svuotare il frigo?</strong></div>
     <p>Ogni tanto conviene smaltire quello che sta per scadere: una frittata o piatti di recupero in questo caso sono un classico. Scrivi l'ingrediente che vuoi consumare e l'app ti suggerisce una ricetta fattibile a partire da quello che desideri smaltire e quello che hai.</p>
+    <p>Puoi anche segnare quando scadono i freschi: in dispensa tieni premuto un ingrediente, oppure tocca <strong>⏳ Scadenze dei freschi</strong>. Quando qualcosa sta per scadere lo trovi in cima alla pagina iniziale, con il tasto <strong>«Cosa cucino con questi?»</strong> che ti mostra le ricette per consumarlo.</p>
 
     <div class="sez"><strong> Per finire</strong></div>
     <p>Di tutte le ricette puoi conoscere, oltre all'apporto calorico per porzione, anche il profilo nutrizionale toccando il tasto <span class="ico-in ico-nutri" aria-label="tasto valori nutrizionali">\u{1F4CA}</span>.</p>
@@ -4759,6 +4988,12 @@ function tappaHome(){
   app.innerHTML = `<div class="home">
     <div class="home-saluto">${sal}${nome}<small>Cosa cuciniamo?</small></div>
     ${htmlPromemoriaSalva()}
+    ${(()=>{ const v = inScadenza(2); if(!v.length) return "";
+      return `<div class="bcella hscad" id="hScad">
+        <b>\u23F3 ${L("Da consumare presto","Use up soon")}</b>
+        <ul data-no-tr>${v.slice(0,8).map(x=>`<li>${esc(nomeIng(x.k))} \u00b7 ${breveScad(x.n)}</li>`).join("")}</ul>
+        <div class="azioni"><button class="btn small" id="hScadCucina">\u{1F373} ${L("Cosa cucino con questi?","What can I cook with these?")}</button>
+          <button class="btn small ghost" id="hScadModifica">${L("Scadenze","Dates")}</button></div></div>`; })()}
     <div class="bento">
       ${profiloCompilato() ? "" : htmlConosciamoci(false)}
       <div class="bcella c-menta" id="hDisp">
@@ -4858,6 +5093,8 @@ function tappaHome(){
     const es = ["ort","fru","pes"].map(k=>st[k].find(x=>x.m.includes(m) && !fermoIn(x,m) && (x.m[0]===m || x.m[0]===prec) && x.m.length<12) || st[k].find(x=>x.m.includes(m) && !fermoIn(x,m) && x.m.length<12)).filter(Boolean).map(x=>IN_INGLESE?x.en.toLowerCase():x.it.toLowerCase());
     document.getElementById("hStagTxt").textContent = L(`Calendario di ortaggi, frutta, pesce e molluschi. A ${nomeMese(m)}: ${es.join(", ")} e altri ${Math.max(0,n-es.length)}`, `Calendar of vegetables, fruit, fish and shellfish. In ${nomeMese(m)}: ${es.join(", ")} and ${Math.max(0,n-es.length)} more`); }
   document.getElementById("hSpesa").onclick = ()=>apriSpesa();
+  const hsc = document.getElementById("hScadCucina"); if(hsc) hsc.onclick = ()=>cucinaConInScadenza();
+  const hsm = document.getElementById("hScadModifica"); if(hsm) hsm.onclick = ()=>apriScadenze();
 }
 
 /* --- menu --- */
