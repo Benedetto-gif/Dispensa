@@ -708,7 +708,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v143</div>
+  <div class="ver-splash" data-no-tr>v144</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -719,7 +719,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v143</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v144</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -1076,6 +1076,9 @@ const SOTTO_REPARTI = {
   ]
 };
 const ORDINE_SOTTO = {"Essiccati e disidratati": ["Frutta","Ortaggi e funghi","Erbe, aromi e fiori","Carne e pesce"]};
+/* nome mostrato in dispensa: fra i latticini "formaggio feta" diventa "feta" (si sa che e' un formaggio) */
+function etichettaDisp(k){ return IN_INGLESE ? k : k.replace(/^formaggio\s+(?!fresco$)/i, ""); }
+function ordinaPerEtichetta(l){ return l.slice().sort((a, b)=>etichettaDisp(a).localeCompare(etichettaDisp(b), "it")); }
 function sottoReparti(tit, vis){
   const def = SOTTO_REPARTI[tit];
   if(!def) return null;
@@ -1955,13 +1958,13 @@ function htmlRepartiDisp(){
     const chip = i=>{ const mesi = D.stagioni[i];
           const stag = mesi ? (mesi.includes(meseStagione())?` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
           const nb = tit === "Cantina" ? nBottiglie(i) : 0;
-          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}${badgeScad(i)}</button>`; };
+          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${esc(etichettaDisp(i))}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}${badgeScad(i)}</button>`; };
     const sotto = sottoReparti(tit, vis);
     return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||repAperti.has(tit)?"open":""} data-rep="${esc(tit)}">
       <summary>${tit} <em>${presi?presi+" segnati":lista.length+" voci"}</em></summary>
       <div class="corpo">${sotto
-        ? sotto.map(([nome, l])=>`<div class="sotto-rep">${nome}</div><div class="chips">${l.map(chip).join("")}</div>`).join("")
-        : `<div class="chips">${vis.map(chip).join("")}</div>`}
+        ? sotto.map(([nome, l])=>`<div class="sotto-rep">${nome}</div><div class="chips">${ordinaPerEtichetta(l).map(chip).join("")}</div>`).join("")
+        : `<div class="chips">${ordinaPerEtichetta(vis).map(chip).join("")}</div>`}
       </div></details>`;
   }).join("")}`;
 }
