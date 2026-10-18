@@ -1936,6 +1936,8 @@ function htmlRispostaDisp(){
         </div>
         <p class="mini" id="ingEsito" aria-live="polite"></p>` : ""}`;
 }
+/* reparti aperti a mano: restano aperti se la pagina si ridisegna (es. dopo aver segnato una scadenza) */
+const repAperti = new Set();
 function htmlRepartiDisp(){
   const {q} = statoCercaDisp();
   const COLORE_REPARTO = {
@@ -1955,7 +1957,7 @@ function htmlRepartiDisp(){
           const nb = tit === "Cantina" ? nBottiglie(i) : 0;
           return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${i}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}${badgeScad(i)}</button>`; };
     const sotto = sottoReparti(tit, vis);
-    return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q?"open":""}>
+    return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||repAperti.has(tit)?"open":""} data-rep="${esc(tit)}">
       <summary>${tit} <em>${presi?presi+" segnati":lista.length+" voci"}</em></summary>
       <div class="corpo">${sotto
         ? sotto.map(([nome, l])=>`<div class="sotto-rep">${nome}</div><div class="chips">${l.map(chip).join("")}</div>`).join("")
@@ -1990,6 +1992,10 @@ function collegaRispostaDisp(){
   }
 }
 function collegaRepartiDisp(){
+  app.querySelectorAll("details[data-rep]").forEach(d=>d.addEventListener("toggle", ()=>{
+    if(cercaDisp.trim()) return;
+    d.open ? repAperti.add(d.dataset.rep) : repAperti.delete(d.dataset.rep);
+  }));
   /* tocco breve: segno o tolgo dalla dispensa. Tocco lungo: sposta o togli dall'elenco */
   app.querySelectorAll("[data-i]").forEach(b=>{
     let attesa = null, lungo = false;
