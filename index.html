@@ -105,6 +105,9 @@ body[data-filigrana="1"]::before{
 .scad-gruppo{margin:6px 0;border:1px solid var(--linea);border-radius:12px;padding:6px 12px}
 .scad-gruppo summary{cursor:pointer;font-weight:700;padding:6px 0}
 .scad-gruppo summary em{font-style:normal;opacity:.6;font-weight:600;margin-left:6px}
+.scad-conf{flex-basis:100%}
+.scad-conf-r{display:flex;align-items:center;gap:8px;margin:4px 0}
+.scad-conf-r .mini{min-width:24px;font-weight:700}
 .scad-quick{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
 .cant-bott{border:1px solid var(--linea);border-left:5px solid #6E1E35;border-radius:12px;padding:12px 14px;margin:10px 0;background:var(--carta)}
 .cant-tit{font-weight:800;font-size:1.05rem}
@@ -711,7 +714,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v145</div>
+  <div class="ver-splash" data-no-tr>v146</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -722,7 +725,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v145</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v146</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -1158,26 +1161,47 @@ const CARNE = new Set(CAT_DISP["Carne e salumi"] || []);
 const PESCE = new Set(CAT_DISP["Pesce"] || []);
 const LATT  = new Set(CAT_DISP["Latticini e uova"] || []);
 const DEPERIBILI = ["Verdure e ortaggi","Frutta","Carne e salumi","Pesce","Latticini e uova","Surgelati e congelati"];
-/* ===== Scadenze dei freschi: S.scad = { ingrediente: "AAAA-MM-GG" } ===== */
+/* ===== Scadenze: S.scad = { ingrediente: ["AAAA-MM-GG", ...] } una data per confezione ===== */
 function isoData(d){ return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
 function fraGiorni(n){ const d = new Date(); d.setDate(d.getDate() + n); return isoData(d); }
 function giorniA(iso){ const [y,m,g] = String(iso).split("-").map(Number); const o = new Date(); o.setHours(0,0,0,0); return Math.round((new Date(y, m-1, g) - o) / 86400000); }
+/* le date di un ingrediente, dalla piu' vicina (accetta anche il vecchio formato a data singola) */
+function listaScad(k){ const v = (S.scad || {})[k]; return (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean).sort(); }
+function prossimaScad(k){ return listaScad(k)[0] || ""; }
+function nConfezioni(k){ return listaScad(k).length; }
+/* ingrediente -> data piu' vicina (solo per quelli in dispensa) */
 function scadenze(){
   S.scad = S.scad || {};
-  Object.keys(S.scad).forEach(k=>{ if(!S.scad[k] || !S.dispensa.includes(k)) delete S.scad[k]; });
-  return S.scad;
+  const out = {};
+  Object.keys(S.scad).forEach(k=>{ const l = listaScad(k); if(!l.length || !S.dispensa.includes(k)) delete S.scad[k]; else{ S.scad[k] = l; out[k] = l[0]; } });
+  return out;
 }
 function quandoScade(n){ return n < 0 ? L("scaduto","expired") : n === 0 ? L("scade oggi","expires today") : n === 1 ? L("scade domani","expires tomorrow") : L(`scade fra ${n} giorni`,`expires in ${n} days`); }
 function breveScad(n){ return n < 0 ? L("scaduto","expired") : n === 0 ? L("oggi","today") : n === 1 ? L("domani","tmrw") : n + L("g","d"); }
 function classeScad(n){ return n <= 0 ? "scad-rossa" : n <= 2 ? "scad-arancio" : "scad-ok"; }
-function badgeScad(k){ const d = (S.scad || {})[k]; if(!d || !S.dispensa.includes(k)) return ""; const n = giorniA(d);
-  return ` <span class="scad-b ${classeScad(n)}" title="${esc(quandoScade(n))}">\u23F3${breveScad(n)}</span>`; }
+function badgeScad(k){ const d = prossimaScad(k); if(!d || !S.dispensa.includes(k)) return ""; const n = giorniA(d), c = nConfezioni(k);
+  return ` <span class="scad-b ${classeScad(n)}" title="${esc(quandoScade(n))}${c > 1 ? " · " + c + " " + L("confezioni","packs") : ""}">⏳${breveScad(n)}${c > 1 ? " ×" + c : ""}</span>`; }
 function inScadenza(entro){ return Object.entries(scadenze()).map(([k, d])=>({k, n: giorniA(d)})).filter(x=>x.n <= entro).sort((a, b)=>a.n - b.n); }
-function segnaScadenza(k, iso){
+function mettiInDispensa(k){ if(!S.dispensa.includes(k)){ S.dispensa.push(k); S.dispensaData = new Date().toLocaleDateString("it-IT"); } }
+function scriviScad(k, l){ S.scad = S.scad || {}; l = l.filter(Boolean).sort(); if(l.length) S.scad[k] = l; else delete S.scad[k]; }
+/* cambia la data di una confezione (i = indice, di base la piu' vicina); iso vuoto = toglie quella confezione */
+function segnaScadenza(k, iso, i){
   scadenze();
-  if(iso){ S.scad[k] = iso; if(!S.dispensa.includes(k)){ S.dispensa.push(k); S.dispensaData = new Date().toLocaleDateString("it-IT"); } }
-  else delete S.scad[k];
-  salva();
+  const l = listaScad(k); i = i == null ? 0 : +i;
+  if(iso){ if(i < l.length) l[i] = iso; else l.push(iso); mettiInDispensa(k); }
+  else if(i < l.length) l.splice(i, 1);
+  scriviScad(k, l); salva();
+}
+/* un'altra confezione dello stesso prodotto, con la sua data */
+function aggiungiConfezione(k, iso){ scadenze(); const l = listaScad(k); l.push(iso || fraGiorni(7)); scriviScad(k, l); mettiInDispensa(k); salva(); }
+/* ne ho finita una: tolgo la piu' vicina; se era l'ultima chiedo se togliere l'ingrediente dalla dispensa */
+function finitaConfezione(k){
+  const l = listaScad(k);
+  if(l.length > 1){ l.shift(); scriviScad(k, l); salva(); return true; }
+  if(confirm(L(`Era l’ultima confezione di «${etichettaDisp(nomeIng(k))}». La tolgo dalla dispensa e la metto nella lista della spesa?`, `That was the last pack of “${nomeIng(k)}”. Remove it from the pantry and add it to the shopping list?`))){
+    S.dispensa = S.dispensa.filter(x=>x !== k); scriviScad(k, []); metti(k, nomeIng(k), ""); salva(); return true;
+  }
+  scriviScad(k, []); salva(); return true;
 }
 function ridisegnaDopoScad(){ if(passo === 2) tappaDispensa(); else if(passo === 5) tappaHome(); }
 /* "cosa cucino con questi?": ricette che usano gli ingredienti in scadenza */
@@ -1190,16 +1214,26 @@ function cucinaConInScadenza(){
 /* ===== pannello Scadenze: tutto quello che hai in dispensa ===== */
 const SENZA_SCADENZA = new Set(["acqua","sale"]);
 function rigaScadenza(k){
-  const d = (S.scad||{})[k] || "";
-  return `<div class="scad-riga"><b data-no-tr>${esc(etichettaDisp(nomeIng(k)))}${badgeScad(k)}</b>
-    <input type="date" value="${d}" data-scd="${esc(k)}" aria-label="${L("Data di scadenza","Use-by date")}">
+  const l = listaScad(k), nome = esc(etichettaDisp(nomeIng(k))), ek = esc(k);
+  const data = (d, i)=>`<input type="date" value="${d}" data-scd="${ek}" data-i="${i}" aria-label="${L("Data di scadenza","Use-by date")}">`;
+  if(l.length <= 1) return `<div class="scad-riga"><b data-no-tr>${nome}${badgeScad(k)}</b>
+    ${data(l[0] || "", 0)}
     <span class="scad-quick" style="margin:0">
-      <button class="chip" data-scg="1" data-k="${esc(k)}">${L("domani","tmrw")}</button>
-      <button class="chip" data-scg="3" data-k="${esc(k)}">+3</button>
-      <button class="chip" data-scg="7" data-k="${esc(k)}">+7</button>
-      <button class="chip" data-scf="${esc(k)}" aria-label="${L("Fotografa la data","Photograph the date")}">\u{1F4F7}</button>
-      ${d ? `<button class="chip" data-scg="x" data-k="${esc(k)}" aria-label="${L("Togli la scadenza","Remove the date")}">✕</button>` : ""}
+      <button class="chip" data-scg="1" data-k="${ek}">${L("domani","tmrw")}</button>
+      <button class="chip" data-scg="3" data-k="${ek}">+3</button>
+      <button class="chip" data-scg="7" data-k="${ek}">+7</button>
+      <button class="chip" data-scf="${ek}" data-i="0" aria-label="${L("Fotografa la data","Photograph the date")}">\u{1F4F7}</button>
+      ${l.length ? `<button class="chip" data-scadd="${ek}" title="${L("Un’altra confezione","Another pack")}">➕ ${L("confezione","pack")}</button>
+                    <button class="chip" data-scg="x" data-k="${ek}" data-i="0" aria-label="${L("Togli la scadenza","Remove the date")}">✕</button>` : ""}
     </span></div>`;
+  return `<div class="scad-riga scad-multi"><b data-no-tr>${nome}${badgeScad(k)}</b>
+    <div class="scad-conf">${l.map((d, i)=>`<div class="scad-conf-r"><span class="mini">${i + 1}ª</span>${data(d, i)}
+      <button class="chip" data-scf="${ek}" data-i="${i}" aria-label="${L("Fotografa la data","Photograph the date")}">\u{1F4F7}</button>
+      <button class="chip" data-scg="x" data-k="${ek}" data-i="${i}" aria-label="${L("Togli questa confezione","Remove this pack")}">✕</button></div>`).join("")}
+      <div class="scad-quick" style="margin:6px 0 0">
+        <button class="chip" data-scadd="${ek}">➕ ${L("Un’altra confezione","Another pack")}</button>
+        <button class="chip" data-scfin="${ek}">✔️ ${L("Ne ho finita una","Finished one")}</button>
+      </div></div></div>`;
 }
 function apriScadenze(stato){
   const sc = scadenze();
@@ -1224,19 +1258,21 @@ function apriScadenze(stato){
     <div class="azioni"><button class="btn" data-sc="chiudi">${L("Fatto","Done")}</button></div>`);
 }
 document.addEventListener("click", e=>{
-  const b = e.target.closest("[data-sc],[data-scg],[data-scf]"); if(!b || veloAperto !== "scadenze") return;
+  const b = e.target.closest("[data-sc],[data-scg],[data-scf],[data-scadd],[data-scfin]"); if(!b || veloAperto !== "scadenze") return;
   if(b.dataset.sc === "chiudi"){ chiudiVelo(); ridisegnaDopoScad(); return; }
   if(b.dataset.sc === "codice"){ scattaFoto(f=>prodottoDaCodice(f)); return; }
-  if(b.dataset.scf){ const k = b.dataset.scf; scattaFoto(f=>dataDaFoto(f, iso=>{ segnaScadenza(k, iso); apriScadenze(`✅ ${esc(etichettaDisp(nomeIng(k)))}: ${quandoScade(giorniA(iso))} (${dataLeggibile(iso)}).`); })); return; }
+  const riapri = msg=>{ const aperti = [...velo.querySelectorAll("details.scad-gruppo[open] summary")].map(x=>x.firstChild.textContent.trim());
+    apriScadenze(msg); velo.querySelectorAll("details.scad-gruppo").forEach(d=>{ if(aperti.includes(d.querySelector("summary").firstChild.textContent.trim())) d.open = true; }); };
+  if(b.dataset.scadd){ aggiungiConfezione(b.dataset.scadd); riapri(L("\u2795 Aggiunta una confezione fra una settimana: correggi la data o fotografala.","\u2795 Added a pack expiring in a week: correct the date or photograph it.")); return; }
+  if(b.dataset.scfin){ finitaConfezione(b.dataset.scfin); riapri(); return; }
+  if(b.dataset.scf){ const k = b.dataset.scf, ix = +(b.dataset.i || 0); scattaFoto(f=>dataDaFoto(f, iso=>{ segnaScadenza(k, iso, ix); apriScadenze(`✅ ${esc(etichettaDisp(nomeIng(k)))}: ${quandoScade(giorniA(iso))} (${dataLeggibile(iso)}).`); })); return; }
   const g = b.dataset.scg, k = b.dataset.k;
-  segnaScadenza(k, g === "x" ? "" : fraGiorni(+g));
-  const aperti = [...velo.querySelectorAll("details.scad-gruppo[open] summary")].map(x=>x.firstChild.textContent.trim());
-  apriScadenze();
-  velo.querySelectorAll("details.scad-gruppo").forEach(d=>{ if(aperti.includes(d.querySelector("summary").firstChild.textContent.trim())) d.open = true; });
+  segnaScadenza(k, g === "x" ? "" : fraGiorni(+g), b.dataset.i);
+  riapri();
 });
 document.addEventListener("change", e=>{
   const i = e.target.closest("[data-scd]"); if(!i) return;
-  segnaScadenza(i.dataset.scd, i.value || "");
+  segnaScadenza(i.dataset.scd, i.value || "", i.dataset.i);
   if(veloAperto === "scadenze") apriScadenze();
 });
 
@@ -1373,8 +1409,9 @@ document.addEventListener("click", e=>{
     let k = TUTTI_ING.includes(nome) ? nome : (chiaveDi(nome) || "");
     if(!k) k = aggiungiIngrediente(nome, indovinaCat(nome) || "Dispensa");
     if(!S.dispensa.includes(k)){ S.dispensa.push(k); S.dispensaData = new Date().toLocaleDateString("it-IT"); }
-    if(iso) segnaScadenza(k, iso); else salva();
-    apriScadenze(`✅ ${esc(etichettaDisp(nomeIng(k)))} ${L("in dispensa","in the pantry")}${iso ? " · " + quandoScade(giorniA(iso)) + " (" + dataLeggibile(iso) + ")" : ""}.`);
+    const gia = nConfezioni(k);
+    if(iso){ if(gia) aggiungiConfezione(k, iso); else segnaScadenza(k, iso); } else salva();
+    apriScadenze((gia && iso ? "\u2795 " + L("Un\u2019altra confezione: ","Another pack: ") : "") + `✅ ${esc(etichettaDisp(nomeIng(k)))} ${L("in dispensa","in the pantry")}${iso ? " · " + quandoScade(giorniA(iso)) + " (" + dataLeggibile(iso) + ")" : ""}.`);
   }
 });
 
@@ -3365,7 +3402,11 @@ document.addEventListener("click", e=>{
     if(box || nt) salvaGiudizio(r.id, +(box && box.dataset.n || 0), nt ? nt.value : ""); }
   S.menuSett = (S.menuSett || []).filter(x=>x.id !== r.id);
   const inSpesa = document.getElementById("fineSpesa");
-  const tolti = [...document.querySelectorAll("[data-usato]:checked")].map(c=>c.dataset.usato);
+  let tolti = [...document.querySelectorAll("[data-usato]:checked")].map(c=>c.dataset.usato);
+  /* con piu' confezioni ne finisce una (la piu' vicina) e l'ingrediente resta in dispensa */
+  const restano = tolti.filter(k=>nConfezioni(k) > 1);
+  restano.forEach(k=>{ const l = listaScad(k); l.shift(); scriviScad(k, l); });
+  tolti = tolti.filter(k=>!restano.includes(k));
   if(tolti.length){
     S.dispensa = S.dispensa.filter(k=>!tolti.includes(k));
     if(inSpesa && inSpesa.checked)
@@ -3907,7 +3948,8 @@ function apriIngOpz(k){
       <select id="ioCat">${Object.keys(CAT_DISP).map(c=>
         `<option ${c===attuale?"selected":""}>${c}</option>`).join("")}</select></label>
     ${attuale !== "Cantina" ? `<div class="card" style="margin:12px 0">
-      <b>\u23F3 ${L("Scadenza","Use-by date")}</b>${badgeScad(k)}
+      <b>⏳ ${L("Scadenza","Use-by date")}</b>${badgeScad(k)}
+      ${nConfezioni(k) > 1 ? `<p class="mini" style="margin:4px 0 0">${L(`Hai ${nConfezioni(k)} confezioni: qui cambi la data della prima (${dataLeggibile(prossimaScad(k))}). Le altre le vedi in ⏳ Scadenze.`, `You have ${nConfezioni(k)} packs: here you change the first one (${dataLeggibile(prossimaScad(k))}). See the others in ⏳ Use-by dates.`)}</p>` : ""}
       <div class="scad-quick">
         <button class="chip" data-io="sc" data-g="0" data-k="${esc(k)}">${L("oggi","today")}</button>
         <button class="chip" data-io="sc" data-g="1" data-k="${esc(k)}">${L("domani","tomorrow")}</button>
@@ -3917,10 +3959,12 @@ function apriIngOpz(k){
       </div>
       <p class="mini cant-stato" id="scStato" aria-live="polite"></p>
       <label class="campo"><span>${L("Oppure scegli la data","Or pick the date")}</span>
-        <input type="date" id="ioScad" value="${(S.scad||{})[k] || ""}"></label>
+        <input type="date" id="ioScad" value="${prossimaScad(k)}"></label>
       <div class="azioni" style="margin-top:6px">
         <button class="btn small" data-io="scsalva" data-k="${esc(k)}">${L("Salva la scadenza","Save the date")}</button>
-        ${(S.scad||{})[k] ? `<button class="btn small ghost" data-io="scvia" data-k="${esc(k)}">${L("Togli la scadenza","Remove the date")}</button>` : ""}
+        ${prossimaScad(k) ? `<button class="btn small ghost" data-io="scadd" data-k="${esc(k)}">➕ ${L("Salva come un’altra confezione","Save as another pack")}</button>
+           <button class="btn small ghost" data-io="scfin" data-k="${esc(k)}">✔️ ${L("Ne ho finita una","Finished one")}</button>
+           <button class="btn small ghost" data-io="scvia" data-k="${esc(k)}">${L("Togli la scadenza","Remove the date")}</button>` : ""}
       </div></div>` : ""}
     <div class="azioni">
       <button class="btn" data-io="sposta" data-k="${esc(k)}">Sposta qui</button>
@@ -3935,6 +3979,8 @@ document.addEventListener("click", e=>{
   if(a === "chiudi"){ chiudiVelo(); return; }
   const k = b.dataset.k;
   if(a === "scfoto"){ scattaFoto(f=>dataDaFoto(f, iso=>{ document.getElementById("ioScad").value = iso; statoScad("✅ " + L("Data letta: ","Date read: ") + dataLeggibile(iso) + L(". Controllala e tocca «Salva la scadenza».",". Check it and tap “Save the date”.")); })); return; }
+  if(a === "scadd"){ aggiungiConfezione(k, document.getElementById("ioScad").value || ""); chiudiVelo(); ridisegnaDopoScad(); return; }
+  if(a === "scfin"){ finitaConfezione(k); chiudiVelo(); ridisegnaDopoScad(); return; }
   if(a === "sc" || a === "scsalva" || a === "scvia"){
     segnaScadenza(k, a === "sc" ? fraGiorni(+b.dataset.g) : a === "scvia" ? "" : (document.getElementById("ioScad").value || ""));
     chiudiVelo(); ridisegnaDopoScad(); return;
@@ -5068,7 +5114,7 @@ const PERCHE_EN = `<div class="perche">
 
     <div class="sez"><strong>Want to clear out the fridge?</strong></div>
     <p>Every now and then it pays to use up what is about to expire: an omelette or a leftovers dish is a classic. Look up the ingredient you want to use up and the app suggests a recipe you can make from it and from what you have.</p>
-    <p>You can also mark when what you have at home expires: in the pantry press and hold an ingredient, or tap <strong>⏳ Use-by dates</strong>. Pick the date yourself, or photograph it on the pack and the app reads it; with the barcode the app recognises the product and puts it in the pantry. When something is about to expire you'll find it at the top of the home page, with the <strong>“What can I cook with these?”</strong> button showing recipes to use it up.</p>
+    <p>You can also mark when what you have at home expires: in the pantry press and hold an ingredient, or tap <strong>⏳ Use-by dates</strong>. Pick the date yourself, or photograph it on the pack and the app reads it; with the barcode the app recognises the product and puts it in the pantry. If you have several packs of the same product with different dates, each keeps its own: when you finish one tap “Finished one” and the app moves on to the next date. When something is about to expire you'll find it at the top of the home page, with the <strong>“What can I cook with these?”</strong> button showing recipes to use it up.</p>
 
     <div class="sez"><strong>The week at the table</strong></div>
     <p>On any recipe card tap <strong>📅 Add to this week's menu</strong>. On the home page, in <strong>This week's menu</strong>, you'll find the recipes you picked, can change how many are at the table for each, and with one tap put everything missing on the shopping list: quantities from the recipes add up, what you already have stays out and the list is split by department.</p>
@@ -5121,7 +5167,7 @@ function apriPerche(){
 
     <div class="sez"><strong>Vuoi svuotare il frigo?</strong></div>
     <p>Ogni tanto conviene smaltire quello che sta per scadere: una frittata o piatti di recupero in questo caso sono un classico. Scrivi l'ingrediente che vuoi consumare e l'app ti suggerisce una ricetta fattibile a partire da quello che desideri smaltire e quello che hai.</p>
-    <p>Puoi anche segnare quando scade quello che hai in casa: in dispensa tieni premuto un ingrediente, oppure tocca <strong>⏳ Scadenze</strong>. La data la scegli tu, oppure la fotografi sulla confezione e l'app la legge; con il codice a barre l'app riconosce il prodotto e lo mette in dispensa. Quando qualcosa sta per scadere lo trovi in cima alla pagina iniziale, con il tasto <strong>«Cosa cucino con questi?»</strong> che ti mostra le ricette per consumarlo.</p>
+    <p>Puoi anche segnare quando scade quello che hai in casa: in dispensa tieni premuto un ingrediente, oppure tocca <strong>⏳ Scadenze</strong>. La data la scegli tu, oppure la fotografi sulla confezione e l'app la legge; con il codice a barre l'app riconosce il prodotto e lo mette in dispensa. Se hai più confezioni dello stesso prodotto con date diverse, ognuna ha la sua: quando ne finisci una tocca «Ne ho finita una» e l'app passa alla data successiva. Quando qualcosa sta per scadere lo trovi in cima alla pagina iniziale, con il tasto <strong>«Cosa cucino con questi?»</strong> che ti mostra le ricette per consumarlo.</p>
 
     <div class="sez"><strong>La settimana in tavola</strong></div>
     <p>Sulla scheda di ogni ricetta tocca <strong>📅 Nel menu della settimana</strong>. Nella pagina iniziale, in <strong>Menu della settimana</strong>, trovi le ricette scelte, puoi cambiare quanti siete a tavola per ognuna e con un tocco metti nella lista della spesa tutto quello che manca: le quantità delle varie ricette si sommano, quello che hai già in dispensa resta fuori e la lista è divisa per reparto.</p>
