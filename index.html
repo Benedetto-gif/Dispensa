@@ -665,7 +665,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v132</div>
+  <div class="ver-splash" data-no-tr>v133</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -676,7 +676,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v132</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v133</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -3666,13 +3666,27 @@ function ricettaDaMicrodati(doc){
    in quel caso cerco nella pagina il titolo "Procedimento" e prendo i paragrafi che lo seguono */
 const TITOLO_PROC = /^(procedimento|preparazione|come (si )?prepar|istruzioni|esecuzione|metodo|method|directions|instructions|preparation)\b/i;
 const FINE_PROC = /^(consigl|conservazion|varianti|curiosit|ricette (correlate|simili)|potrebbe|ti potrebbe|leggi anche|guarda anche|commenti|abbinament|il consiglio|note\b|tips|related|you may|comments)/i;
+/* tiene solo le righe che sono davvero passaggi: via dosi di ingredienti ("200 g di ricotta"),
+   tempi e dati della scheda ("Tempo totale 43 min", "Difficoltà: facile"); se non resta
+   nessuna frase vera (almeno 35 caratteri) il procedimento si considera mancante */
+function soloPassi(proc){
+  const via = t=>/^(tempo|tempi|preparazione|cottura|riposo|difficolt|porzioni|dosi|costo|calorie|kcal|total|prep|cook)\b[^.]{0,30}$/i.test(t)
+    || /^\d+([.,]\d+)?\s*(g|gr|kg|ml|cl|l|dl|cucchia\w*|pz|n\.?|spicch\w*|fett\w*|bustin\w*)?\b[^.]{0,45}$/i.test(t)
+    || (t.length < 35 && !/[.!]$/.test(t) && !/\b(\w+ate|\w+ete|\w+ite|aggiungi|mescola|cuoci|versa|taglia|lessa|friggi|servi)\b/i.test(t));
+  const r = (proc || []).map(x=>String(x).trim()).filter(t=>t && !via(t));
+  return r.some(t=>t.length >= 35) ? r : [];
+}
 function procDaPagina(doc){
   if(!doc || !doc.body) return [];
   const el = [...doc.body.querySelectorAll("h1,h2,h3,h4,h5,h6,p,li,strong,b,span,div")]
     .filter(e=>!e.closest("nav,footer,header,aside,script,style,form"));
   const testo = e=>(e.textContent || "").replace(/\s+/g, " ").trim();
-  const iTit = el.findIndex(e=>{ const t = testo(e); return t.length < 40 && TITOLO_PROC.test(t) && !e.querySelector("p,li"); });
-  if(iTit < 0) return [];
+  const titoli = [];
+  el.forEach((e, i)=>{ const t = testo(e).replace(/[:.]\s*$/, ""); if(t.length < 30 && TITOLO_PROC.test(t) && !/\d/.test(t) && !e.querySelector("p,li")) titoli.push(i); });
+  for(const iTit of titoli){ const p = soloPassi(passiDopo(el, iTit, testo)); if(p.length) return p; }
+  return [];
+}
+function passiDopo(el, iTit, testo){
   const passi = [], visti = new Set();
   for(let i = iTit + 1; i < el.length && passi.length < 30; i++){
     const e = el[i], t = testo(e), tag = e.tagName;
@@ -3700,7 +3714,7 @@ function leggiRicettaNascosta(html, url){
   if(!o) return null;
 
   const righe = [].concat(o.recipeIngredient || o.ingredients || []).map(pulisciTesto).filter(Boolean);
-  let proc  = passaggiDa(o.recipeInstructions);
+  let proc  = soloPassi(passaggiDa(o.recipeInstructions));
   if(!righe.length) return null;
   if(!proc.length) proc = procDaPagina(doc);
 
@@ -3770,7 +3784,7 @@ async function scaricaDaWeb(url, dove){
       const ric = leggiRicettaNascosta(await vie[i](), url);
       if(ric && !ric.proc.length){
         /* la scheda c'era ma senza procedimento: lo cerco nel testo della pagina */
-        try{ const g = leggiTesto(await scaricaConLimite("https://r.jina.ai/" + url)); if(g.proc.length) ric.proc = g.proc; }catch(e){}
+        try{ const p = soloPassi(leggiTesto(await scaricaConLimite("https://r.jina.ai/" + url)).proc); if(p.length) ric.proc = p; }catch(e){}
       }
       if(ric){ avanzamento(100, 100, "Ricetta trovata: controllo che sia leggibile\u2026"); setTimeout(()=>{ avanzamento(null); fine(); consegnaImport(ric); }, 350); return; }
     }catch(e){}
