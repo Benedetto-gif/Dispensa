@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Che cucino?">
 <script>
-/* Lo sfondo: l'utente sceglie un colore (RGB) e ne memorizza piu' d'uno; il tasto in alto passa da una scelta all'altra.
+/* Lo sfondo: l'utente sceglie un colore (luminosita', brillantezza e tinta in OKLCH, oppure RGB) e ne memorizza piu' d'uno; il tasto in alto passa da una scelta all'altra.
    Da quel colore ricavo da solo superfici, linee e testo (scuro sui colori chiari, chiaro su quelli scuri).
    Va applicato prima del primo disegno, o si vede lo sfarfallio. */
 window.SFONDO = (function(){
@@ -29,6 +29,47 @@ window.SFONDO = (function(){
   function lum(c){ var f = function(v){ v /= 255; return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
     return 0.2126*f(c[0]) + 0.7152*f(c[1]) + 0.0722*f(c[2]); }
   function scuro(c){ return lum(c) < 0.18; }
+  /* --- OKLCH: luminosita' (L 0-1), brillantezza (C), tinta (H 0-360) --- */
+  function lin(v){ v /= 255; return v <= 0.04045 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); }
+  function gam(v){ return 255 * (v <= 0.0031308 ? 12.92*v : 1.055*Math.pow(v, 1/2.4) - 0.055); }
+  function aOklch(c){
+    var r = lin(c[0]), g = lin(c[1]), b = lin(c[2]);
+    var l = Math.cbrt(0.4122214708*r + 0.5363325363*g + 0.0514459929*b),
+        m = Math.cbrt(0.2119034982*r + 0.6806995451*g + 0.1073969566*b),
+        s = Math.cbrt(0.0883024619*r + 0.2817188376*g + 0.6299787005*b);
+    var L = 0.2104542553*l + 0.7936177850*m - 0.0040720468*s,
+        A = 1.9779984951*l - 2.4285922050*m + 0.4505937099*s,
+        B = 0.0259040371*l + 0.7827717662*m - 0.8086757660*s;
+    var h = Math.atan2(B, A) * 180 / Math.PI; if(h < 0) h += 360;
+    return [L, Math.sqrt(A*A + B*B), h];
+  }
+  function grezzo(L, C, H){
+    var a = C * Math.cos(H*Math.PI/180), b = C * Math.sin(H*Math.PI/180);
+    var l = Math.pow(L + 0.3963377774*a + 0.2158037573*b, 3),
+        m = Math.pow(L - 0.1055613458*a - 0.0638541728*b, 3),
+        s = Math.pow(L - 0.0894841775*a - 1.2914855480*b, 3);
+    return [ 4.0767416621*l - 3.3077115913*m + 0.2309699292*s,
+            -1.2684380046*l + 2.6097574011*m - 0.3413193965*s,
+            -0.0041960863*l - 0.7034186147*m + 1.7076147010*s];
+  }
+  function dentro(v){ return v.every(function(x){ return x >= -0.0005 && x <= 1.0005; }); }
+  /* da OKLCH a RGB; se il colore non e' visualizzabile abbasso solo la brillantezza, tinta e luce restano */
+  function daOklch(L, C, H){
+    L = Math.max(0, Math.min(1, L)); C = Math.max(0, C);
+    if(!dentro(grezzo(L, C, H))){
+      var lo = 0, hi = C;
+      for(var i = 0; i < 24; i++){ var md = (lo + hi) / 2; if(dentro(grezzo(L, md, H))) lo = md; else hi = md; }
+      C = lo;
+    }
+    return grezzo(L, C, H).map(function(v){ return lim(gam(Math.max(0, Math.min(1, v)))); });
+  }
+  /* riquadri colorati: brillantezza (moltiplica la C) e luce (sposta la L) */
+  function riq(){ try{ var r = JSON.parse(localStorage.getItem("checucino.riq") || "null"); if(r) return {b:+r.b || 1, l:+r.l || 0}; }catch(e){} return {b:1, l:0}; }
+  function applicaRiq(r){
+    R.style.setProperty("--riq-b", String(Math.max(.3, Math.min(1.8, r.b))));
+    R.style.setProperty("--riq-l", String(Math.max(-.12, Math.min(.12, r.l))));
+  }
+  function salvaRiq(r){ try{ localStorage.setItem("checucino.riq", JSON.stringify(r)); }catch(e){} applicaRiq(r); }
   function lista(){
     try{ var l = JSON.parse(localStorage.getItem("checucino.sfondi") || "null");
       if(l && l.length) return l.map(function(c){ return [lim(c[0]), lim(c[1]), lim(c[2])]; }); }catch(e){}
@@ -49,17 +90,23 @@ window.SFONDO = (function(){
   }
   function salva(l, i){ try{ localStorage.setItem("checucino.sfondi", JSON.stringify(l)); localStorage.setItem("checucino.sfondoSel", String(i)); }catch(e){} }
   function applica(c){
-    var d = scuro(c), v = d
-      ? {carta:c, superficie:mix(c,W,.05), superficie2:mix(c,W,.12), linea:mix(c,W,.2), inchiostro:mix(c,W,.93), "inchiostro-soft":mix(c,W,.7)}
-      : {carta:c, superficie:mix(c,W,.7), superficie2:mix(c,B,.06), linea:mix(c,B,.14), inchiostro:mix(c,B,.86), "inchiostro-soft":mix(c,B,.62)};
+    /* superfici, linee e testi ricavati in OKLCH: stessa tinta dello sfondo, cambia solo la luce */
+    var d = scuro(c), k = aOklch(c), L = k[0], C = k[1], H = k[2];
+    var f = function(l, cc){ return daOklch(l, cc, H); };
+    var v = d
+      ? {carta:c, superficie:f(L+.035, C), superficie2:f(L+.08, C), linea:f(L+.15, C*.9),
+         inchiostro:f(Math.max(.94, L+.5), Math.min(C*.3, .02)), "inchiostro-soft":f(Math.max(.8, L+.4), Math.min(C*.5, .03))}
+      : {carta:c, superficie:f(L+(1-L)*.7, C*.4), superficie2:f(L-.04, C), linea:f(L-.12, C*1.1),
+         inchiostro:f(Math.max(.12, Math.min(.27, L-.48)), Math.min(C*1.5, .04)), "inchiostro-soft":f(Math.max(.2, Math.min(.47, L-.34)), Math.min(C*1.3, .035))};
     for(var k in v) R.style.setProperty("--" + k, hex(v[k]));
     R.style.setProperty("--tono", d ? "80" : "15");
     if(d) R.setAttribute("data-scuro", ""); else R.removeAttribute("data-scuro");
     var m = document.getElementById("metaTema"); if(m) m.content = hex(c);
   }
-  return {PREDEF:PREDEF, hex:hex, lum:lum, scuro:scuro, lista:lista, sel:sel, salva:salva, applica:applica};
+  return {PREDEF:PREDEF, hex:hex, lum:lum, scuro:scuro, lista:lista, sel:sel, salva:salva, applica:applica,
+    aOklch:aOklch, daOklch:daOklch, riq:riq, salvaRiq:salvaRiq, applicaRiq:applicaRiq};
 })();
-try{ SFONDO.applica(SFONDO.lista()[SFONDO.sel()]); }catch(e){}
+try{ SFONDO.applica(SFONDO.lista()[SFONDO.sel()]); SFONDO.applicaRiq(SFONDO.riq()); }catch(e){}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -273,6 +320,24 @@ body[data-filigrana="1"]::before{
 :root[data-scuro] .bcella.c-mattone,:root[data-scuro] .pcella.c-mattone{background:#A14D1D}
 .bcella.c-bordeaux, .pcella.c-bordeaux{background:#8B3A52;color:#fff}
 :root[data-scuro] .pcella.c-bordeaux{background:#9E4A62}
+/* Gli stessi colori in OKLCH: i cursori "Riquadri colorati" in Aspetto ne regolano
+   brillantezza (--riq-b moltiplica la C) e luce (--riq-l sposta la L, con un tetto per il testo bianco). */
+@supports (color: oklch(clamp(.2, calc(.3 + 0), .6) calc(.1 * 1) 30)){
+  .bcella.c-verde, .pcella.c-verde{background:oklch(clamp(.28, calc(0.5272 + var(--riq-l, 0)), .64) min(.24, calc(0.1679 * var(--riq-b, 1))) 29.9)}
+  :root[data-scuro] .bcella.c-verde, :root[data-scuro] .pcella.c-verde{background:oklch(clamp(.28, calc(0.5248 + var(--riq-l, 0)), .64) min(.24, calc(0.1572 * var(--riq-b, 1))) 30.3)}
+  .bcella.c-menta, .pcella.c-menta{background:oklch(clamp(.28, calc(0.5052 + var(--riq-l, 0)), .64) min(.24, calc(0.1268 * var(--riq-b, 1))) 248.6)}
+  :root[data-scuro] .bcella.c-menta, :root[data-scuro] .pcella.c-menta{background:oklch(clamp(.28, calc(0.5043 + var(--riq-l, 0)), .64) min(.24, calc(0.1158 * var(--riq-b, 1))) 246.0)}
+  .bcella.c-crema, .pcella.c-crema{background:oklch(clamp(.28, calc(0.5088 + var(--riq-l, 0)), .64) min(.24, calc(0.1058 * var(--riq-b, 1))) 78.7)}
+  :root[data-scuro] .bcella.c-crema, :root[data-scuro] .pcella.c-crema{background:oklch(clamp(.28, calc(0.5039 + var(--riq-l, 0)), .64) min(.24, calc(0.1005 * var(--riq-b, 1))) 83.0)}
+  .bcella.c-senape, .pcella.c-senape{background:oklch(clamp(.28, calc(0.4708 + var(--riq-l, 0)), .64) min(.24, calc(0.1527 * var(--riq-b, 1))) 302.8)}
+  :root[data-scuro] .bcella.c-senape, :root[data-scuro] .pcella.c-senape{background:oklch(clamp(.28, calc(0.5299 + var(--riq-l, 0)), .64) min(.24, calc(0.156 * var(--riq-b, 1))) 302.4)}
+  .bcella.c-auto, .pcella.c-auto{background:oklch(clamp(.28, calc(0.4912 + var(--riq-l, 0)), .64) min(.24, calc(0.0905 * var(--riq-b, 1))) 170.2)}
+  :root[data-scuro] .bcella.c-auto, :root[data-scuro] .pcella.c-auto{background:oklch(clamp(.28, calc(0.4948 + var(--riq-l, 0)), .64) min(.24, calc(0.09 * var(--riq-b, 1))) 171.2)}
+  .bcella.c-mattone, .pcella.c-mattone{background:oklch(clamp(.28, calc(0.5206 + var(--riq-l, 0)), .64) min(.24, calc(0.1379 * var(--riq-b, 1))) 44.8)}
+  :root[data-scuro] .bcella.c-mattone, :root[data-scuro] .pcella.c-mattone{background:oklch(clamp(.28, calc(0.5181 + var(--riq-l, 0)), .64) min(.24, calc(0.1261 * var(--riq-b, 1))) 46.7)}
+  .bcella.c-bordeaux, .pcella.c-bordeaux{background:oklch(clamp(.28, calc(0.4647 + var(--riq-l, 0)), .64) min(.24, calc(0.1128 * var(--riq-b, 1))) 4.0)}
+  :root[data-scuro] .bcella.c-bordeaux, :root[data-scuro] .pcella.c-bordeaux{background:oklch(clamp(.28, calc(0.5219 + var(--riq-l, 0)), .64) min(.24, calc(0.1142 * var(--riq-b, 1))) 3.8)}
+}
 /* pcella colorata: testo e icona leggibili sopra il colore pieno */
 .pcella[class*="c-"]{border-color:transparent}
 .pcella[class*="c-"] small{color:#fff;opacity:1;font-weight:600}
@@ -481,6 +546,13 @@ body[data-filigrana="1"]::before{
 .asp-pv-m{flex-basis:100%;color:var(--inchiostro-soft);font-size:.9rem}
 .asp-cur{display:grid;grid-template-columns:52px 1fr 62px;align-items:center;gap:10px;margin:10px 0}
 .asp-k{font-weight:800;font-size:.9rem}
+.asp-cur.asp-ok{grid-template-columns:78px 1fr 62px}
+.asp-rgb{margin-top:6px;border-top:1px solid var(--linea);padding-top:8px}
+.asp-rgb summary{cursor:pointer;font-weight:700;font-size:.9rem;color:var(--inchiostro-soft)}
+.asp-riq-prev{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:6px 0 4px}
+.asp-riq-prev .bcella{height:34px;padding:0;border-radius:10px;cursor:default}
+#aspORL{background:linear-gradient(90deg,#3a3a3a,#bdbdbd)}
+#aspORB{background:linear-gradient(90deg,#8a8a8a,#E5482F,#1E7BD6,#7B3FC9)}
 .asp-cur input[type=range]{-webkit-appearance:none;appearance:none;height:14px;border-radius:999px;border:1px solid var(--linea);margin:0;width:100%}
 .asp-cur input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--inchiostro);box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .asp-cur input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--inchiostro)}
@@ -830,7 +902,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v162</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v165</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -6083,13 +6155,18 @@ function apriImpostazioni(){
   const filigrana = localStorage.getItem("checucino.filigrana") === "1";
   const l = SFONDO.lista(), i = SFONDO.sel(), c = l[i];
   const pallino = (col, n, on) => `<span class="asp-pal${on?" on":""}" style="background:${SFONDO.hex(col)};color:${SFONDO.scuro(col)?"#fff":"#111"}">${n}</span>`;
+  const OKC = 0.3;   /* brillantezza massima del cursore (C di OKLCH) */
+  const ok = SFONDO.aOklch(c), rq = SFONDO.riq();
+  const okCur = (k, nome, mn, mx, val) => `<label class="asp-cur asp-ok"><span class="asp-k">${nome}</span>
+      <input type="range" min="${mn}" max="${mx}" step="1" id="aspO${k}" value="${val}" aria-label="${nome}">
+      <input type="number" min="${mn}" max="${mx}" id="aspO${k}n" value="${val}" inputmode="numeric" aria-label="${nome}"></label>`;
   const cursore = (k, nome, j) => `<label class="asp-cur"><span class="asp-k" style="color:${["#C62828","#2E7D32","#1565C0"][j]}">${nome}</span>
       <input type="range" min="0" max="255" step="1" id="asp${k}" value="${c[j]}" aria-label="${nome}">
       <input type="number" min="0" max="255" id="asp${k}n" value="${c[j]}" inputmode="numeric" aria-label="${nome}"></label>`;
   apriVelo("impostazioni", `
     <div class="velo-top"><h2>\u{1F3A8} ${L("Aspetto","Appearance")}</h2>
       <button class="chiudi" data-imp="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
-    <p class="mini">${L("Scegli il colore di sfondo con i tre cursori (rosso, verde, blu). Ogni modifica si salva da sola. Puoi tenere più scelte: il tasto rotondo in alto con il numero passa dall’una all’altra. Testi e riquadri si adattano da soli, scuri sui colori chiari e chiari su quelli scuri.","Choose the background colour with the three sliders (red, green, blue). Every change saves itself. You can keep several choices: the round numbered button at the top switches between them. Text and boxes adapt on their own.")}</p>
+    <p class="mini">${L("Scegli lo sfondo con tre cursori: luce (da scuro a chiaro), brillo (da grigio a colore pieno) e tinta (il colore). Ogni modifica si salva da sola. Puoi tenere più scelte: il tasto rotondo in alto con il numero passa dall’una all’altra. Testi e riquadri si adattano da soli, scuri sui colori chiari e chiari su quelli scuri.","Choose the background with three sliders: light (dark to light), vividness (grey to full colour) and hue (the colour). Every change saves itself. You can keep several choices: the round numbered button at the top switches between them. Text and boxes adapt on their own.")}</p>
     <div class="sez">${L("Le tue scelte","Your choices")}</div>
     <div class="asp-scelte">${l.map((col,n)=>`<button type="button" class="asp-scelta" data-asp-sel="${n}" aria-label="${L("Scelta","Choice")} ${n+1}">${pallino(col, n+1, n===i)}</button>`).join("")}
       <button type="button" class="asp-scelta asp-nuova" id="aspNuova" ${l.length >= 9 ? "disabled" : ""}>＋ ${L("Nuova","New")}</button></div>
@@ -6099,10 +6176,22 @@ function apriImpostazioni(){
         <span class="asp-pv-c" id="aspHexV">${SFONDO.hex(c).toUpperCase()}</span>
         <span class="asp-pv-m">${L("Così si legge un testo sopra","This is how text reads on it")}</span>
       </div>
-      ${cursore("R", L("Rosso","Red"), 0)}${cursore("G", L("Verde","Green"), 1)}${cursore("B", L("Blu","Blue"), 2)}
+      ${okCur("L", "☀️ " + L("Luce","Light"), 0, 100, Math.round(ok[0]*100))}
+      ${okCur("C", "✨ " + L("Brillo","Vivid"), 0, 100, Math.min(100, Math.round(ok[1]/OKC*100)))}
+      ${okCur("H", "🎨 " + L("Tinta","Hue"), 0, 359, Math.round(ok[2]))}
+      <details class="asp-rgb"><summary>🎛️ ${L("Regola per canali RGB (rosso, verde, blu)","Adjust by RGB channels (red, green, blue)")}</summary>
+      ${cursore("R", L("Rosso","Red"), 0)}${cursore("G", L("Verde","Green"), 1)}${cursore("B", L("Blu","Blue"), 2)}</details>
       <label class="campo" style="margin-top:8px"><span>${L("Codice colore (se lo conosci)","Colour code (if you know it)")}</span>
         <input type="text" id="aspHex" value="${SFONDO.hex(c).toUpperCase()}" maxlength="7" autocapitalize="characters" data-no-tr></label>
       ${l.length > 1 ? `<button type="button" class="btn small btn-elimina" id="aspElimina" style="margin-top:10px">\u{1F5D1}️ ${L("Elimina la scelta","Delete choice")} ${i+1}</button>` : ""}
+    </div>
+    <div class="sez">${L("Riquadri colorati","Coloured boxes")}</div>
+    <div class="asp-box">
+      <p class="mini" style="margin-top:0">${L("Vale per tutti i riquadri a colore pieno (prima pagina, dispensa, scelte). La luce ha un tetto, così il testo bianco resta sempre leggibile.","Applies to all full-colour boxes. Light has a ceiling so white text stays readable.")}</p>
+      <div class="asp-riq-prev">${["verde","menta","crema","senape","auto","mattone"].map(k=>`<span class="bcella c-${k}"></span>`).join("")}</div>
+      ${okCur("RB", "✨ " + L("Brillo","Vivid"), 30, 180, Math.round(rq.b*100))}
+      ${okCur("RL", "☀️ " + L("Luce","Light"), -12, 12, Math.round(rq.l*100))}
+      <button type="button" class="btn small" id="aspRiqZero" style="margin-top:4px">↺ ${L("Valori iniziali","Reset")}</button>
     </div>
     <div class="sez">${L("Parti da un colore già pronto","Start from a ready-made colour")}</div>
     <div class="chips" id="aspPronti">${SFONDO.PREDEF.map((p,n)=>`<button class="chip" data-pronto="${n}"><span class="asp-dot" style="background:${SFONDO.hex(p.c)}"></span>${L(p.n,["Sage green","Cream","Light blue","Old rose","Deep blue","Charcoal","Dark green","Dark burgundy"][n])}</button>`).join("")}</div>
@@ -6118,6 +6207,21 @@ function apriImpostazioni(){
     document.getElementById("asp"+k).style.background = `linear-gradient(90deg, ${SFONDO.hex(a)}, ${SFONDO.hex(b)})`;
   });
   let attesa = null;
+  /* tinta ricordata: con brillo zero (grigio) la tinta non esiste, ma il cursore non deve saltare */
+  let tintaMem = ok[2], daOk = false;
+  const okDaCur = () => [+document.getElementById("aspOL").value/100, +document.getElementById("aspOC").value/100*OKC, +document.getElementById("aspOH").value];
+  const dipingiOk = (o) => {
+    const g = (fn, n) => "linear-gradient(90deg," + Array.from({length:n+1}, (_,i)=>SFONDO.hex(fn(i/n))).join(",") + ")";
+    document.getElementById("aspOL").style.background = g(t=>SFONDO.daOklch(t, o[1], o[2]), 10);
+    document.getElementById("aspOC").style.background = g(t=>SFONDO.daOklch(o[0], t*OKC, o[2]), 10);
+    document.getElementById("aspOH").style.background = g(t=>SFONDO.daOklch(Math.min(.8, Math.max(.45, o[0])), Math.max(.1, o[1]), t*360), 12);
+  };
+  const metti = (id, v) => { const r = document.getElementById(id), n = document.getElementById(id+"n"); r.value = v; if(document.activeElement !== n) n.value = v; };
+  const usaOk = (salvaOra) => {
+    const o = okDaCur(); tintaMem = o[2];
+    ["L","C","H"].forEach(k=>{ const n = document.getElementById("aspO"+k+"n"); if(document.activeElement !== n) n.value = document.getElementById("aspO"+k).value; });
+    daOk = true; usa(SFONDO.daOklch(o[0], o[1], o[2]), salvaOra); daOk = false;
+  };
   const usa = (col, salvaOra) => {
     const lst = SFONDO.lista(), n = SFONDO.sel();
     lst[n] = col.map(x=>Math.max(0, Math.min(255, Math.round(+x || 0))));
@@ -6129,11 +6233,34 @@ function apriImpostazioni(){
     const pal = document.querySelector(`[data-asp-sel="${n}"] .asp-pal`);
     if(pal){ pal.style.background = h; pal.style.color = SFONDO.scuro(lst[n]) ? "#fff" : "#111"; }
     dipingiCursori(lst[n]);
+    if(!daOk){
+      const o = SFONDO.aOklch(lst[n]); if(o[1] > .004) tintaMem = o[2];
+      metti("aspOL", Math.round(o[0]*100)); metti("aspOC", Math.min(100, Math.round(o[1]/OKC*100))); metti("aspOH", Math.round(tintaMem));
+    }
+    dipingiOk(okDaCur());
     clearTimeout(attesa);
     const memo = ()=>{ SFONDO.salva(lst, n); aggiornaTastoSfondo(); };
     if(salvaOra) memo(); else attesa = setTimeout(memo, 250);
   };
   dipingiCursori(c);
+  dipingiOk(okDaCur());
+  ["L","C","H"].forEach(k=>{
+    const r = document.getElementById("aspO"+k), n = document.getElementById("aspO"+k+"n");
+    r.oninput = ()=>usaOk();
+    r.onchange = ()=>usaOk(true);
+    n.oninput = ()=>{ const v = n.value; if(v === "" || isNaN(+v)) return; r.value = Math.max(+r.min, Math.min(+r.max, +v)); usaOk(); };
+  });
+  const usaRiq = () => {
+    const v = {b:+document.getElementById("aspORB").value/100, l:+document.getElementById("aspORL").value/100};
+    ["RB","RL"].forEach(k=>{ const n = document.getElementById("aspO"+k+"n"); if(document.activeElement !== n) n.value = document.getElementById("aspO"+k).value; });
+    SFONDO.salvaRiq(v);
+  };
+  ["RB","RL"].forEach(k=>{
+    const r = document.getElementById("aspO"+k), n = document.getElementById("aspO"+k+"n");
+    r.oninput = usaRiq;
+    n.oninput = ()=>{ const v = n.value; if(v === "" || isNaN(+v)) return; r.value = Math.max(+r.min, Math.min(+r.max, +v)); usaRiq(); };
+  });
+  document.getElementById("aspRiqZero").onclick = ()=>{ metti("aspORB", 100); metti("aspORL", 0); usaRiq(); };
   K.forEach(k=>{
     document.getElementById("asp"+k).oninput = ()=>usa(leggi());
     document.getElementById("asp"+k).onchange = ()=>usa(leggi(), true);
