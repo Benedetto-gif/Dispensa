@@ -383,6 +383,23 @@ body[data-filigrana="1"]::before{
 .ab-via .ab-tolto{display:block}
 .ab-via .ab-campi{display:none}
 .ab-via > .ab-testa b{text-decoration:line-through;opacity:.55}
+.mie-elenco{margin:12px 0;padding:10px 14px;border-radius:14px;background:#2E7D4F;color:#fff}
+.mie-elenco>summary{cursor:pointer;font-weight:700;font-size:1.02rem}
+.mie-elenco>.mini{color:#fff;opacity:.92}
+.mie-l{list-style:none;margin:8px 0 2px;padding:0}
+.mie-l>li{border-top:1px solid rgba(255,255,255,.28)}
+.mia-riga{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:11px 2px;cursor:pointer;color:#fff}
+.mia-riga:focus-visible{outline:2px solid #FFE3A6;outline-offset:2px;border-radius:8px}
+.mia-riga .mini{color:#fff;opacity:.85}
+.mia-ic{font-size:1.25rem;line-height:1}
+.mia-nome{flex:1;font-weight:600}
+.mia-car{transition:transform .2s;font-size:.9rem}
+.mia-riga[aria-expanded="true"] .mia-car{transform:rotate(90deg)}
+.mia-riga.mia-ok .mia-nome::after{content:" \2713";color:#C9F2B8}
+.mia-anteprima{padding:4px 0 12px;color:var(--inchiostro)}
+.mia-verdetto{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.mia-verdetto .btn.ghost{color:#fff;border-color:#fff}
+.mia-verdetto .btn-elimina{background:#C0392B;color:#fff;border-color:#C0392B}
 .mie-come{margin:12px 0;padding:10px 14px;border-radius:14px;background:#1F6F8B;color:#fff}
 .mie-come summary{cursor:pointer;font-weight:700}
 .mie-come ol{margin:8px 0 2px;padding-left:1.3em}
@@ -715,7 +732,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v150</div>
+  <div class="ver-splash" data-no-tr>v151</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -726,7 +743,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v150</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v151</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -4869,10 +4886,14 @@ function apriMie(){
         <li>${L("Controlla ingredienti e procedimento e salva: puoi correggerli a mano.","Check ingredients and method and save: you can correct them by hand.")}</li>
       </ol>
       <p class="mini" style="color:#fff">${L("Se la ricetta viene da un altro sito ti avviso: pu\u00f2 arrivare incompleta, e puoi comunque eliminarla. Su iPhone, dove Condividi non arriva all\u2019app, copia il link e usa \u00abIncolla una ricetta dal web\u00bb.","If the recipe comes from another site I\u2019ll warn you: it may arrive incomplete, and you can still delete it. On iPhone, where Share can\u2019t reach the app, copy the link and use \u201cPaste a recipe from the web\u201d.")}</p></details>
-    ${S.mie.length ? `<ul class="spesa-l">${S.mie.map(r=>
-      `<li><span><span data-no-tr>${esc(nomeR(r))}</span> <span class="mini">${esc(r.cat)} \u00b7 ${r.tempo} min</span></span>
-        <button class="chiudi" data-mia="mod" data-id="${r.id}">Modifica</button>
-        <button class="chiudi" data-mia="del" data-id="${r.id}">Elimina</button></li>`).join("")}</ul>`
+    ${S.mie.length ? `<details class="mie-elenco"><summary>\u{1F4DA} ${L("Le tue ricette","Your recipes")} (${S.mie.length})</summary>
+      <p class="mini" style="margin:6px 0 2px">${L("Tocca una ricetta per vederla com\u2019\u00e8 nell\u2019app: se \u00e8 giusta la tieni, altrimenti la correggi o la elimini.","Tap a recipe to see it as it is in the app: if it\u2019s right keep it, otherwise correct it or delete it.")}</p>
+      <ul class="mie-l">${S.mie.map(r=>
+      `<li><button type="button" class="mia-riga" data-mia="vedi" data-id="${r.id}" aria-expanded="false">
+          <span class="mia-ic" aria-hidden="true">${eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"\u{1F37D}\uFE0F")}</span>
+          <span class="mia-nome"><span data-no-tr>${esc(nomeR(r))}</span> <span class="mini">${esc(r.cat)} \u00b7 ${r.tempo} min</span></span>
+          <span class="mia-car" aria-hidden="true">\u25B8</span></button>
+        <div class="mia-anteprima" id="miaPrev${r.id}" hidden></div></li>`).join("")}</ul></details>`
       : `<div class="vuoto"><p>Non hai ancora ricette tue.</p>
          <p class="mini">Scrivile a mano oppure incolla il testo di una ricetta trovata sul web: la riscrivo io nel formato dell'app.</p></div>`}`);
 }
@@ -4886,6 +4907,31 @@ document.addEventListener("click", e=>{
   if(a === "foto"){ apriImport(); setTimeout(()=>{ const x = document.querySelector("[data-imp-foto]"); if(x) x.click(); }, 50); return; }
   const r = trovaRicetta(+b.dataset.id);
   if(!r) return;
+  if(a === "vedi"){
+    const box = document.getElementById("miaPrev" + r.id); if(!box) return;
+    const apri = box.hidden;
+    /* una sola ricetta aperta alla volta */
+    document.querySelectorAll(".mia-anteprima").forEach(x=>{ x.hidden = true; x.innerHTML = ""; });
+    document.querySelectorAll(".mia-riga").forEach(x=>x.setAttribute("aria-expanded","false"));
+    if(apri){
+      box.innerHTML = `<div class="ric-grid">${scheda(valutaCompleta(r)).replace('<details class="ric', '<details open class="ric')}</div>
+        <div class="mia-verdetto">
+          <button class="btn small" data-mia="tieni" data-id="${r.id}">\u{1F44D} ${L("Va bene, la tengo","Looks right, keep it")}</button>
+          <button class="btn small ghost" data-mia="mod" data-id="${r.id}">\u270F\uFE0F ${L("Correggi","Correct")}</button>
+          <button class="btn small btn-elimina" data-mia="del" data-id="${r.id}">\u{1F5D1}\uFE0F ${L("Elimina","Delete")}</button>
+        </div>`;
+      box.hidden = false; b.setAttribute("aria-expanded","true");
+      box.scrollIntoView({block:"nearest", behavior:"smooth"});
+    }
+    return;
+  }
+  if(a === "tieni"){
+    const box = document.getElementById("miaPrev" + r.id);
+    if(box){ box.hidden = true; box.innerHTML = ""; }
+    const riga = document.querySelector(`.mia-riga[data-id="${r.id}"]`);
+    if(riga){ riga.setAttribute("aria-expanded","false"); riga.classList.add("mia-ok"); }
+    return;
+  }
   if(a === "mod") apriEditor(r);
   if(a === "del" && confirm("Elimino \u00ab" + r.n + "\u00bb?")){
     S.mie = S.mie.filter(x=>x.id !== r.id); salva(); apriMie();
