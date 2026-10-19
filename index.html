@@ -830,7 +830,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v161</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v162</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2605,6 +2605,7 @@ function tappaVoglia(){
 }
 
 /* --- 5. ricette --- */
+const ICONA_STILE = {onnivoro:"\u{1F356}", vegetariano:"\u{1F95A}", vegano:"\u{1F331}"};
 let cambiaVoloAperto = false;   /* il riquadro portata/pasto parte chiuso; resta aperto mentre lo usi */
 function tappaRicette(){
   const lista = filtra();
@@ -2620,7 +2621,7 @@ function tappaRicette(){
     <p>${pronte ? `${pronte} le puoi fare adesso senza uscire di casa.`
                 : "Nessuna è completa: per le prime in elenco manca pochissimo."}</p>
     <div class="riep">
-      <span>${sess.stile}${sess.accordo==="diverso"&&tavolata().length>1?" · differenziato":""}</span>
+      ${sess.accordo==="diverso"&&tavolata().length>1?`<span>differenziato</span>`:""}
       ${sess.tempo!=="999"?`<span>entro ${sess.tempo} min</span>`:""}
       ${sess.modo==="recupero"&&sess.recupero.length?`<span>da consumare: ${esc(sess.recupero.join(", "))}</span>`:""}
       ${sess.modo==="idea"&&sess.cerca?`<span>“${esc(sess.cerca)}”</span>`:""}
@@ -2630,6 +2631,7 @@ function tappaRicette(){
     <details class="cambia-al-volo" id="cambiaVolo" ${cambiaVoloAperto?"open":""}>
       <summary>${sess.unico && !sess.portate.length ? "\u{1F958} " + L("piatto unico","one-dish meal") : sess.portate.length ? sess.portate.map(p2=>(ICONA_PORTATA[p2]||"") + " " + p2.toLowerCase()).join(" · ") + (sess.unico ? " · \u{1F958} " + L("unico","one-dish") : "") : "\u{1F37D}️ " + L("tutte le portate","all courses")}
         · ${pastoAttuale()==="cena" ? "\u{1F319} " + L("cena","dinner") : "☀️ " + L("pranzo","lunch")}
+        · ${ICONA_STILE[sess.stile] || ""} ${sess.stile}
         <span class="cv-cambia">${L("cambia","change")}</span></summary>
       <div class="chips" id="rPort" style="margin-top:10px">
         <button class="chip ${!sess.portate.length && !sess.unico ? "on" : ""}" data-rport="">\u{1F37D}️ ${L("tutte le portate","all courses")}</button>
@@ -2639,6 +2641,9 @@ function tappaRicette(){
       <div class="chips" id="rPasto" style="margin-top:8px">
         <button class="chip ${pastoAttuale()==="pranzo"?"on":""}" data-rpasto="pranzo">☀️ ${L("pranzo","lunch")}</button>
         <button class="chip ${pastoAttuale()==="cena"?"on":""}" data-rpasto="cena">\u{1F319} ${L("cena","dinner")}</button>
+      </div>
+      <div class="chips" id="rStile" style="margin-top:8px">
+        ${["onnivoro","vegetariano","vegano"].map(v=>`<button class="chip ${sess.stile===v?"on":""}" data-rstile="${v}">${ICONA_STILE[v]} ${v}</button>`).join("")}
       </div>
     </details>
     <div class="chips" style="margin-top:10px">
@@ -2691,6 +2696,7 @@ function tappaRicette(){
     tappaRicette();
   });
   app.querySelectorAll("[data-rpasto]").forEach(b=>b.onclick=()=>{ sess.pasto = b.dataset.rpasto; tappaRicette(); });
+  app.querySelectorAll("[data-rstile]").forEach(b=>b.onclick=()=>{ sess.stile = b.dataset.rstile; tappaRicette(); });
   const cv = document.getElementById("cambiaVolo"); if(cv) cv.ontoggle = ()=>{ cambiaVoloAperto = cv.open; };
   document.getElementById("fPref").onclick  = ()=>{ soloPref = true;  tappaRicette(); };
   app.querySelectorAll("#ordCrit .chip, #ordNutri .chip").forEach(b=>b.onclick=()=>{
