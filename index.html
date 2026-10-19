@@ -396,6 +396,8 @@ body[data-filigrana="1"]::before{
 .mia-car{transition:transform .2s;font-size:.9rem}
 .mia-riga[aria-expanded="true"] .mia-car{transform:rotate(90deg)}
 .mia-riga.mia-ok .mia-nome::after{content:" \2713";color:#C9F2B8}
+.mia-dacontr{background:#FFE3A6;color:#5A3A00;border-radius:999px;padding:1px 8px;font-size:.85rem}
+.mia-stato{align-self:center;font-weight:700;color:#C9F2B8;margin-right:4px}
 .mia-anteprima{padding:4px 0 12px;color:var(--inchiostro)}
 .mia-verdetto{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .mia-verdetto .btn.ghost{color:#fff;border-color:#fff}
@@ -732,7 +734,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v151</div>
+  <div class="ver-splash" data-no-tr>v152</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -743,7 +745,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v151</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v152</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -4886,10 +4888,10 @@ function apriMie(){
         <li>${L("Controlla ingredienti e procedimento e salva: puoi correggerli a mano.","Check ingredients and method and save: you can correct them by hand.")}</li>
       </ol>
       <p class="mini" style="color:#fff">${L("Se la ricetta viene da un altro sito ti avviso: pu\u00f2 arrivare incompleta, e puoi comunque eliminarla. Su iPhone, dove Condividi non arriva all\u2019app, copia il link e usa \u00abIncolla una ricetta dal web\u00bb.","If the recipe comes from another site I\u2019ll warn you: it may arrive incomplete, and you can still delete it. On iPhone, where Share can\u2019t reach the app, copy the link and use \u201cPaste a recipe from the web\u201d.")}</p></details>
-    ${S.mie.length ? `<details class="mie-elenco"><summary>\u{1F4DA} ${L("Le tue ricette","Your recipes")} (${S.mie.length})</summary>
+    ${S.mie.length ? `<details class="mie-elenco"><summary>\u{1F4DA} ${L("Le tue ricette","Your recipes")} (${S.mie.length})${(n=>n?` \u00b7 <span class="mia-dacontr">${n} ${L(n===1?"da controllare":"da controllare", n===1?"to check":"to check")}</span>`:` \u00b7 ${L("tutte convalidate \u2713","all validated \u2713")}`)(S.mie.filter(x=>!x.validata).length)}</summary>
       <p class="mini" style="margin:6px 0 2px">${L("Tocca una ricetta per vederla com\u2019\u00e8 nell\u2019app: se \u00e8 giusta la tieni, altrimenti la correggi o la elimini.","Tap a recipe to see it as it is in the app: if it\u2019s right keep it, otherwise correct it or delete it.")}</p>
       <ul class="mie-l">${S.mie.map(r=>
-      `<li><button type="button" class="mia-riga" data-mia="vedi" data-id="${r.id}" aria-expanded="false">
+      `<li><button type="button" class="mia-riga${r.validata?" mia-ok":""}" data-mia="vedi" data-id="${r.id}" aria-expanded="false">
           <span class="mia-ic" aria-hidden="true">${eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"\u{1F37D}\uFE0F")}</span>
           <span class="mia-nome"><span data-no-tr>${esc(nomeR(r))}</span> <span class="mini">${esc(r.cat)} \u00b7 ${r.tempo} min</span></span>
           <span class="mia-car" aria-hidden="true">\u25B8</span></button>
@@ -4916,7 +4918,7 @@ document.addEventListener("click", e=>{
     if(apri){
       box.innerHTML = `<div class="ric-grid">${scheda(valutaCompleta(r)).replace('<details class="ric', '<details open class="ric')}</div>
         <div class="mia-verdetto">
-          <button class="btn small" data-mia="tieni" data-id="${r.id}">\u{1F44D} ${L("Va bene, la tengo","Looks right, keep it")}</button>
+          ${r.validata ? `<span class="mia-stato">\u2713 ${L("Convalidata","Validated")}</span><button class="btn small ghost" data-mia="sconvalida" data-id="${r.id}">${L("Da ricontrollare","Check again")}</button>` : `<button class="btn small" data-mia="tieni" data-id="${r.id}">\u{1F44D} ${L("Va bene, la tengo","Looks right, keep it")}</button>`}
           <button class="btn small ghost" data-mia="mod" data-id="${r.id}">\u270F\uFE0F ${L("Correggi","Correct")}</button>
           <button class="btn small btn-elimina" data-mia="del" data-id="${r.id}">\u{1F5D1}\uFE0F ${L("Elimina","Delete")}</button>
         </div>`;
@@ -4925,11 +4927,13 @@ document.addEventListener("click", e=>{
     }
     return;
   }
-  if(a === "tieni"){
-    const box = document.getElementById("miaPrev" + r.id);
-    if(box){ box.hidden = true; box.innerHTML = ""; }
-    const riga = document.querySelector(`.mia-riga[data-id="${r.id}"]`);
-    if(riga){ riga.setAttribute("aria-expanded","false"); riga.classList.add("mia-ok"); }
+  if(a === "tieni" || a === "sconvalida"){
+    /* la convalida resta salvata con la ricetta */
+    const m = S.mie.find(x=>x.id === r.id);
+    if(m){ if(a === "tieni") m.validata = Date.now(); else delete m.validata; salva(); }
+    const aperto = document.querySelector(".mie-elenco") && document.querySelector(".mie-elenco").open;
+    apriMie();
+    const el = document.querySelector(".mie-elenco"); if(el && aperto) el.open = true;
     return;
   }
   if(a === "mod") apriEditor(r);
