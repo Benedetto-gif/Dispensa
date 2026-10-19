@@ -762,7 +762,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v154</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v156</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -5743,7 +5743,10 @@ function apriScuola(id){
       <div class="sc-grid" data-no-tr>${lez.filter(x=>(x.g||"tec") === g).map(x=>`<div class="bcella ${x.c}" data-scuola="${x.id}" role="button" tabindex="0">
         ${x.mia?`<span class="badge">${L("tua","yours")}</span>`:""}
         <span class="sc-e">${x.e}</span><b>${x.t}</b><small>${x.s}</small></div>`).join("")}</div>
-      <button class="btn ghost sc-agg" data-scuola-nuova="${g}">\uFF0B ${g === "att" ? L("Aggiungi un attrezzo","Add a piece of equipment") : L("Aggiungi una tecnica","Add a technique")}</button>`).join("")}`);
+      <button class="btn ghost sc-agg" data-scuola-nuova="${g}">\uFF0B ${g === "att" ? L("Aggiungi un attrezzo","Add a piece of equipment") : L("Aggiungi una tecnica","Add a technique")}</button>`).join("")}
+      <h3 class="sc-gruppo">${L("La scienza in cucina","Kitchen science")}</h3>
+      <div class="sc-grid"><div class="bcella c-senape" data-scienza-apri role="button" tabindex="0">
+        <span class="sc-e">\u{1F52C}</span><b>${L("Perch\u00e9 succede?","Why does it happen?")}</b><small>${L("Chiedi una curiosit\u00e0: cerco la spiegazione scientifica","Ask a question: I look up the scientific explanation")}</small></div></div>`);
     return;
   }
   const i = lez.indexOf(l), succ = lez[(i+1) % lez.length];
@@ -5773,7 +5776,7 @@ document.addEventListener("click", e=>{
 });
 document.addEventListener("keydown", e=>{
   if(e.key !== "Enter") return;
-  const b = e.target.closest && e.target.closest(".bcella[data-scuola]"); if(b) b.click();
+  const b = e.target.closest && e.target.closest(".bcella[data-scuola], .bcella[data-scienza-apri]"); if(b) b.click();
 });
 function apriSchedaMia(g, id){
   const m = id ? (S.schedeMie || []).find(x=>x.id === id) : null;
@@ -5932,6 +5935,7 @@ document.addEventListener("click", e=>{
 function apriScienza(){
   apriVelo("scienza", `
     <div class="velo-top"><h2>La scienza in cucina</h2>
+      <button class="chiudi" data-scuola="indice">\u2190 ${L("Lezioni","Lessons")}</button>
       <button class="chiudi" data-scienza="chiudi" onclick="chiudiVelo()">Chiudi</button></div>
     <p class="mini">Chiedi perch\u00e9 succede una cosa in cucina: cerco la spiegazione scientifica sul web.</p>
     <label class="campo"><span>La tua curiosit\u00e0</span>
@@ -5950,6 +5954,7 @@ function apriScienza(){
   document.getElementById("scienzaEsempi").querySelectorAll(".chip").forEach(b=>b.onclick=()=>cerca(IN_INGLESE ? b.textContent : b.dataset.c));
 }
 document.addEventListener("click", e=>{
+  if(e.target.closest("[data-scienza-apri]")){ apriScienza(); return; }
   const b = e.target.closest("[data-scienza]");
   if(!b) return;
   if(b.dataset.scienza === "chiudi") chiudiVelo();
@@ -6219,27 +6224,21 @@ function disegnaMenu(){
       <button id="mSalta" ${pronta?"":"disabled"}>${pronta?"Vai diretto alle ricette fattibili":"Prima carica la dispensa"}</button>
     </div>
     <div class="menu-box mb-blu">
-      <div class="sez">Modifica</div>
+      <div class="sez">Strumenti</div>
       <button data-go="0">Le mie preferenze</button>
       <button data-go="1">Chi c'è a tavola</button>
       <button data-go="2">La dispensa</button>
       <button data-go="3">Cosa cucinare</button>
-    </div>
-    <div class="menu-box mb-oro">
-      <div class="sez">Strumenti</div>
       <button id="mSpesa">Lista della spesa${S.spesa.filter(x=>!x.presa).length?` (${S.spesa.filter(x=>!x.presa).length})`:""}</button>
       <button id="mNasc">Ricette nascoste${S.nascoste.length?` (${S.nascoste.length})`:""}</button>
       <button id="mImpostazioni">Aspetto</button>
-      <button id="mSalva">Salva i miei dati (su Drive o in un file)</button>
-      <button id="mCarica">Reimporta da un file</button>
-    </div>
-    <div class="menu-box mb-senape">
-      <div class="sez">La scienza in cucina</div>
-      <button id="mScienza">Chiedi una curiosit\u00e0</button>
+      <button id="mRadio">${L("Radio: musica mentre cucini","Radio: music while you cook")}${radioSel>=0?` (${esc(RADIO[radioSel].n)})`:""}</button>
+      <button id="mNuova">Ricomincia il percorso</button>
     </div>
     <div class="menu-box mb-bordeaux">
-      <div class="sez">Altro</div>
-      <button id="mNuova">Ricomincia il percorso</button>
+      <div class="sez">${L("Salva / azzera","Save / reset")}</div>
+      <button id="mSalva">Salva i miei dati (su Drive o in un file)</button>
+      <button id="mCarica">${L("Importa i dati da un file","Import data from a file")}</button>
       ${haBackupAzzera() ? `<button id="mRecupera">${L("\u21A9\uFE0F Recupera i dati azzerati","\u21A9\uFE0F Restore the erased data")}</button>` : ""}
       <button id="mReset" class="rischio">Azzera tutti i dati</button>
     </div></div>`;
@@ -6249,7 +6248,7 @@ function disegnaMenu(){
   document.getElementById("mSpesa").onclick=()=>{ menuAperto=false; disegnaMenu(); apriSpesa(); };
   document.getElementById("mNasc").onclick=()=>{ menuAperto=false; disegnaMenu(); apriNascoste(); };
   document.getElementById("mImpostazioni").onclick=()=>{ menuAperto=false; disegnaMenu(); apriImpostazioni(); };
-  document.getElementById("mScienza").onclick=()=>{ menuAperto=false; disegnaMenu(); apriScienza(); };
+  document.getElementById("mRadio").onclick=e=>{ e.stopPropagation(); menuAperto=false; disegnaMenu(); radioAperto=true; disegnaRadio(); };
   document.getElementById("mSalva").onclick=()=>{ menuAperto=false; disegnaMenu(); esportaDati(); };
   document.getElementById("mCarica").onclick=()=>{ menuAperto=false; disegnaMenu(); importaDati(); };
   document.getElementById("mNuova").onclick=()=>{ sess = nuovaSessione(); menuAperto=false; disegnaMenu(); vai(S.profilo.fatto ? 5 : 0); };
