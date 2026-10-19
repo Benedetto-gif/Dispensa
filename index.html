@@ -6381,10 +6381,13 @@ function disegnaMenu(){
   menuBtn.setAttribute("aria-expanded", menuAperto);
   if(!menuAperto){ menuPan.innerHTML=""; return; }
   const pronta = S.dispensa.length > 0;
+  /* ricette mie gia' scritte (non le sole foto a mano, che vanno prima trascritte) e non ancora convalidate */
+  const daConv = (S.mie || []).filter(x=>!x.validata && !x.soloFoto).length;
   menuPan.innerHTML = `<div class="menu-pan">
     <div class="menu-box mb-teal">
       <div class="sez">Scorciatoia</div>
       <button id="mSalta" ${pronta?"":"disabled"}>${pronta?"Vai diretto alle ricette fattibili":"Prima carica la dispensa"}</button>
+      <button id="mConvalida" ${daConv?"":"disabled"}>${daConv ? L(`\u2705 Convalida tutte le mie ricette (${daConv} da controllare)`,`\u2705 Validate all my recipes (${daConv} to check)`) : L("\u2705 Le mie ricette sono tutte convalidate","\u2705 All my recipes are validated")}</button>
     </div>
     <div class="menu-box mb-blu">
       <div class="sez">Strumenti</div>
@@ -6406,6 +6409,16 @@ function disegnaMenu(){
   menuPan.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ menuAperto=false; disegnaMenu(); vai(+b.dataset.go); });
   if(pronta) document.getElementById("mSalta").onclick=()=>{
     sess = nuovaSessione(); sess.modo="app"; menuAperto=false; disegnaMenu(); vai(4); };
+  document.getElementById("mConvalida").onclick=()=>{
+    const da = (S.mie || []).filter(x=>!x.validata && !x.soloFoto);
+    if(!da.length) return;
+    if(!confirm(L(`Convalido in un colpo solo ${da.length === 1 ? "la ricetta da controllare" : "le " + da.length + " ricette da controllare"}? Potrai sempre rimetterne una \u00abda ricontrollare\u00bb da \u00abLe mie ricette\u00bb.`,
+      `Validate ${da.length === 1 ? "the recipe to check" : "all " + da.length + " recipes to check"} at once? You can always set one back to \u201ccheck again\u201d from \u201cMy recipes\u201d.`))) return;
+    const ora = Date.now(); da.forEach(x=>x.validata = ora); salva();
+    menuAperto=false; disegnaMenu();
+    const nt = (S.mie || []).filter(x=>x.soloFoto).length;
+    alert(L(`Fatto: ${da.length === 1 ? "1 ricetta convalidata" : da.length + " ricette convalidate"}.`, `Done: ${da.length} recipe${da.length === 1 ? "" : "s"} validated.`) + (nt ? "\n" + L(`Restano ${nt} ricette scritte a mano da trascrivere.`, `${nt} handwritten recipes still to transcribe.`) : ""));
+  };
   document.getElementById("mImpostazioni").onclick=()=>{ menuAperto=false; disegnaMenu(); apriImpostazioni(); };
   document.getElementById("mRadio").onclick=()=>{ menuAperto=false; disegnaMenu(); apriCercaRadio(); };
   document.getElementById("mSalva").onclick=()=>{ menuAperto=false; disegnaMenu(); esportaDati(); };
