@@ -488,6 +488,11 @@ body[data-filigrana="1"]::before{
 .asp-dot{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;vertical-align:-2px;border:1px solid rgba(0,0,0,.25)}
 .cambia-al-volo{margin-top:12px;padding:10px 12px;border-radius:14px;background:var(--superficie);border:1px solid var(--linea)}
 .cambia-al-volo .chip{font-size:.82rem}
+.cambia-al-volo summary{cursor:pointer;font-weight:700;list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.cambia-al-volo summary::-webkit-details-marker{display:none}
+.cv-cambia{margin-left:auto;font-size:.78rem;font-weight:800;padding:3px 10px;border-radius:999px;background:var(--verde);color:#fff}
+.cv-cambia::after{content:" \25BE"}
+.cambia-al-volo[open] .cv-cambia::after{content:" \25B4"}
 .tono-n{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
   font:800 .8rem/1 Karla,system-ui,sans-serif;border:2px solid var(--inchiostro);box-shadow:0 0 0 2px var(--superficie)}
 .menu-btn.tondo .sole{display:none;color:#E9A21F}
@@ -825,7 +830,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v160</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v161</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2600,6 +2605,7 @@ function tappaVoglia(){
 }
 
 /* --- 5. ricette --- */
+let cambiaVoloAperto = false;   /* il riquadro portata/pasto parte chiuso; resta aperto mentre lo usi */
 function tappaRicette(){
   const lista = filtra();
   const pronte = lista.filter(o=>o.mancanti.length===0 && o.sostituibili.length===0).length;
@@ -2621,8 +2627,11 @@ function tappaRicette(){
     </div>
     ${ricercaTollerante?`<p class="mini"><b>\u00ab${esc(sess.cerca)}\u00bb scritto cos\u00ec non c'\u00e8: ti mostro quelle che gli somigliano.</b></p>`:""}
     ${sess.modo==="idea"&&sess.cerca.trim()?`<p class="mini">Cerco fra nomi, ingredienti e regioni, anche con qualche errore di battitura. Se il nome combacia te la mostro anche fuori dal tempo e dalla portata che hai scelto; se la escludono allergie, gusti o stile, te lo dico in fondo.</p>`:""}
-    <div class="cambia-al-volo">
-      <div class="chips" id="rPort">
+    <details class="cambia-al-volo" id="cambiaVolo" ${cambiaVoloAperto?"open":""}>
+      <summary>${sess.unico && !sess.portate.length ? "\u{1F958} " + L("piatto unico","one-dish meal") : sess.portate.length ? sess.portate.map(p2=>(ICONA_PORTATA[p2]||"") + " " + p2.toLowerCase()).join(" · ") + (sess.unico ? " · \u{1F958} " + L("unico","one-dish") : "") : "\u{1F37D}️ " + L("tutte le portate","all courses")}
+        · ${pastoAttuale()==="cena" ? "\u{1F319} " + L("cena","dinner") : "☀️ " + L("pranzo","lunch")}
+        <span class="cv-cambia">${L("cambia","change")}</span></summary>
+      <div class="chips" id="rPort" style="margin-top:10px">
         <button class="chip ${!sess.portate.length && !sess.unico ? "on" : ""}" data-rport="">\u{1F37D}️ ${L("tutte le portate","all courses")}</button>
         ${PORTATE.map(p2=>`<button class="chip ${sess.portate.includes(p2)?"on":""}" data-rport="${p2}">${ICONA_PORTATA[p2]||""} ${p2.toLowerCase()}</button>`).join("")}
         <button class="chip ${sess.unico?"on":""}" data-rport="*unico">\u{1F958} ${L("piatto unico","one-dish meal")}</button>
@@ -2631,7 +2640,7 @@ function tappaRicette(){
         <button class="chip ${pastoAttuale()==="pranzo"?"on":""}" data-rpasto="pranzo">☀️ ${L("pranzo","lunch")}</button>
         <button class="chip ${pastoAttuale()==="cena"?"on":""}" data-rpasto="cena">\u{1F319} ${L("cena","dinner")}</button>
       </div>
-    </div>
+    </details>
     <div class="chips" style="margin-top:10px">
       <button class="chip ${soloPref?"":"on"}" id="fTutte">Tutte</button>
       <button class="chip ${soloPref?"on":""}" id="fPref">\u2605 Solo le preferite (${S.preferite.length})</button>
@@ -2682,6 +2691,7 @@ function tappaRicette(){
     tappaRicette();
   });
   app.querySelectorAll("[data-rpasto]").forEach(b=>b.onclick=()=>{ sess.pasto = b.dataset.rpasto; tappaRicette(); });
+  const cv = document.getElementById("cambiaVolo"); if(cv) cv.ontoggle = ()=>{ cambiaVoloAperto = cv.open; };
   document.getElementById("fPref").onclick  = ()=>{ soloPref = true;  tappaRicette(); };
   app.querySelectorAll("#ordCrit .chip, #ordNutri .chip").forEach(b=>b.onclick=()=>{
     ordinaPer = b.dataset.crit; ordinaDir = null; /* al cambio criterio riparte dal verso naturale di quel criterio */
