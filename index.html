@@ -4920,7 +4920,7 @@ function apriMie(){
         if(dt) p.push(`<span class="mia-dacontr mia-datrasc">${dt} ${L("da trascrivere","to transcribe")}</span>`);
         return p.length ? " \u00b7 " + p.join(" ") : ` \u00b7 ${L("tutte convalidate \u2713","all validated \u2713")}`; })()}</summary>
       <p class="mini" style="margin:6px 0 2px">${L("Tocca una ricetta per vederla com\u2019\u00e8 nell\u2019app: se \u00e8 giusta la tieni, altrimenti la correggi o la elimini.","Tap a recipe to see it as it is in the app: if it\u2019s right keep it, otherwise correct it or delete it.")}</p>
-      <ul class="mie-l">${S.mie.map(r=>
+      <ul class="mie-l">${S.mie.slice().sort((a,b)=>String(nomeR(a)||"").localeCompare(String(nomeR(b)||""),"it",{sensitivity:"base",numeric:true})).map(r=>
       `<li><button type="button" class="mia-riga${r.validata?" mia-ok":""}" data-mia="vedi" data-id="${r.id}" aria-expanded="false">
           <span class="mia-ic" aria-hidden="true">${r.soloFoto?"\u{1F4DC}":eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"\u{1F37D}\uFE0F")}</span>
           <span class="mia-nome"><span data-no-tr>${esc(nomeR(r))}</span> <span class="mini">${esc(r.cat)} \u00b7 ${r.soloFoto ? L("da trascrivere","to transcribe") : r.tempo + " min"}${(r.foto||[]).length ? " \u00b7 \u{1F5BC}\uFE0F" : ""}</span></span>
