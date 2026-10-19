@@ -383,6 +383,23 @@ body[data-filigrana="1"]::before{
 .ab-via .ab-tolto{display:block}
 .ab-via .ab-campi{display:none}
 .ab-via > .ab-testa b{text-decoration:line-through;opacity:.55}
+.btn-mano{background:#8A5A2B!important;color:#fff!important}
+.foto-gal{display:flex;gap:8px;overflow-x:auto;padding:6px 0 10px;-webkit-overflow-scrolling:touch}
+.foto-min{position:relative;flex:0 0 auto;width:92px;height:122px;border-radius:10px;overflow:hidden;border:2px solid #fff;background:#F3ECE2;padding:0;cursor:zoom-in;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.foto-min img{width:100%;height:100%;object-fit:cover;display:block}
+.foto-min.foto-persa::after{content:"?";position:absolute;inset:0;display:grid;place-items:center;font-size:2rem;color:#8A5A2B}
+.foto-via{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-weight:800;cursor:pointer}
+.foto-zoom{position:fixed;inset:0;z-index:9999;background:#111;display:flex;flex-direction:column}
+.fz-barra{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#222;color:#fff}
+.fz-barra .fz-n{flex:1;font-weight:700}
+.fz-barra button{min-width:44px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;font-size:1.1rem;font-weight:700;padding:0 12px;cursor:pointer}
+.fz-area{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom}
+.fz-area img{display:block;width:100%;max-width:none;height:auto}
+.mano-box{margin:6px 0 4px;padding:12px;border-radius:12px;background:#FFF6E8;color:#3A2A14}
+.mano-box .mini{color:#5A4630}
+.mano-box .btn.ghost{color:#3A2A14!important;border-color:#8A5A2B!important}
+.mia-anteprima .mano-nota{color:#fff!important;font-style:italic;margin:0 0 6px}
+.mia-datrasc{background:#F3D9B8;color:#4A2E10}
 .mie-elenco{margin:12px 0;padding:10px 14px;border-radius:14px;background:#2E7D4F;color:#fff}
 .mie-elenco>summary{cursor:pointer;font-weight:700;font-size:1.02rem}
 .mie-elenco>.mini{color:#fff;opacity:.92}
@@ -734,7 +751,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v152</div>
+  <div class="ver-splash" data-no-tr>v153</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -745,7 +762,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v152</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v153</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -1632,7 +1649,8 @@ for(const [k, cat] of Object.entries(S.ingSpostati || {})){
 });
 /* alfabetico in ogni reparto fin dall'avvio, non solo sulle aggiunte successive */
 Object.keys(CAT_DISP).forEach(ordinaCat);
-function archivio(){ return D.ricette.concat(S.mie || []); }
+function archivio(){ return D.ricette.concat((S.mie || []).filter(r=>!r.soloFoto)); }
+function trovaMia(id){ return (S.mie || []).find(x=>x.id === id); }
 function trovaRicetta(id){ return archivio().find(x=>x.id === id); }
 let sess = nuovaSessione();
 let passo = 0, menuAperto = false, cercaDisp = "";
@@ -3801,7 +3819,12 @@ function htmlPromemoriaSalva(){
     <div class="azioni"><button class="btn" id="promSalva">${L("Salva ora","Save now")}</button><button class="btn ghost" id="promDopo">${L("Pi\u00f9 tardi","Later")}</button></div></div>`;
 }
 async function esportaDati(){
-  const testo = JSON.stringify({app:"che-cucino", versione:1, dati:S}, null, 2);
+  /* le foto delle ricette (scritte a mano e originali) viaggiano nel salvataggio, cosi' non si perdono */
+  const foto = {};
+  for(const id of tutteLeFoto()){
+    try{ const bl = await FotoDB.get(id); if(bl) foto[id] = await blobInDataUrl(bl); }catch(e){}
+  }
+  const testo = JSON.stringify({app:"che-cucino", versione:1, dati:S, foto}, null, 2);
   const giorno = new Date().toISOString().slice(0,10);
   /* sul telefono apro il menu "Condividi": cosi' si salva direttamente su Google Drive (cartella Dispensa).
      Chrome condivide solo alcuni tipi di file, per questo il salvataggio condiviso e' un .txt (dentro c'e' lo stesso contenuto) */
@@ -3833,8 +3856,11 @@ function importaDati(){
         const g = JSON.parse(fr.result), d = g.dati || g;
         if(!d || typeof d !== "object" || !("profilo" in d)) throw new Error("formato");
         S = Object.assign(JSON.parse(JSON.stringify(VUOTO)), d);
+        (S.mie || []).forEach(preparaRicetta);
         salva(); sess = nuovaSessione(); vai(0);
-        alert("Dati reimportati.");
+        const ff = g.foto && typeof g.foto === "object" ? Object.entries(g.foto) : [];
+        Promise.all(ff.map(([id, u])=>fetch(u).then(x=>x.blob()).then(bl=>FotoDB.put(id, bl)).catch(()=>{})))
+          .then(()=>alert(ff.length ? L(`Dati reimportati, con ${ff.length} foto di ricette.`, `Data re-imported, with ${ff.length} recipe photos.`) : "Dati reimportati."));
       }catch(err){ alert("Questo file non sembra un salvataggio di Che cucino?"); }
     };
     fr.readAsText(f);
@@ -3867,7 +3893,7 @@ document.addEventListener("click", e=>{
                  break;
     case "modifica": apriEditor(r); break;
     case "elimina":  if(confirm("Elimino «" + r.n + "» dalle tue ricette?")){
-                       S.mie = S.mie.filter(x=>x.id !== r.id); salva(); tappaRicette();
+                       eliminaFotoDi(r); S.mie = S.mie.filter(x=>x.id !== r.id); salva(); tappaRicette();
                      } break;
   }
 });
@@ -4879,7 +4905,8 @@ function apriMie(){
     <div class="azioni">
       <button class="btn small" data-mia="nuova">\u270F\uFE0F Scrivi una ricetta</button>
       <button class="btn small btn-web" data-mia="web">\u{1F517} Incolla una ricetta dal web</button>
-      <button class="btn small" data-mia="foto">\u{1F4F7} ${L("Da una foto","From a photo")}</button>
+      <button class="btn small" data-mia="foto">\u{1F4F7} ${L("Pagina stampata","Printed page")}</button>
+      <button class="btn small btn-mano" data-mia="mano">\u{1F4DC} ${L("Scritta a mano","Handwritten")}</button>
     </div>
     <details class="mie-come"><summary>\u{1F4D6} ${L("Come prendere una ricetta dal web","How to take a recipe from the web")}</summary>
       <ol class="passi">
@@ -4888,12 +4915,15 @@ function apriMie(){
         <li>${L("Controlla ingredienti e procedimento e salva: puoi correggerli a mano.","Check ingredients and method and save: you can correct them by hand.")}</li>
       </ol>
       <p class="mini" style="color:#fff">${L("Se la ricetta viene da un altro sito ti avviso: pu\u00f2 arrivare incompleta, e puoi comunque eliminarla. Su iPhone, dove Condividi non arriva all\u2019app, copia il link e usa \u00abIncolla una ricetta dal web\u00bb.","If the recipe comes from another site I\u2019ll warn you: it may arrive incomplete, and you can still delete it. On iPhone, where Share can\u2019t reach the app, copy the link and use \u201cPaste a recipe from the web\u201d.")}</p></details>
-    ${S.mie.length ? `<details class="mie-elenco"><summary>\u{1F4DA} ${L("Le tue ricette","Your recipes")} (${S.mie.length})${(n=>n?` \u00b7 <span class="mia-dacontr">${n} ${L(n===1?"da controllare":"da controllare", n===1?"to check":"to check")}</span>`:` \u00b7 ${L("tutte convalidate \u2713","all validated \u2713")}`)(S.mie.filter(x=>!x.validata).length)}</summary>
+    ${S.mie.length ? `<details class="mie-elenco"><summary>\u{1F4DA} ${L("Le tue ricette","Your recipes")} (${S.mie.length})${(()=>{ const dc = S.mie.filter(x=>!x.validata && !x.soloFoto).length, dt = S.mie.filter(x=>x.soloFoto).length, p = [];
+        if(dc) p.push(`<span class="mia-dacontr">${dc} ${L("da controllare","to check")}</span>`);
+        if(dt) p.push(`<span class="mia-dacontr mia-datrasc">${dt} ${L("da trascrivere","to transcribe")}</span>`);
+        return p.length ? " \u00b7 " + p.join(" ") : ` \u00b7 ${L("tutte convalidate \u2713","all validated \u2713")}`; })()}</summary>
       <p class="mini" style="margin:6px 0 2px">${L("Tocca una ricetta per vederla com\u2019\u00e8 nell\u2019app: se \u00e8 giusta la tieni, altrimenti la correggi o la elimini.","Tap a recipe to see it as it is in the app: if it\u2019s right keep it, otherwise correct it or delete it.")}</p>
       <ul class="mie-l">${S.mie.map(r=>
       `<li><button type="button" class="mia-riga${r.validata?" mia-ok":""}" data-mia="vedi" data-id="${r.id}" aria-expanded="false">
-          <span class="mia-ic" aria-hidden="true">${eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"\u{1F37D}\uFE0F")}</span>
-          <span class="mia-nome"><span data-no-tr>${esc(nomeR(r))}</span> <span class="mini">${esc(r.cat)} \u00b7 ${r.tempo} min</span></span>
+          <span class="mia-ic" aria-hidden="true">${r.soloFoto?"\u{1F4DC}":eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"\u{1F37D}\uFE0F")}</span>
+          <span class="mia-nome"><span data-no-tr>${esc(nomeR(r))}</span> <span class="mini">${esc(r.cat)} \u00b7 ${r.soloFoto ? L("da trascrivere","to transcribe") : r.tempo + " min"}${(r.foto||[]).length ? " \u00b7 \u{1F5BC}\uFE0F" : ""}</span></span>
           <span class="mia-car" aria-hidden="true">\u25B8</span></button>
         <div class="mia-anteprima" id="miaPrev${r.id}" hidden></div></li>`).join("")}</ul></details>`
       : `<div class="vuoto"><p>Non hai ancora ricette tue.</p>
@@ -4907,7 +4937,8 @@ document.addEventListener("click", e=>{
   if(a === "nuova"){ apriEditor(null); return; }
   if(a === "web"){ apriImport(); return; }
   if(a === "foto"){ apriImport(); setTimeout(()=>{ const x = document.querySelector("[data-imp-foto]"); if(x) x.click(); }, 50); return; }
-  const r = trovaRicetta(+b.dataset.id);
+  if(a === "mano"){ apriMano(); return; }
+  const r = trovaMia(+b.dataset.id) || trovaRicetta(+b.dataset.id);
   if(!r) return;
   if(a === "vedi"){
     const box = document.getElementById("miaPrev" + r.id); if(!box) return;
@@ -4916,12 +4947,14 @@ document.addEventListener("click", e=>{
     document.querySelectorAll(".mia-anteprima").forEach(x=>{ x.hidden = true; x.innerHTML = ""; });
     document.querySelectorAll(".mia-riga").forEach(x=>x.setAttribute("aria-expanded","false"));
     if(apri){
-      box.innerHTML = `<div class="ric-grid">${scheda(valutaCompleta(r)).replace('<details class="ric', '<details open class="ric')}</div>
+      box.innerHTML = r.soloFoto ? anteprimaManoscritta(r) : `${galleriaFoto(r)}<div class="ric-grid">${scheda(valutaCompleta(r)).replace('<details class="ric', '<details open class="ric')}</div>
         <div class="mia-verdetto">
           ${r.validata ? `<span class="mia-stato">\u2713 ${L("Convalidata","Validated")}</span><button class="btn small ghost" data-mia="sconvalida" data-id="${r.id}">${L("Da ricontrollare","Check again")}</button>` : `<button class="btn small" data-mia="tieni" data-id="${r.id}">\u{1F44D} ${L("Va bene, la tengo","Looks right, keep it")}</button>`}
           <button class="btn small ghost" data-mia="mod" data-id="${r.id}">\u270F\uFE0F ${L("Correggi","Correct")}</button>
           <button class="btn small btn-elimina" data-mia="del" data-id="${r.id}">\u{1F5D1}\uFE0F ${L("Elimina","Delete")}</button>
+          <button class="btn small ghost" data-mia="aggfoto" data-id="${r.id}">\u{1F4F7} ${L((r.foto||[]).length ? "Aggiungi foto" : "Aggiungi la foto dell\u2019originale", (r.foto||[]).length ? "Add photo" : "Add a photo of the original")}</button>
         </div>`;
+      caricaMiniature(box);
       box.hidden = false; b.setAttribute("aria-expanded","true");
       box.scrollIntoView({block:"nearest", behavior:"smooth"});
     }
@@ -4938,10 +4971,260 @@ document.addEventListener("click", e=>{
   }
   if(a === "mod") apriEditor(r);
   if(a === "del" && confirm("Elimino \u00ab" + r.n + "\u00bb?")){
+    eliminaFotoDi(r);
     S.mie = S.mie.filter(x=>x.id !== r.id); salva(); apriMie();
   }
+  if(a === "trascrivi"){ faiTrascrivere(r, b); return; }
+  if(a === "incolla"){ apriIncollaTrascrizione(r); return; }
+  if(a === "ioscrivo"){ apriEditor(Object.assign({}, r, {ing:[], proc:[], tempo:40, diff:"facile", _trascr:true})); return; }
+  if(a === "aggfoto"){ aggiungiFotoA(r); return; }
 });
 
+
+/* ===========================================================
+   Ricette scritte a mano: si conservano come foto (l'originale),
+   la trascrizione e' facoltativa e si controlla accanto alla foto.
+   Le foto stanno nel database del telefono (IndexedDB), non nel
+   salvataggio leggero dei dati; viaggiano nel backup su Drive.
+   =========================================================== */
+const FotoDB = (()=>{
+  let db = null;
+  function apri(){
+    return db || (db = new Promise((ok, ko)=>{
+      const q = indexedDB.open("checucino-foto", 1);
+      q.onupgradeneeded = ()=>q.result.createObjectStore("foto");
+      q.onsuccess = ()=>ok(q.result);
+      q.onerror = ()=>ko(q.error);
+    }));
+  }
+  async function op(modo, fn){
+    const d = await apri();
+    return new Promise((ok, ko)=>{
+      const t = d.transaction("foto", modo), r = fn(t.objectStore("foto"));
+      t.oncomplete = ()=>ok(r ? r.result : undefined);
+      t.onerror = ()=>ko(t.error);
+    });
+  }
+  return { put:(k, v)=>op("readwrite", s=>s.put(v, k)), get:k=>op("readonly", s=>s.get(k)), del:k=>op("readwrite", s=>s.delete(k)) };
+})();
+const _urlFoto = {};
+async function urlFoto(id){
+  if(_urlFoto[id]) return _urlFoto[id];
+  const bl = await FotoDB.get(id);
+  return bl ? (_urlFoto[id] = URL.createObjectURL(bl)) : "";
+}
+function blobInDataUrl(bl){
+  return new Promise((ok, ko)=>{ const fr = new FileReader(); fr.onload = ()=>ok(fr.result); fr.onerror = ko; fr.readAsDataURL(bl); });
+}
+function tutteLeFoto(){ return [].concat(...(S.mie || []).map(r=>r.foto || [])); }
+function eliminaFotoDi(r){ (r.foto || []).forEach(id=>{ FotoDB.del(id).catch(()=>{}); }); }
+/* la grafia vuole dettaglio: 2200 px sul lato lungo, JPEG di buona qualita' */
+async function salvaFotoFile(file){
+  const c = await immagineRidotta(file, 2200);
+  const bl = await new Promise(ok=>c.toBlob(ok, "image/jpeg", .85));
+  const id = "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  await FotoDB.put(id, bl);
+  return id;
+}
+function galleriaFoto(r){
+  const ff = r.foto || [];
+  if(!ff.length) return "";
+  return `<div class="foto-gal">${ff.map((id, n)=>`<button type="button" class="foto-min" data-foto-zoom="${id}" title="${L("Ingrandisci","Enlarge")}"><img data-foto-id="${id}" alt="${L("Pagina","Page")} ${n + 1}"></button>`).join("")}</div>`;
+}
+function caricaMiniature(dove){
+  (dove || document).querySelectorAll("img[data-foto-id]:not([src])").forEach(async im=>{
+    const u = await urlFoto(im.dataset.fotoId).catch(()=>"");
+    if(u) im.src = u; else im.closest(".foto-min").classList.add("foto-persa");
+  });
+}
+/* foto a tutto schermo: un tocco ingrandisce, si scorre col dito; frecce fra le pagine */
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("[data-foto-zoom]"); if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  const gal = [...b.closest(".foto-gal").querySelectorAll("[data-foto-zoom]")].map(x=>x.dataset.fotoZoom);
+  let i = gal.indexOf(b.dataset.fotoZoom);
+  const ov = document.createElement("div");
+  ov.className = "foto-zoom";
+  ov.innerHTML = `<div class="fz-barra"><span class="fz-n"></span>
+      <button type="button" data-fz="meno" aria-label="${L("Riduci","Zoom out")}">−</button>
+      <button type="button" data-fz="piu" aria-label="${L("Ingrandisci","Zoom in")}">+</button>
+      ${gal.length > 1 ? `<button type="button" data-fz="prec" aria-label="${L("Pagina precedente","Previous page")}">‹</button><button type="button" data-fz="succ" aria-label="${L("Pagina successiva","Next page")}">›</button>` : ""}
+      <button type="button" data-fz="chiudi">${L("Chiudi","Close")}</button></div>
+    <div class="fz-area"><img alt=""></div>`;
+  document.body.append(ov);
+  const img = ov.querySelector("img"), area = ov.querySelector(".fz-area");
+  let z = 1;
+  const mostra = async ()=>{ z = 1; img.style.width = "100%"; img.src = await urlFoto(gal[i]); ov.querySelector(".fz-n").textContent = gal.length > 1 ? (i + 1) + " / " + gal.length : ""; };
+  const zoom = d=>{ z = Math.max(1, Math.min(5, z + d)); img.style.width = (z * 100) + "%"; };
+  ov.addEventListener("click", ev=>{
+    const c = ev.target.closest("[data-fz]");
+    if(!c){ if(ev.target === img) zoom(z >= 3 ? -z : 1); return; }
+    const a = c.dataset.fz;
+    if(a === "chiudi") ov.remove();
+    if(a === "piu") zoom(1);
+    if(a === "meno") zoom(-1);
+    if(a === "prec"){ i = (i - 1 + gal.length) % gal.length; mostra(); }
+    if(a === "succ"){ i = (i + 1) % gal.length; mostra(); }
+  });
+  mostra();
+}, true);
+
+/* nuova ricetta scritta a mano: nome, portata, foto delle pagine */
+function apriMano(){
+  const fotoNuove = [];
+  apriVelo("mano", `
+    <div class="velo-top"><h2>\u{1F4DC} ${L("Ricetta scritta a mano","Handwritten recipe")}</h2>
+      <button class="chiudi" data-mano="chiudi">${L("Chiudi","Close")}</button></div>
+    <p class="mini">${L("La conservo come foto, così com’è: grafia, macchie e appunti a margine compresi. Se occupa più pagine, aggiungile tutte. Quando vuoi la fai trascrivere, così l’app la può usare con la dispensa.","I keep it as a photo, just as it is: handwriting, stains and margin notes included. If it spans several pages, add them all. Whenever you like you can have it transcribed, so the app can use it with your pantry.")}</p>
+    <label class="campo"><span>${L("Nome del piatto","Name of the dish")}</span>
+      <input type="text" id="manoNome" placeholder="${L("es. Pasta con le sarde della nonna","e.g. Grandma’s pasta con le sarde")}"></label>
+    <div class="riga" style="gap:10px">
+      <label class="campo" style="flex:1"><span>${L("Portata","Course")}</span><select id="manoCat">${PORTATE.map(c=>`<option>${c}</option>`).join("")}</select></label>
+    </div>
+    <label class="campo"><span>${L("Di chi è (facoltativo)","Whose is it (optional)")}</span>
+      <input type="text" id="manoNota" placeholder="${L("es. quaderno di nonna Maria, anni ’60","e.g. Grandma Maria’s notebook, 1960s")}"></label>
+    <div class="azioni">
+      <button type="button" class="btn small" data-mano="scatta">\u{1F4F7} ${L("Fotografa la pagina","Photograph the page")}</button>
+      <button type="button" class="btn small ghost" data-mano="galleria">\u{1F5BC}️ ${L("Scegli dalla galleria","Choose from gallery")}</button>
+      <input type="file" id="manoScatta" accept="image/*" capture="environment" hidden>
+      <input type="file" id="manoGalleria" accept="image/*" multiple hidden>
+    </div>
+    <p class="mini">${L("Per una foto leggibile: luce del giorno senza ombre, pagina ben distesa, telefono parallelo al foglio.","For a readable photo: daylight without shadows, page laid flat, phone parallel to the sheet.")}</p>
+    <div id="manoFoto" class="foto-gal"></div>
+    <p class="mini" id="manoEsito" aria-live="polite"></p>
+    <div class="azioni"><button class="btn" data-mano="salva">${L("Conserva la ricetta","Keep the recipe")}</button></div>`);
+  const disegna = ()=>{
+    const box = document.getElementById("manoFoto");
+    box.innerHTML = fotoNuove.map((id, n)=>`<div class="foto-min"><img data-foto-id="${id}" alt="${L("Pagina","Page")} ${n + 1}"><button type="button" class="foto-via" data-mano-via="${n}" aria-label="${L("Togli","Remove")}">✕</button></div>`).join("");
+    caricaMiniature(box);
+  };
+  const aggiungi = async files=>{
+    const es = document.getElementById("manoEsito");
+    for(const f of files){ try{ fotoNuove.push(await salvaFotoFile(f)); }catch(err){ es.textContent = L("Non riesco a leggere questa foto.","I can’t read this photo."); } }
+    es.textContent = fotoNuove.length ? L(`${fotoNuove.length} ${fotoNuove.length === 1 ? "pagina" : "pagine"}`, `${fotoNuove.length} ${fotoNuove.length === 1 ? "page" : "pages"}`) : "";
+    disegna();
+  };
+  ["manoScatta", "manoGalleria"].forEach(k=>{ const inp = document.getElementById(k); inp.onchange = ()=>{ aggiungi([...inp.files]); inp.value = ""; }; });
+  velo.onclick = e=>{
+    const v = e.target.closest("[data-mano-via]");
+    if(v){ const id = fotoNuove.splice(+v.dataset.manoVia, 1)[0]; FotoDB.del(id).catch(()=>{}); disegna(); return; }
+    const b = e.target.closest("[data-mano]"); if(!b) return;
+    const a = b.dataset.mano;
+    if(a === "chiudi"){ fotoNuove.forEach(id=>FotoDB.del(id).catch(()=>{})); velo.onclick = null; apriMie(); return; }
+    if(a === "scatta") document.getElementById("manoScatta").click();
+    if(a === "galleria") document.getElementById("manoGalleria").click();
+    if(a === "salva"){
+      const nome = document.getElementById("manoNome").value.trim();
+      if(!nome){ alert(L("Manca il nome del piatto.","The name of the dish is missing.")); return; }
+      if(!fotoNuove.length){ alert(L("Aggiungi almeno una foto della ricetta.","Add at least one photo of the recipe.")); return; }
+      S.mie = S.mie || [];
+      S.mie.push({ id: -Date.now(), n: nome, cat: document.getElementById("manoCat").value, tempo: 0, diff: "", tags: [],
+        ing: [], proc: [], nota: document.getElementById("manoNota").value.trim(), luogo: "", estero: false, all: [], unico: false,
+        porz: PORZIONI, nvoci: 0, minimo: false, leggero: false, att: [], att_opz: [], foto: fotoNuove.slice(), soloFoto: true });
+      S.daSalvare = (S.daSalvare || 0) + 1;
+      salva(); velo.onclick = null; apriMie();
+      const el = document.querySelector(".mie-elenco"); if(el) el.open = true;
+    }
+  };
+}
+async function aggiungiFotoA(r){
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*"; inp.multiple = true;
+  inp.onchange = async ()=>{
+    const m = trovaMia(r.id); if(!m) return;
+    m.foto = m.foto || [];
+    for(const f of inp.files){ try{ m.foto.push(await salvaFotoFile(f)); }catch(e){} }
+    S.daSalvare = (S.daSalvare || 0) + 1;
+    salva(); apriMie();
+    const el = document.querySelector(".mie-elenco"); if(el) el.open = true;
+    const riga = document.querySelector(`.mia-riga[data-id="${r.id}"]`); if(riga) riga.click();
+  };
+  inp.click();
+}
+function anteprimaManoscritta(r){
+  return `${galleriaFoto(r)}
+    ${r.nota ? `<p class="mini mano-nota" data-no-tr>${esc(r.nota)}</p>` : ""}
+    <div class="mano-box">
+      <b>${L("Per usarla con la dispensa va trascritta","To use it with your pantry it needs transcribing")}</b>
+      <p class="mini">${L("Il modo migliore: la mandi a Claude o a Gemini, che leggono bene la scrittura a mano, insieme a una richiesta già pronta. Poi incolli qui la risposta e la controlli accanto alla foto.","The best way: send it to Claude or Gemini, which read handwriting well, with a ready-made request. Then paste the answer here and check it next to the photo.")}</p>
+      <div class="mia-verdetto">
+        <button class="btn small" data-mia="trascrivi" data-id="${r.id}">\u{1F916} ${L("Fai trascrivere","Have it transcribed")}</button>
+        <button class="btn small" data-mia="incolla" data-id="${r.id}">\u{1F4CB} ${L("Incolla la trascrizione","Paste the transcription")}</button>
+        <button class="btn small ghost" data-mia="ioscrivo" data-id="${r.id}">✏️ ${L("La trascrivo io","I’ll transcribe it myself")}</button>
+      </div></div>
+    <div class="mia-verdetto">
+      <button class="btn small ghost" data-mia="aggfoto" data-id="${r.id}">\u{1F4F7} ${L("Aggiungi una pagina","Add a page")}</button>
+      <button class="btn small btn-elimina" data-mia="del" data-id="${r.id}">\u{1F5D1}️ ${L("Elimina","Delete")}</button>
+    </div>`;
+}
+function richiestaTrascrizione(r){
+  return L(
+`Trascrivi la ricetta scritta a mano nelle foto (${(r.foto||[]).length === 1 ? "una pagina" : (r.foto||[]).length + " pagine, in ordine"}). Rispetta parole, dosi e modi di dire originali, anche dialettali: non modernizzare e non aggiungere niente. Se una parola non si legge scrivi [?].
+Rispondi solo con il testo, in questo formato:
+${r.n}
+Porzioni: (solo se indicate)
+Ingredienti
+(un ingrediente per riga, con la sua quantità, senza trattini)
+Procedimento
+(un passaggio per riga, senza numeri)
+Le note a margine mettile come ultimo passaggio, iniziando con «Nota:».`,
+`Transcribe the handwritten recipe in the photos (${(r.foto||[]).length === 1 ? "one page" : (r.foto||[]).length + " pages, in order"}). Keep the original words, amounts and expressions, including dialect: don't modernise and don't add anything. If a word can't be read write [?].
+Reply only with the text, in this format:
+${r.n}
+Servings: (only if stated)
+Ingredients
+(one ingredient per line, with its amount, no dashes)
+Method
+(one step per line, no numbers)
+Put margin notes as the last step, starting with "Note:".`);
+}
+async function faiTrascrivere(r, bottone){
+  const testo = richiestaTrascrizione(r);
+  try{ await navigator.clipboard.writeText(testo); }catch(e){}
+  const files = [];
+  for(const [n, id] of (r.foto || []).entries()){
+    const bl = await FotoDB.get(id).catch(()=>null);
+    if(bl) files.push(new File([bl], (nomeR(r) || "ricetta").replace(/[^\wÀ-ſ]+/g, "-") + "-" + (n + 1) + ".jpg", {type:"image/jpeg"}));
+  }
+  const avviso = L("La richiesta per la trascrizione è copiata: se nella chat non compare da sola, tieni premuto e scegli Incolla. Quando hai la risposta, copiala e torna qui su «Incolla la trascrizione».",
+                   "The transcription request is copied: if it doesn’t appear in the chat by itself, long-press and choose Paste. When you have the answer, copy it and come back here to “Paste the transcription”.");
+  try{
+    if(files.length && navigator.canShare && navigator.canShare({files})){
+      alert(L("Nel menu Condividi scegli Claude o Gemini.\n\n","In the Share menu choose Claude or Gemini.\n\n") + avviso);
+      await navigator.share({files, text: testo, title: nomeR(r)});
+      return;
+    }
+  }catch(e){ if(e && e.name === "AbortError") return; }
+  /* niente Condividi (es. computer): scarico le foto e lascio la richiesta negli appunti */
+  files.forEach(f=>{ const a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; document.body.append(a); a.click(); a.remove(); });
+  alert(L("Ho scaricato le foto. Aprile in Claude o in Gemini e incolla la richiesta.\n\n","I’ve downloaded the photos. Open them in Claude or Gemini and paste the request.\n\n") + avviso);
+}
+function apriIncollaTrascrizione(r){
+  apriVelo("incolla", `
+    <div class="velo-top"><h2>${L("Incolla la trascrizione","Paste the transcription")}</h2>
+      <button class="chiudi" data-inc="chiudi">${L("Chiudi","Close")}</button></div>
+    ${galleriaFoto(r)}
+    <label class="campo" style="margin-top:10px"><span>${L("Testo della ricetta","Recipe text")}</span>
+      <textarea id="incTesto" rows="12" placeholder="${esc(nomeR(r))}&#10;Ingredienti&#10;…&#10;Procedimento&#10;…"></textarea></label>
+    <div class="azioni">
+      <button class="btn small ghost" data-inc="appunti">\u{1F4CB} ${L("Incolla dagli appunti","Paste from clipboard")}</button>
+      <button class="btn" data-inc="avanti">${L("Avanti: controlla","Next: check it")}</button></div>`);
+  caricaMiniature(velo);
+  velo.onclick = async e=>{
+    const b = e.target.closest("[data-inc]"); if(!b) return;
+    const a = b.dataset.inc, ta = document.getElementById("incTesto");
+    if(a === "chiudi"){ velo.onclick = null; apriMie(); return; }
+    if(a === "appunti"){ try{ ta.value = (await navigator.clipboard.readText()).trim(); }catch(err){ ta.focus(); } return; }
+    if(a === "avanti"){
+      const t = ta.value.trim();
+      if(!t){ alert(L("Incolla prima il testo della trascrizione.","Paste the transcription text first.")); return; }
+      const g = leggiTesto(t);
+      velo.onclick = null;
+      apriEditor(Object.assign({}, r, { n: r.n, tempo: 40, diff: "facile",
+        ing: g.ing, proc: g.proc, porz: g.porz, _trascr: true }));
+    }
+  };
+}
 function apriImport(){
   apriVelo("import", `
     <div class="velo-top"><h2>Ricetta dal web</h2>
@@ -4956,14 +5239,11 @@ function apriImport(){
     <p class="mini" id="impEsito" aria-live="polite"></p>
     <div id="impEsame"></div>
     <div class="foto-ricetta">
-      ${ANDROID ? `<button type="button" class="btn small" data-imp-lens>\u{1F50D} ${L("Leggi con Google Lens","Read with Google Lens")}</button>` : ""}
       <button type="button" class="btn small ghost" data-imp-foto>\u{1F4F7} ${L("Fotografa una pagina stampata","Photograph a printed page")}</button>
       <input type="file" id="impFotoIn" accept="image/*" capture="environment" hidden>
     </div>
     <div id="lensRitorno"></div>
-    <p class="mini" style="margin-top:0">${ANDROID
-      ? L("<b>Scritta a mano?</b> Usa Google Lens: inquadra la pagina, tocca <b>Testo</b> → <b>Seleziona tutto</b> → <b>Copia</b>, poi torna qui e incolla. Il tasto della foto va bene per le pagine stampate dei libri.","<b>Handwritten?</b> Use Google Lens: frame the page, tap <b>Text</b> → <b>Select all</b> → <b>Copy</b>, then come back here and paste. The photo button is fine for printed book pages.")
-      : L("<b>Scritta a mano?</b> Apri la Fotocamera, inquadra la pagina e tocca l’icona del <b>testo</b> (Testo attivo): seleziona tutto, copia, poi torna qui e incolla. Il tasto della foto va bene per le pagine stampate dei libri.","<b>Handwritten?</b> Open the Camera, frame the page and tap the <b>text</b> icon (Live Text): select all, copy, then come back here and paste. The photo button is fine for printed book pages.")}</p>
+    <p class="mini" style="margin-top:0">${L("<b>Scritta a mano?</b> Conservala come foto: in <b>Le mie ricette</b> tocca <b>\u{1F4DC} Scritta a mano</b>. L\u2019originale resta com\u2019\u00e8, e quando vuoi la fai trascrivere. Il tasto della foto qui sopra va bene per le pagine stampate dei libri.","<b>Handwritten?</b> Keep it as a photo: in <b>My recipes</b> tap <b>\u{1F4DC} Handwritten</b>. The original stays as it is, and you can have it transcribed whenever you like. The photo button above is fine for printed book pages.")}</p>
     <label class="campo" style="margin-top:10px"><span>Oppure incolla qui il testo</span>
       <textarea id="impTesto" rows="10" placeholder="Nome del piatto&#10;Ingredienti&#10;320 gr di pasta&#10;2 melanzane&#10;Procedimento&#10;Taglia le melanzane\u2026"></textarea></label>
     <div class="azioni"><button class="btn" data-imp="leggi">Prepara la ricetta</button></div>`);
@@ -5048,8 +5328,9 @@ function apriEditor(r, tolte){
   const allSugg = new Set(v.all || []);
   (v.ing || []).forEach(i=>(ALL_DI[i.k] || []).forEach(a=>allSugg.add(a)));
   apriVelo("editor", `
-    <div class="velo-top"><h2>${nuovo ? "Nuova ricetta" : "Modifica ricetta"}</h2>
+    <div class="velo-top"><h2>${v._trascr ? L("Controlla la trascrizione","Check the transcription") : nuovo ? "Nuova ricetta" : "Modifica ricetta"}</h2>
       <button class="chiudi" data-ed="chiudi">Chiudi</button></div>
+    ${(v.foto||[]).length ? `${v._trascr ? `<p class="mini">${L("Confronta il testo con la foto dell\u2019originale: toccala per ingrandirla. Le parole che non si leggevano sono segnate con [?].","Compare the text with the photo of the original: tap it to enlarge it. Words that couldn\u2019t be read are marked [?].")}</p>` : ""}${galleriaFoto(v)}` : ""}
     ${v._nonStd ? `<div class="ed-avviso">\u26A0\uFE0F ${L("Questa ricetta viene da un sito non fra quelli consigliati: controlla bene ingredienti e procedimento prima di salvare, potrebbero essere incompleti. Se non ti convince, puoi comunque eliminarla.","This recipe comes from a site that isn\u2019t recommended: check ingredients and method carefully before saving, they may be incomplete. If you\u2019re not happy with it, you can still delete it.")}
       <div style="margin-top:8px"><button class="btn small ghost" data-ed-scarta>\u{1F5D1}\uFE0F ${L("Elimina questa ricetta","Delete this recipe")}</button></div></div>` : ""}
     ${tolte && tolte.length ? `<div class="imp-tolte"><b data-no-tr>\u{1F9F9} ${L(`Ho tolto ${tolte.length} ${tolte.length===1?"riga che non sembrava un ingrediente":"righe che non sembravano ingredienti"}`, `I removed ${tolte.length} ${tolte.length===1?"line that didn\u2019t look like an ingredient":"lines that didn\u2019t look like ingredients"}`)}</b>
@@ -5094,6 +5375,7 @@ function apriEditor(r, tolte){
       <button class="btn ghost" data-ed="chiudi">Annulla</button>
     </div>`);
   velo.querySelectorAll("[data-tag],[data-all]").forEach(b=>b.onclick = ()=>b.classList.toggle("on"));
+  caricaMiniature(velo);
 }
 /* ricetta importata da un sito non consigliato: la scarto senza salvarla */
 document.addEventListener("click", e=>{
@@ -5128,6 +5410,9 @@ document.addEventListener("click", e=>{
     porz: Math.max(1, Math.min(60, Math.round(+document.getElementById("ePorz").value) || PORZIONI)),
     nvoci: ing.length, minimo:false, leggero:false, att:[], att_opz:[]
   };
+  /* le foto dell'originale restano con la ricetta anche dopo correzioni e trascrizioni */
+  const prec = trovaMia(bozza.id);
+  if(prec && prec.foto && prec.foto.length) bozza.foto = prec.foto.slice();
   const orfani = ing.filter(i=>!i.k);
   orfani.length ? apriAbbina(bozza, orfani) : salvaMia(bozza);
 });
@@ -5272,7 +5557,7 @@ const PERCHE_EN = `<div class="perche">
     <p>On any recipe card tap <strong>📅 Add to this week's menu</strong>. On the home page, in <strong>This week's menu</strong>, you'll find the recipes you picked, can change how many are at the table for each, and with one tap put everything missing on the shopping list: quantities from the recipes add up, what you already have stays out and the list is split by department.</p>
 
     <div class="sez"><strong>Your recipes, your memories</strong></div>
-    <p>Have a cookbook or an old family recipe notebook? In <strong>My recipes</strong> tap <strong>📷 From a photo</strong>. For handwritten recipes use <strong>🔍 Read with Google Lens</strong>: frame the page, copy the text and when you come back to the app paste it with one tap; you correct and save. The app's own photo reads printed pages too.</p>
+    <p>Have a cookbook or an old family recipe notebook? In <strong>My recipes</strong>, printed pages go in with <strong>📷 Printed page</strong>: the app reads them and you correct and save. Grandma's handwritten recipes go in with <strong>📜 Handwritten</strong>: they are kept as photos, the original with its handwriting, and you can have them transcribed by Claude or Gemini whenever you like, checking the text next to the photo.</p>
     <p>When you finish cooking you can rate the dish and write a note for next time (“less salt”, “the guests loved it”): you'll find it on the card and at the start of the recipe when you make it again. And with <strong>📤 Send to a friend</strong> the recipe goes out on WhatsApp, readable by anyone; if your friend has Che cucino?, one tap on the link adds it to their recipes.</p>
 
     <div class="sez"><strong>Finally</strong></div>
@@ -5326,7 +5611,7 @@ function apriPerche(){
     <p>Sulla scheda di ogni ricetta tocca <strong>📅 Nel menu della settimana</strong>. Nella pagina iniziale, in <strong>Menu della settimana</strong>, trovi le ricette scelte, puoi cambiare quanti siete a tavola per ognuna e con un tocco metti nella lista della spesa tutto quello che manca: le quantità delle varie ricette si sommano, quello che hai già in dispensa resta fuori e la lista è divisa per reparto.</p>
 
     <div class="sez"><strong>Le tue ricette, i tuoi ricordi</strong></div>
-    <p>Hai un libro di cucina o un vecchio quaderno di ricette di famiglia? In <strong>Le mie ricette</strong> tocca <strong>📷 Da una foto</strong>. Per le ricette scritte a mano usa <strong>🔍 Leggi con Google Lens</strong>: inquadri la pagina, copi il testo e tornando nell'app lo incolli con un tocco; tu correggi e salvi. Le pagine stampate le legge anche la foto dell'app.</p>
+    <p>Hai un libro di cucina o un vecchio quaderno di ricette di famiglia? In <strong>Le mie ricette</strong> le pagine stampate entrano con <strong>📷 Pagina stampata</strong>: l'app le legge, tu correggi e salvi. Le ricette scritte a mano della nonna entrano con <strong>📜 Scritta a mano</strong>: si conservano come foto, l'originale con la sua grafia, e quando vuoi le fai trascrivere da Claude o Gemini, controllando il testo accanto alla foto.</p>
     <p>Quando finisci di cucinare puoi dare un voto e scrivere una nota per la prossima volta («meno sale», «agli ospiti è piaciuta»): la ritrovi sulla scheda e all'inizio della ricetta quando la rifai. E con <strong>📤 Manda a un amico</strong> la ricetta parte su WhatsApp, leggibile da chiunque; se l'amico ha Che cucino?, con un tocco sul link entra nelle sue ricette.</p>
 
     <div class="sez"><strong> Per finire</strong></div>
