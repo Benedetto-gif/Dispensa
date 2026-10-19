@@ -751,7 +751,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
   </svg>
   <div class="nome">Che cucino?</div>
   <div class="autore-splash" data-no-tr>di Benedetto Daniele Sgroi</div>
-  <div class="ver-splash" data-no-tr>v153</div>
+  <div class="ver-splash" data-no-tr>v154</div>
 </div>
 <header class="top">
   <div class="top-in">
@@ -762,7 +762,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v153</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v154</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -5589,7 +5589,7 @@ function apriPerche(){
     <p>Scrivi quello che vuoi preparare, l'app controlla se hai tutti gli ingredienti. Se ti manca qualcosa non preoccuparti, <strong>"Che cucino?"</strong> ti propone una sostituzione con quello che hai già, oppure aggiunge quel che manca alla lista della spesa.</p>
     <p>Se la ricetta non è nell'archivio, tocca <strong>«Cerca su Google nei siti consigliati»</strong>: la ricerca si limita a GialloZafferano, Fatto in casa da Benedetta, Misya, Ricette della Nonna e Cookaround, che pubblicano le ricette in un formato standard che l'app legge per intero.</p>
     <p>Apri la ricetta che ti piace, tocca i <strong>tre puntini ⋮</strong> in alto a destra, poi <strong>Condividi</strong> → <strong>Che cucino?</strong>: la ricetta arriva da sola. Controlla ingredienti e procedimento e salva.</p>
-    <p>Se scegli un sito diverso l'app ci prova lo stesso, ma ti avvisa che la ricetta potrebbe arrivare incompleta e ti invita a cercarla nei siti consigliati. Se non ti convince, puoi comunque eliminarla. (Su iPhone Condividi non arriva all'app: copia il link e incollalo in <strong>Extra → Le mie ricette</strong>.)</p>
+    <p>Se scegli un sito diverso l'app ci prova lo stesso, ma ti avvisa che la ricetta potrebbe arrivare incompleta e ti invita a cercarla nei siti consigliati. Se non ti convince, puoi comunque eliminarla. (Su iPhone Condividi non arriva all'app: copia il link e incollalo in <strong>Le mie ricette, nella pagina iniziale</strong>.)</p>
     <p>Ora hai una nuova ricetta in archivio.</p>
     <div class="sez"><strong>Vuoi un'idea di cosa mangiare?</strong></div>
     <p>L'app guarda anche la stagione e l'ora: d'inverno non ti propone per prime granite e insalate di riso, d'estate zuppe e brasati; e la sera, se scegli <strong>🌙 cena</strong>, mette avanti i piatti più leggeri e in fondo fritti e piatti sostanziosi. Restano comunque nell'elenco, e se cerchi un piatto per nome lo trovi sempre.</p>
@@ -6112,6 +6112,21 @@ function tappaHome(){
         <b>Cosa vuoi mangiare?</b>
         <small>Un'idea precisa, lascia scegliere all'app, smaltisci un avanzo, o un menu a tema</small>
       </div>
+      <div class="bcella c-bordeaux" id="hMie">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M11 7h18l6 6v24a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M29 7v6h6" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M14 19h10M14 24h14M14 29h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="33" cy="33" r="7" fill="currentColor" opacity=".25"/>
+  <circle cx="33" cy="33" r="7" stroke="currentColor" stroke-width="2"/>
+  <path d="M33 29.5v7M29.5 33h7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+</svg>
+        ${(S.mie||[]).length?`<span class="badge">${S.mie.length}</span>`:""}
+        <b>${L("Le mie ricette","My recipes")}</b>
+        <small>${(()=>{ const m = S.mie || [], dt = m.filter(x=>x.soloFoto).length, dc = m.filter(x=>!x.soloFoto && !x.validata).length;
+          const extra = [dt ? `${dt} ${L("da trascrivere","to transcribe")}` : "", dc ? `${dc} ${L("da controllare","to check")}` : ""].filter(Boolean).join(" \u00b7 ");
+          return L("Aggiungi dal web, da una pagina stampata o scritta a mano","Add from the web, a printed page or handwritten") + (extra ? ` \u00b7 <span style="font-weight:800">${extra}</span>` : ""); })()}</small>
+      </div>
       <div class="bcella c-menta" id="hMenu">
         <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect x="7" y="10" width="30" height="27" rx="4" stroke="currentColor" stroke-width="2.2"/>
@@ -6171,6 +6186,7 @@ function tappaHome(){
   document.getElementById("hVoglia").onclick = ()=>vai(3);
   document.getElementById("hScuola").onclick = ()=>apriScuola();
   document.getElementById("hMenu").onclick = ()=>apriMenuSett();
+  document.getElementById("hMie").onclick = ()=>apriMie();
   const ps = document.getElementById("promSalva"); if(ps) ps.onclick = ()=>esportaDati();
   const pd = document.getElementById("promDopo"); if(pd) pd.onclick = ()=>{ S.promemoriaDopo = Date.now() + 7 * GIORNO_MS; salva(); tappaHome(); };
   document.getElementById("hStag").onclick = ()=>{ stagMese = new Date().getMonth()+1; stagVista = "mese"; apriStagioni(); centraMese(); };
@@ -6212,7 +6228,6 @@ function disegnaMenu(){
     <div class="menu-box mb-oro">
       <div class="sez">Strumenti</div>
       <button id="mSpesa">Lista della spesa${S.spesa.filter(x=>!x.presa).length?` (${S.spesa.filter(x=>!x.presa).length})`:""}</button>
-      <button id="mMie">Le mie ricette${S.mie.length?` (${S.mie.length})`:""}</button>
       <button id="mNasc">Ricette nascoste${S.nascoste.length?` (${S.nascoste.length})`:""}</button>
       <button id="mImpostazioni">Aspetto</button>
       <button id="mSalva">Salva i miei dati (su Drive o in un file)</button>
@@ -6232,7 +6247,6 @@ function disegnaMenu(){
   if(pronta) document.getElementById("mSalta").onclick=()=>{
     sess = nuovaSessione(); sess.modo="app"; menuAperto=false; disegnaMenu(); vai(4); };
   document.getElementById("mSpesa").onclick=()=>{ menuAperto=false; disegnaMenu(); apriSpesa(); };
-  document.getElementById("mMie").onclick=()=>{ menuAperto=false; disegnaMenu(); apriMie(); };
   document.getElementById("mNasc").onclick=()=>{ menuAperto=false; disegnaMenu(); apriNascoste(); };
   document.getElementById("mImpostazioni").onclick=()=>{ menuAperto=false; disegnaMenu(); apriImpostazioni(); };
   document.getElementById("mScienza").onclick=()=>{ menuAperto=false; disegnaMenu(); apriScienza(); };
