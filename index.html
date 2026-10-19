@@ -511,6 +511,13 @@ body[data-filigrana="1"]::before{
 .radio-pan .rc0{background:#B83729}.radio-pan .rc1{background:#1768A9}.radio-pan .rc2{background:#865D00}
 .radio-pan .rc3{background:#6D3FA0}.radio-pan .rc4{background:#157159}.radio-pan .rc5{background:#A74915}
 .radio-pan .rc6{background:#8B3A52}
+.radio-pan button#radioCerca{color:var(--verde);font-weight:800}
+.rb-l{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rb-riga{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:var(--carta);border:1px solid var(--linea)}
+.rb-ico{flex:none;width:36px;height:36px;border-radius:9px;object-fit:contain;background:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.rb-nome{flex:1;min-width:0;display:flex;flex-direction:column}
+.rb-nome b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rb-az{flex:none;display:flex;flex-direction:column;gap:5px;align-items:flex-end}
 :root[data-scuro] .radio-pan .rc0{background:#B33C2D}:root[data-scuro] .radio-pan .rc1{background:#1C69A2}
 :root[data-scuro] .radio-pan .rc2{background:#805E09}:root[data-scuro] .radio-pan .rc3{background:#7E50B5}
 :root[data-scuro] .radio-pan .rc4{background:#16725B}:root[data-scuro] .radio-pan .rc5{background:#A14D1D}
@@ -762,7 +769,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     </button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v156</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v157</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <div class="rail" id="rail"></div>
@@ -1899,7 +1906,7 @@ function esclusePerNome(){
   archivio().forEach(r=>{
     if(!tutteTrovate(parole, nomeRicetta(r))) return;
     const m = [];
-    if(S.nascoste.includes(r.id)) m.push("l'avevi nascosta (la rimetti da Extra \u2192 Ricette nascoste)");
+    if(S.nascoste.includes(r.id)) m.push("l'avevi nascosta con \u00abNon propormela pi\u00f9\u00bb");
     if(soloPref && !S.preferite.includes(r.id)) m.push("stai guardando solo le preferite");
     const a = alg.filter(x=>r.all.includes(x));
     if(a.length) m.push("contiene " + a.join(", ") + ", da escludere per qualcuno a tavola");
@@ -2594,7 +2601,7 @@ function tappaRicette(){
           <p class="mini">${L(`Cerca \u00ab${esc(sess.cerca)}\u00bb sul web. Trovata la ricetta, tocca i tre puntini in alto, \u201cCopia link\u201d, e torna qui.`, `Search the web for \u00ab${esc(sess.cerca)}\u00bb. Once you find the recipe, tap the three dots at the top, \u201cCopy link\u201d, and come back here.`)}</p>
           ${linkWebHTML(sess.cerca)}</div></div>` : ""}
   ${escluse.length?`<div class="card" style="margin-top:14px"><b>${mostra.length?"Ho trovato anche":"Le ho trovate, ma le ho escluse"}</b>
-      <ul class="spesa-l" style="margin-top:6px">${escluse.map(o=>`<li><span><span data-no-tr>${esc(nomeR(o.r))}</span>${o.r.id<0?" <span class=\"mini\">(tua)</span>":""}<br><span class="mini">Esclusa perch\u00e9 ${esc(o.motivo)}.</span></span></li>`).join("")}</ul></div>`:""}
+      <ul class="spesa-l" style="margin-top:6px">${escluse.map(o=>`<li><span><span data-no-tr>${esc(nomeR(o.r))}</span>${o.r.id<0?" <span class=\"mini\">(tua)</span>":""}<br><span class="mini">Esclusa perch\u00e9 ${esc(o.motivo)}.</span></span>${S.nascoste.includes(o.r.id)?`<button class="chiudi" data-rimetti="${o.r.id}">${L("Rimettila","Bring it back")}</button>`:""}</li>`).join("")}</ul></div>`:""}
   ${lista.length>mostra.length?`<p class="mini" style="text-align:center">Mostrate le prime ${mostra.length} di ${lista.length}. Restringi i filtri per vedere le altre.</p>`:""}`;
 
   document.getElementById("fTutte").onclick = ()=>{ soloPref = false; tappaRicette(); };
@@ -6023,6 +6030,8 @@ function apriNascoste(){
          <p class="mini">Il tasto «Non propormela più» lo trovi dentro ogni ricetta.</p></div>`}`);
 }
 document.addEventListener("click", e=>{
+  const rm = e.target.closest("[data-rimetti]");
+  if(rm){ S.nascoste = S.nascoste.filter(x=>x !== +rm.dataset.rimetti); salva(); disegna(); return; }
   const b = e.target.closest("[data-nas]");
   if(!b) return;
   if(b.dataset.nas === "chiudi"){ chiudiVelo(); return; }
@@ -6229,10 +6238,8 @@ function disegnaMenu(){
       <button data-go="1">Chi c'è a tavola</button>
       <button data-go="2">La dispensa</button>
       <button data-go="3">Cosa cucinare</button>
-      <button id="mSpesa">Lista della spesa${S.spesa.filter(x=>!x.presa).length?` (${S.spesa.filter(x=>!x.presa).length})`:""}</button>
-      <button id="mNasc">Ricette nascoste${S.nascoste.length?` (${S.nascoste.length})`:""}</button>
       <button id="mImpostazioni">Aspetto</button>
-      <button id="mRadio">${L("Radio: musica mentre cucini","Radio: music while you cook")}${radioSel>=0?` (${esc(RADIO[radioSel].n)})`:""}</button>
+      <button id="mRadio">${L("Cerca altre radio","Find more radio stations")}${(S.radioMie||[]).length?` (${L("ne hai","you have")} ${S.radioMie.length})`:""}</button>
       <button id="mNuova">Ricomincia il percorso</button>
     </div>
     <div class="menu-box mb-bordeaux">
@@ -6245,10 +6252,8 @@ function disegnaMenu(){
   menuPan.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ menuAperto=false; disegnaMenu(); vai(+b.dataset.go); });
   if(pronta) document.getElementById("mSalta").onclick=()=>{
     sess = nuovaSessione(); sess.modo="app"; menuAperto=false; disegnaMenu(); vai(4); };
-  document.getElementById("mSpesa").onclick=()=>{ menuAperto=false; disegnaMenu(); apriSpesa(); };
-  document.getElementById("mNasc").onclick=()=>{ menuAperto=false; disegnaMenu(); apriNascoste(); };
   document.getElementById("mImpostazioni").onclick=()=>{ menuAperto=false; disegnaMenu(); apriImpostazioni(); };
-  document.getElementById("mRadio").onclick=e=>{ e.stopPropagation(); menuAperto=false; disegnaMenu(); radioAperto=true; disegnaRadio(); };
+  document.getElementById("mRadio").onclick=()=>{ menuAperto=false; disegnaMenu(); apriCercaRadio(); };
   document.getElementById("mSalva").onclick=()=>{ menuAperto=false; disegnaMenu(); esportaDati(); };
   document.getElementById("mCarica").onclick=()=>{ menuAperto=false; disegnaMenu(); importaDati(); };
   document.getElementById("mNuova").onclick=()=>{ sess = nuovaSessione(); menuAperto=false; disegnaMenu(); vai(S.profilo.fatto ? 5 : 0); };
@@ -6288,10 +6293,13 @@ const RADIO = [
 
 const radioAudio = new Audio();
 radioAudio.preload = "none";
+/* le stazioni: quelle dell'app, poi quelle trovate e aggiunte dall'utente, poi quella in prova */
+let radioProva = null;
+function stazioni(){ return RADIO.concat(S.radioMie || [], radioProva ? [radioProva] : []); }
 let radioSel = -1, radioUrl = 0, radioMsg = "", radioAperto = false, radioAvanza = false, radioAttesa = null, radioInOnda = false;
 
 function apriFlusso(){
-  const st = RADIO[radioSel];
+  const st = stazioni()[radioSel];
   radioMsg = "Collego " + st.n + "\u2026";
   radioAudio.src = st.u[radioUrl];
   disegnaRadio();
@@ -6310,9 +6318,9 @@ function avanzaRadio(){
   if(radioSel < 0 || radioAvanza) return;
   radioAvanza = true;
   setTimeout(()=>{ radioAvanza = false; }, 400);
-  if(radioUrl + 1 < RADIO[radioSel].u.length){ radioUrl++; apriFlusso(); }
+  if(radioUrl + 1 < stazioni()[radioSel].u.length){ radioUrl++; apriFlusso(); }
   else{
-    radioMsg = RADIO[radioSel].n + " non risponde adesso. Prova un altro genere.";
+    radioMsg = stazioni()[radioSel].n + " non risponde adesso. Prova un altro genere.";
     radioSel = -1; disegnaRadio();
   }
 }
@@ -6331,7 +6339,7 @@ radioAudio.addEventListener("error", avanzaRadio);
 radioAudio.addEventListener("playing", ()=>{
   clearTimeout(radioAttesa);
   radioInOnda = true;
-  radioMsg = "In onda: " + RADIO[radioSel].n;
+  radioMsg = "In onda: " + stazioni()[radioSel].n;
   disegnaRadio();
 });
 
@@ -6346,9 +6354,15 @@ function disegnaRadio(){
     <div class="chips">
       ${RADIO.map((r,i)=>`<button data-i="${i}" class="rc${i%7} ${i===radioSel?"on":""}">${r.n}</button>`).join("")}
     </div>
+    ${(S.radioMie||[]).length ? `<div class="sez">${L("Le tue radio","Your stations")}</div>
+    <div class="chips">${S.radioMie.map((r,j)=>{ const i = RADIO.length + j;
+      return `<button data-i="${i}" class="rc${i%7} ${i===radioSel?"on":""}" data-no-tr>\u{1F4FB} ${esc(r.n)}</button>`; }).join("")}</div>` : ""}
+    ${radioProva && radioSel === stazioni().length-1 ? `<div class="stato" data-no-tr>${L("In prova","Trying")}: ${esc(radioProva.n)}</div>` : ""}
+    <button class="spegni" id="radioCerca">\u{1F50D} ${L("Cerca altre radio","Find more stations")}</button>
     ${radioSel>=0 ? `<button class="spegni" id="radioStop">Spegni</button>` : ""}
   </div>`;
   pan.querySelectorAll("[data-i]").forEach(b=>b.onclick = ()=>accendiRadio(+b.dataset.i));
+  document.getElementById("radioCerca").onclick = e=>{ e.stopPropagation(); radioAperto = false; disegnaRadio(); apriCercaRadio(); };
   const stop = document.getElementById("radioStop");
   if(stop) stop.onclick = fermaRadio;
 }
@@ -6362,6 +6376,110 @@ document.addEventListener("click", e=>{
     radioAperto = false; disegnaRadio();
   }
 });
+
+/* ===========================================================
+   Cerca altre radio: l'archivio libero di radio-browser.info
+   (decine di migliaia di stazioni nel mondo). Solo flussi https,
+   gli unici che un'app sicura puo' suonare. Le radio aggiunte
+   restano nei dati dell'utente (S.radioMie) e viaggiano nel backup.
+   =========================================================== */
+const RB_SERVER = ["https://de1.api.radio-browser.info","https://fi1.api.radio-browser.info","https://de2.api.radio-browser.info","https://nl1.api.radio-browser.info"];
+const RB_GENERI = [["jazz","Jazz"],["classical","Classica"],["lounge","Lounge"],["chillout","Chill out"],["ambient","Ambient"],["blues","Blues"],["soul","Soul"],["swing","Swing"],["bossa nova","Bossa nova"],["acoustic","Acustica"],["oldies","Anni passati"],["italian","Italiana"],["opera","Lirica"],["baroque","Barocca"],["piano","Pianoforte"],["world","World"]];
+const RB_PAESI = [["","Tutto il mondo"],["IT","Italia"],["FR","Francia"],["ES","Spagna"],["PT","Portogallo"],["GR","Grecia"],["GB","Regno Unito"],["US","Stati Uniti"],["BR","Brasile"],["CU","Cuba"],["JP","Giappone"]];
+let rbRisultati = [], rbStato = "", rbGenere = "", rbPaese = "", rbTesto = "";
+const rbBandiera = cc => /^[A-Z]{2}$/.test(cc||"") ? String.fromCodePoint(...[...cc].map(c=>0x1F1E6 + c.charCodeAt(0) - 65)) : "";
+async function rbCerca(){
+  const q = new URLSearchParams({hidebroken:"true", is_https:"true", order:"clickcount", reverse:"true", limit:"40"});
+  if(rbTesto) q.set("name", rbTesto);
+  if(rbGenere) q.set("tag", rbGenere);
+  if(rbPaese) q.set("countrycode", rbPaese);
+  if(!rbTesto && !rbGenere && !rbPaese){ rbStato = L("Scrivi un nome o scegli un genere o un paese.","Type a name or choose a genre or a country."); disegnaCercaRadio(); return; }
+  rbStato = L("Cerco…","Searching…"); rbRisultati = []; disegnaCercaRadio();
+  for(const srv of RB_SERVER){
+    try{
+      const ctl = new AbortController(), t = setTimeout(()=>ctl.abort(), 8000);
+      const r = await fetch(srv + "/json/stations/search?" + q, {signal:ctl.signal});
+      clearTimeout(t);
+      if(!r.ok) continue;
+      const visti = new Set();
+      rbRisultati = (await r.json()).filter(x=>/^https:/i.test(x.url_resolved || "") && x.name && !visti.has(x.url_resolved) && visti.add(x.url_resolved))
+        .map(x=>({id:x.stationuuid, n:String(x.name).trim().slice(0,60), u:[x.url_resolved], cc:(x.countrycode||"").toUpperCase(),
+                  tags:String(x.tags||"").split(",").map(t=>t.trim()).filter(Boolean).slice(0,4).join(", "), br:x.bitrate||0, ico:/^https:/i.test(x.favicon||"") ? x.favicon : ""}));
+      rbStato = rbRisultati.length ? "" : L("Nessuna radio trovata: prova con un altro nome o genere.","No stations found: try another name or genre.");
+      disegnaCercaRadio(); return;
+    }catch(e){}
+  }
+  rbStato = L("L’archivio delle radio non risponde adesso: riprova tra poco (serve la connessione).","The radio directory isn’t answering right now: try again shortly (you need a connection).");
+  disegnaCercaRadio();
+}
+function apriCercaRadio(){ disegnaCercaRadio(true); }
+function rigaRadio(r, mia){
+  const ico = r.ico ? `<img class="rb-ico" src="${esc(r.ico)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'rb-ico',textContent:'\u{1F4FB}'}))">` : `<span class="rb-ico">\u{1F4FB}</span>`;
+  const st = stazioni(), suona = radioSel >= 0 && st[radioSel] && st[radioSel].u[0] === r.u[0];
+  const giaMia = (S.radioMie||[]).some(x=>x.u[0] === r.u[0]);
+  return `<li class="rb-riga">${ico}<span class="rb-nome" data-no-tr><b>${esc(r.n)}</b><span class="mini">${rbBandiera(r.cc)} ${esc(r.tags || "")}${r.br ? " · " + r.br + " kbps" : ""}</span></span>
+    <span class="rb-az"><button class="chiudi" data-rb="${suona ? "stop" : "ascolta"}" data-u="${esc(r.u[0])}">${suona ? "⏹️ " + L("Ferma","Stop") : "▶️ " + L("Ascolta","Listen")}</button>
+    ${mia ? `<button class="chiudi" data-rb="togli" data-u="${esc(r.u[0])}">✕ ${L("Togli","Remove")}</button>`
+          : giaMia ? `<span class="mini">✓ ${L("tra le tue","saved")}</span>` : `<button class="chiudi" data-rb="aggiungi" data-u="${esc(r.u[0])}">＋ ${L("Aggiungi","Add")}</button>`}</span></li>`;
+}
+function disegnaCercaRadio(nuova){
+  const mie = S.radioMie || [];
+  const html = `<div class="velo-top"><h2>\u{1F4FB} ${L("Cerca altre radio","Find more radio stations")}</h2>
+      <button class="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
+    <p class="mini">${L("Cerca tra le radio di tutto il mondo per nome, genere o paese. Prima ascoltale, poi aggiungi quelle che ti piacciono: le ritrovi nel tasto ♪ della radio, sotto «Le tue radio».","Search stations from all over the world by name, genre or country. Listen first, then add the ones you like: you’ll find them under the ♪ radio button, in “Your stations”.")}</p>
+    <div class="idea-riga"><label class="campo" style="flex:1"><span>${L("Nome della radio","Station name")}</span>
+      <input type="text" id="rbTesto" value="${esc(rbTesto)}" placeholder="${L("es. Radio Swiss Jazz, FIP, Radio 3","e.g. Radio Swiss Jazz, FIP, BBC Radio 3")}" data-no-tr></label>
+      <button class="btn" id="rbVai" style="align-self:flex-end">\u{1F50D} ${L("Cerca","Search")}</button></div>
+    <div class="sez" style="margin-top:12px">${L("Genere","Genre")}</div>
+    <div class="chips" id="rbGeneri">${RB_GENERI.map(([t,n])=>`<button class="chip ${rbGenere===t?"on":""}" data-g="${t}">${L(n, t.charAt(0).toUpperCase()+t.slice(1))}</button>`).join("")}</div>
+    <div class="sez" style="margin-top:12px">${L("Paese","Country")}</div>
+    <div class="chips" id="rbPaesi">${RB_PAESI.map(([c,n])=>`<button class="chip ${rbPaese===c?"on":""}" data-c="${c}">${c ? rbBandiera(c) + " " : "\u{1F30D} "}${n}</button>`).join("")}</div>
+    ${rbStato ? `<p class="mini" style="margin-top:12px" aria-live="polite">${esc(rbStato)}</p>` : ""}
+    ${rbRisultati.length ? `<div class="sez" style="margin-top:12px">${L("Trovate","Found")} (${rbRisultati.length})</div><ul class="rb-l">${rbRisultati.map(r=>rigaRadio(r,false)).join("")}</ul>` : ""}
+    ${mie.length ? `<div class="sez" style="margin-top:16px">${L("Le tue radio","Your stations")} (${mie.length})</div><ul class="rb-l">${mie.map(r=>rigaRadio(r,true)).join("")}</ul>` : ""}
+    <p class="mini" style="margin-top:14px">${L("Elenco libero e curato dagli ascoltatori (radio-browser.info): qualche stazione può non rispondere, in quel caso provane un’altra.","Free listener-curated directory (radio-browser.info): some stations may not answer; if so, try another.")}</p>`;
+  const vi = velo.querySelector(".velo"), y = vi && !nuova ? vi.scrollTop : 0;
+  apriVelo("radio-cerca", html);
+  const vi2 = velo.querySelector(".velo"); if(vi2 && y) vi2.scrollTop = y;
+  const t = document.getElementById("rbTesto");
+  document.getElementById("rbVai").onclick = ()=>{ rbTesto = t.value.trim(); rbCerca(); };
+  t.onkeydown = e=>{ if(e.key === "Enter"){ rbTesto = t.value.trim(); rbCerca(); } };
+  document.querySelectorAll("#rbGeneri [data-g]").forEach(b=>b.onclick=()=>{ rbTesto = t.value.trim(); rbGenere = rbGenere === b.dataset.g ? "" : b.dataset.g; rbCerca(); });
+  document.querySelectorAll("#rbPaesi [data-c]").forEach(b=>b.onclick=()=>{ rbTesto = t.value.trim(); rbPaese = b.dataset.c; rbCerca(); });
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-rb]"); if(!b) return;
+  const u = b.dataset.u, a = b.dataset.rb;
+  const trova = ()=>rbRisultati.find(x=>x.u[0] === u) || (S.radioMie||[]).find(x=>x.u[0] === u);
+  if(a === "stop"){ fermaRadio(); }
+  else if(a === "ascolta"){
+    const r = trova(); if(!r) return;
+    const j = (S.radioMie||[]).findIndex(x=>x.u[0] === u);
+    if(radioSel >= 0) fermaRadio();
+    if(j >= 0){ radioProva = null; accendiRadio(RADIO.length + j); }
+    else{ radioProva = {n:r.n, u:r.u.slice(), cc:r.cc, ico:r.ico, tags:r.tags, br:r.br}; accendiRadio(stazioni().length - 1); }
+    try{ fetch(RB_SERVER[0] + "/json/url/" + encodeURIComponent(r.id || "")).catch(()=>{}); }catch(err){}
+  }
+  else if(a === "aggiungi"){
+    const r = trova(); if(!r) return;
+    S.radioMie = S.radioMie || [];
+    if(!S.radioMie.some(x=>x.u[0] === u)){
+      const inProva = radioProva && radioProva.u[0] === u && radioSel === stazioni().length - 1;
+      S.radioMie.push({n:r.n, u:r.u.slice(), cc:r.cc, ico:r.ico, tags:r.tags, br:r.br});
+      if(inProva){ radioProva = null; radioSel = RADIO.length + S.radioMie.length - 1; }
+      salva();
+    }
+  }
+  else if(a === "togli"){
+    const j = (S.radioMie||[]).findIndex(x=>x.u[0] === u); if(j < 0) return;
+    if(radioSel === RADIO.length + j) fermaRadio();
+    else if(radioSel > RADIO.length + j) radioSel--;
+    S.radioMie.splice(j, 1); salva();
+  }
+  disegnaCercaRadio();
+});
+/* quando la radio cambia stato (collegata, non risponde), aggiorno anche la pagina di ricerca se e' aperta */
+radioAudio.addEventListener("playing", ()=>{ if(document.querySelector("#rbTesto")) disegnaCercaRadio(); });
 
 /* ===========================================================
    La regione dalla posizione
