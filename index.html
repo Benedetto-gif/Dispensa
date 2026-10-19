@@ -15,14 +15,51 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Che cucino?">
 <script>
-/* la luminosita scelta va applicata prima del primo disegno, o si vede lo sfarfallio */
-(function(){try{var t=localStorage.getItem("checucino.tono");
-if(t===null)t=window.matchMedia("(prefers-color-scheme: dark)").matches?"100":"0";
-document.documentElement.style.setProperty("--tono",t);
-if(+t>=55)document.documentElement.setAttribute("data-scuro","");
-var tc=localStorage.getItem("checucino.chiaro"); if(tc)document.documentElement.setAttribute("data-chiaro",tc);
-var ts=localStorage.getItem("checucino.scuroTema"); if(ts)document.documentElement.setAttribute("data-scuro-t",ts);
-}catch(e){}})();
+/* Lo sfondo: l'utente sceglie un colore (RGB) e ne memorizza piu' d'uno; il tasto in alto passa da una scelta all'altra.
+   Da quel colore ricavo da solo superfici, linee e testo (scuro sui colori chiari, chiaro su quelli scuri).
+   Va applicato prima del primo disegno, o si vede lo sfarfallio. */
+window.SFONDO = (function(){
+  var R = document.documentElement, W = [255,255,255], B = [0,0,0];
+  var PREDEF = [
+    {n:"Verde salvia",c:[242,244,238]},{n:"Crema",c:[246,241,231]},{n:"Azzurro",c:[238,243,245]},{n:"Rosa antico",c:[251,239,239]},
+    {n:"Blu profondo",c:[10,30,69]},{n:"Antracite",c:[21,21,21]},{n:"Verde scuro",c:[23,40,26]},{n:"Bordeaux scuro",c:[42,21,32]}];
+  function lim(x){ return Math.max(0, Math.min(255, Math.round(x))); }
+  function hex(c){ return "#" + c.map(function(x){ return ("0" + lim(x).toString(16)).slice(-2); }).join(""); }
+  function mix(c, t, a){ return [c[0]+(t[0]-c[0])*a, c[1]+(t[1]-c[1])*a, c[2]+(t[2]-c[2])*a]; }
+  function lum(c){ var f = function(v){ v /= 255; return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
+    return 0.2126*f(c[0]) + 0.7152*f(c[1]) + 0.0722*f(c[2]); }
+  function scuro(c){ return lum(c) < 0.18; }
+  function lista(){
+    try{ var l = JSON.parse(localStorage.getItem("checucino.sfondi") || "null");
+      if(l && l.length) return l.map(function(c){ return [lim(c[0]), lim(c[1]), lim(c[2])]; }); }catch(e){}
+    /* prima volta: riparto dai due sfondi che l'utente aveva scelto con il vecchio pannello */
+    var tc = 1, ts = 1;
+    try{ tc = +(localStorage.getItem("checucino.chiaro") || 1); ts = +(localStorage.getItem("checucino.scuroTema") || 1); }catch(e){}
+    return [PREDEF[(tc-1) % 4].c.slice(), PREDEF[4 + (ts-1) % 4].c.slice()];
+  }
+  function sel(){
+    var n = lista().length, v = null;
+    try{ v = localStorage.getItem("checucino.sfondoSel"); }catch(e){}
+    if(v === null){
+      var t = null; try{ t = localStorage.getItem("checucino.tono"); }catch(e){}
+      if(t === null) t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "80" : "15";
+      v = +t >= 55 ? 1 : 0;
+    }
+    v = +v || 0; return v < n ? v : 0;
+  }
+  function salva(l, i){ try{ localStorage.setItem("checucino.sfondi", JSON.stringify(l)); localStorage.setItem("checucino.sfondoSel", String(i)); }catch(e){} }
+  function applica(c){
+    var d = scuro(c), v = d
+      ? {carta:c, superficie:mix(c,W,.05), superficie2:mix(c,W,.12), linea:mix(c,W,.2), inchiostro:mix(c,W,.93), "inchiostro-soft":mix(c,W,.7)}
+      : {carta:c, superficie:mix(c,W,.7), superficie2:mix(c,B,.06), linea:mix(c,B,.14), inchiostro:mix(c,B,.86), "inchiostro-soft":mix(c,B,.62)};
+    for(var k in v) R.style.setProperty("--" + k, hex(v[k]));
+    R.style.setProperty("--tono", d ? "80" : "15");
+    if(d) R.setAttribute("data-scuro", ""); else R.removeAttribute("data-scuro");
+    var m = document.getElementById("metaTema"); if(m) m.content = hex(c);
+  }
+  return {PREDEF:PREDEF, hex:hex, lum:lum, scuro:scuro, lista:lista, sel:sel, salva:salva, applica:applica};
+})();
+try{ SFONDO.applica(SFONDO.lista()[SFONDO.sel()]); }catch(e){}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -431,6 +468,26 @@ body[data-filigrana="1"]::before{
 .menu-btn.tondo{width:38px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .menu-btn.tondo svg{width:18px;height:18px}
 @media (max-width:374px){.top-in .menu-btn.tondo{width:32px!important}.top-in .lingua-btn{min-width:32px;padding-left:4px;padding-right:4px}#infoBtn{padding:0 5px!important}}
+.asp-scelte{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+.asp-scelta{border:0;background:none;padding:0;cursor:pointer}
+.asp-pal{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 1rem/1 Karla,system-ui,sans-serif;
+  border:2px solid var(--linea);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.asp-pal.on{border:3px solid var(--inchiostro);box-shadow:0 0 0 3px var(--verde)}
+.asp-nuova{height:42px;padding:0 14px;border-radius:999px;border:2px dashed var(--inchiostro-soft);color:var(--inchiostro);font-weight:700}
+.asp-nuova:disabled{opacity:.4}
+.asp-box{background:var(--superficie);border:1px solid var(--linea);border-radius:16px;padding:12px 14px;margin-bottom:12px}
+.asp-anteprima{background:var(--carta);border:1px solid var(--linea);border-radius:12px;padding:12px 14px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-bottom:10px}
+.asp-pv-t{font-weight:800;color:var(--inchiostro)}.asp-pv-c{font-family:ui-monospace,monospace;color:var(--inchiostro-soft)}
+.asp-pv-m{flex-basis:100%;color:var(--inchiostro-soft);font-size:.9rem}
+.asp-cur{display:grid;grid-template-columns:52px 1fr 62px;align-items:center;gap:10px;margin:10px 0}
+.asp-k{font-weight:800;font-size:.9rem}
+.asp-cur input[type=range]{-webkit-appearance:none;appearance:none;height:14px;border-radius:999px;border:1px solid var(--linea);margin:0;width:100%}
+.asp-cur input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--inchiostro);box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.asp-cur input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--inchiostro)}
+.asp-cur input[type=number]{width:62px;padding:6px;border-radius:8px;border:1px solid var(--linea);background:var(--carta);color:var(--inchiostro);font:inherit;text-align:center}
+.asp-dot{display:inline-block;width:14px;height:14px;border-radius:50%;margin-right:6px;vertical-align:-2px;border:1px solid rgba(0,0,0,.25)}
+.tono-n{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  font:800 .8rem/1 Karla,system-ui,sans-serif;border:2px solid var(--inchiostro);box-shadow:0 0 0 2px var(--superficie)}
 .menu-btn.tondo .sole{display:none;color:#E9A21F}
 .menu-btn.tondo .luna{color:#3B4A6B}
 :root[data-scuro] .menu-btn.tondo .sole{display:block}
@@ -763,13 +820,10 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
 <header class="top">
   <div class="top-in">
     <div class="marchio" id="logoHome" style="cursor:pointer" title="Torna alla home">Che cucino<span>?</span></div>
-    <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Chiaro / scuro" title="Chiaro / scuro">
-      <svg class="sole" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.4 4.4l1.8 1.8M17.8 17.8l1.8 1.8M19.6 4.4l-1.8 1.8M6.2 17.8l-1.8 1.8"/></g></svg>
-      <svg class="luna" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
-    </button>
+    <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v158</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v159</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -5972,39 +6026,93 @@ document.addEventListener("click", e=>{
 /* ===========================================================
    Impostazioni: colori chiaro/scuro e filigrana
    =========================================================== */
-const TEMI_CHIARI = [{v:"1",n:"Verde salvia"},{v:"2",n:"Crema"},{v:"3",n:"Azzurro"},{v:"4",n:"Rosa antico"}];
-const TEMI_SCURI  = [{v:"1",n:"Blu profondo"},{v:"2",n:"Antracite"},{v:"3",n:"Verde scuro"},{v:"4",n:"Bordeaux scuro"}];
+function aggiornaTastoSfondo(){
+  const l = SFONDO.lista(), i = SFONDO.sel(), c = l[i], el = document.getElementById("tonoN"), b = document.getElementById("tonoBtn");
+  if(!el) return;
+  el.textContent = i + 1;
+  el.style.background = SFONDO.hex(c);
+  el.style.color = SFONDO.scuro(c) ? "#fff" : "#111";
+  const t = L(`Sfondo: scelta ${i+1} di ${l.length}` + (l.length > 1 ? " (tocca per la successiva)" : ""), `Background: choice ${i+1} of ${l.length}` + (l.length > 1 ? " (tap for the next)" : ""));
+  b.title = t; b.setAttribute("aria-label", t);
+}
 function apriImpostazioni(){
-  const chiaro = localStorage.getItem("checucino.chiaro") || "1";
-  const scuroT = localStorage.getItem("checucino.scuroTema") || "1";
   const filigrana = localStorage.getItem("checucino.filigrana") === "1";
+  const l = SFONDO.lista(), i = SFONDO.sel(), c = l[i];
+  const pallino = (col, n, on) => `<span class="asp-pal${on?" on":""}" style="background:${SFONDO.hex(col)};color:${SFONDO.scuro(col)?"#fff":"#111"}">${n}</span>`;
+  const cursore = (k, nome, j) => `<label class="asp-cur"><span class="asp-k" style="color:${["#C62828","#2E7D32","#1565C0"][j]}">${nome}</span>
+      <input type="range" min="0" max="255" step="1" id="asp${k}" value="${c[j]}" aria-label="${nome}">
+      <input type="number" min="0" max="255" id="asp${k}n" value="${c[j]}" inputmode="numeric" aria-label="${nome}"></label>`;
   apriVelo("impostazioni", `
-    <div class="velo-top"><h2>Aspetto</h2>
-      <button class="chiudi" data-imp="chiudi" onclick="chiudiVelo()">Chiudi</button></div>
-    <p class="mini">Scegli il colore di sfondo per la modalità chiara e per quella scura. Passi dall'una all'altra con l'interruttore in alto.</p>
-    <div class="sez">Sfondo chiaro</div>
-    <div class="chips" id="impChiaro">
-      ${TEMI_CHIARI.map(t=>`<button class="chip ${chiaro===t.v?"on":""}" data-v="${t.v}">${t.n}</button>`).join("")}
+    <div class="velo-top"><h2>\u{1F3A8} ${L("Aspetto","Appearance")}</h2>
+      <button class="chiudi" data-imp="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
+    <p class="mini">${L("Scegli il colore di sfondo con i tre cursori (rosso, verde, blu). Ogni modifica si salva da sola. Puoi tenere più scelte: il tasto rotondo in alto con il numero passa dall’una all’altra. Testi e riquadri si adattano da soli, scuri sui colori chiari e chiari su quelli scuri.","Choose the background colour with the three sliders (red, green, blue). Every change saves itself. You can keep several choices: the round numbered button at the top switches between them. Text and boxes adapt on their own.")}</p>
+    <div class="sez">${L("Le tue scelte","Your choices")}</div>
+    <div class="asp-scelte">${l.map((col,n)=>`<button type="button" class="asp-scelta" data-asp-sel="${n}" aria-label="${L("Scelta","Choice")} ${n+1}">${pallino(col, n+1, n===i)}</button>`).join("")}
+      <button type="button" class="asp-scelta asp-nuova" id="aspNuova" ${l.length >= 9 ? "disabled" : ""}>＋ ${L("Nuova","New")}</button></div>
+    <div class="asp-box">
+      <div class="asp-anteprima" id="aspPrev">
+        <span class="asp-pv-t">${L("Scelta","Choice")} ${i+1}</span>
+        <span class="asp-pv-c" id="aspHexV">${SFONDO.hex(c).toUpperCase()}</span>
+        <span class="asp-pv-m">${L("Così si legge un testo sopra","This is how text reads on it")}</span>
+      </div>
+      ${cursore("R", L("Rosso","Red"), 0)}${cursore("G", L("Verde","Green"), 1)}${cursore("B", L("Blu","Blue"), 2)}
+      <label class="campo" style="margin-top:8px"><span>${L("Codice colore (se lo conosci)","Colour code (if you know it)")}</span>
+        <input type="text" id="aspHex" value="${SFONDO.hex(c).toUpperCase()}" maxlength="7" autocapitalize="characters" data-no-tr></label>
+      ${l.length > 1 ? `<button type="button" class="btn small btn-elimina" id="aspElimina" style="margin-top:10px">\u{1F5D1}️ ${L("Elimina la scelta","Delete choice")} ${i+1}</button>` : ""}
     </div>
-    <div class="sez">Sfondo scuro</div>
-    <div class="chips" id="impScuro">
-      ${TEMI_SCURI.map(t=>`<button class="chip ${scuroT===t.v?"on":""}" data-v="${t.v}">${t.n}</button>`).join("")}
-    </div>
-    <div class="sez">Filigrana di sfondo</div>
+    <div class="sez">${L("Parti da un colore già pronto","Start from a ready-made colour")}</div>
+    <div class="chips" id="aspPronti">${SFONDO.PREDEF.map((p,n)=>`<button class="chip" data-pronto="${n}"><span class="asp-dot" style="background:${SFONDO.hex(p.c)}"></span>${L(p.n,["Sage green","Cream","Light blue","Old rose","Deep blue","Charcoal","Dark green","Dark burgundy"][n])}</button>`).join("")}</div>
+    <div class="sez">${L("Filigrana di sfondo","Background watermark")}</div>
     <label class="campo" style="display:flex;align-items:center;gap:8px">
       <input type="checkbox" id="impFiligrana" ${filigrana?"checked":""}>
-      <span>Mostra ortaggi, frutta e uova come sfondo leggero</span>
+      <span>\u{1F955} ${L("Mostra ortaggi, frutta e uova come sfondo leggero","Show vegetables, fruit and eggs as a light background")}</span>
     </label>`);
-  document.querySelectorAll("#impChiaro .chip").forEach(b=>b.onclick=()=>{
-    localStorage.setItem("checucino.chiaro", b.dataset.v);
-    document.documentElement.setAttribute("data-chiaro", b.dataset.v);
-    apriImpostazioni();
+  const K = ["R","G","B"];
+  const leggi = () => K.map(k=>+document.getElementById("asp"+k).value);
+  const dipingiCursori = col => K.forEach((k,j)=>{
+    const a = col.slice(), b = col.slice(); a[j] = 0; b[j] = 255;
+    document.getElementById("asp"+k).style.background = `linear-gradient(90deg, ${SFONDO.hex(a)}, ${SFONDO.hex(b)})`;
   });
-  document.querySelectorAll("#impScuro .chip").forEach(b=>b.onclick=()=>{
-    localStorage.setItem("checucino.scuroTema", b.dataset.v);
-    document.documentElement.setAttribute("data-scuro-t", b.dataset.v);
-    apriImpostazioni();
+  let attesa = null;
+  const usa = (col, salvaOra) => {
+    const lst = SFONDO.lista(), n = SFONDO.sel();
+    lst[n] = col.map(x=>Math.max(0, Math.min(255, Math.round(+x || 0))));
+    SFONDO.applica(lst[n]);
+    K.forEach((k,j)=>{ document.getElementById("asp"+k).value = lst[n][j]; const nn = document.getElementById("asp"+k+"n"); if(document.activeElement !== nn) nn.value = lst[n][j]; });
+    const h = SFONDO.hex(lst[n]).toUpperCase(), hx = document.getElementById("aspHex");
+    if(document.activeElement !== hx) hx.value = h;
+    document.getElementById("aspHexV").textContent = h;
+    const pal = document.querySelector(`[data-asp-sel="${n}"] .asp-pal`);
+    if(pal){ pal.style.background = h; pal.style.color = SFONDO.scuro(lst[n]) ? "#fff" : "#111"; }
+    dipingiCursori(lst[n]);
+    clearTimeout(attesa);
+    const memo = ()=>{ SFONDO.salva(lst, n); aggiornaTastoSfondo(); };
+    if(salvaOra) memo(); else attesa = setTimeout(memo, 250);
+  };
+  dipingiCursori(c);
+  K.forEach(k=>{
+    document.getElementById("asp"+k).oninput = ()=>usa(leggi());
+    document.getElementById("asp"+k).onchange = ()=>usa(leggi(), true);
+    document.getElementById("asp"+k+"n").oninput = e=>{ const v = e.target.value; if(v === "" || isNaN(+v)) return; const col = leggi(); col[K.indexOf(k)] = +v; usa(col); };
   });
+  document.getElementById("aspHex").oninput = e=>{
+    const m = /^#?([0-9a-f]{6})$/i.exec(e.target.value.trim()); if(!m) return;
+    usa([0,2,4].map(o=>parseInt(m[1].substr(o,2),16)), true);
+  };
+  document.querySelectorAll("[data-asp-sel]").forEach(b=>b.onclick=()=>{
+    const lst = SFONDO.lista(), n = +b.dataset.aspSel; SFONDO.salva(lst, n); SFONDO.applica(lst[n]); aggiornaTastoSfondo(); apriImpostazioni();
+  });
+  document.getElementById("aspNuova").onclick = ()=>{
+    const lst = SFONDO.lista(); if(lst.length >= 9) return;
+    lst.push(lst[SFONDO.sel()].slice()); SFONDO.salva(lst, lst.length - 1); aggiornaTastoSfondo(); apriImpostazioni();
+  };
+  const el = document.getElementById("aspElimina");
+  if(el) el.onclick = ()=>{
+    const lst = SFONDO.lista(), n = SFONDO.sel(); if(lst.length < 2) return;
+    if(!confirm(L(`Elimino la scelta ${n+1}?`, `Delete choice ${n+1}?`))) return;
+    lst.splice(n, 1); const m = Math.max(0, n - 1); SFONDO.salva(lst, m); SFONDO.applica(lst[m]); aggiornaTastoSfondo(); apriImpostazioni();
+  };
+  document.querySelectorAll("#aspPronti [data-pronto]").forEach(b=>b.onclick=()=>usa(SFONDO.PREDEF[+b.dataset.pronto].c.slice(), true));
   document.getElementById("impFiligrana").onchange = e=>{
     if(e.target.checked){ localStorage.setItem("checucino.filigrana","1"); document.body.setAttribute("data-filigrana","1"); }
     else{ localStorage.removeItem("checucino.filigrana"); document.body.removeAttribute("data-filigrana"); }
@@ -6659,22 +6767,14 @@ function trovaRegione(btn, esito){
    Cursore chiaro/scuro
    =========================================================== */
 (function(){
-  const btn = document.getElementById("tonoBtn"), radice = document.documentElement;
-  const meta = document.getElementById("metaTema");
-  const applica = v=>{
-    radice.style.setProperty("--tono", v);
-    v >= 55 ? radice.setAttribute("data-scuro","") : radice.removeAttribute("data-scuro");
-    if(meta) meta.content = getComputedStyle(radice).getPropertyValue("--carta").trim();
-    btn.setAttribute("aria-pressed", v >= 55 ? "true" : "false");
-  };
-  let t = null;
-  try{ t = localStorage.getItem("checucino.tono"); }catch(e){}
-  if(t === null) t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "80" : "15";
-  applica(+t);
+  const btn = document.getElementById("tonoBtn");
+  /* il tasto passa alla scelta di sfondo successiva (1, 2, 3...) */
   btn.addEventListener("click", ()=>{
-    t = (+t >= 55) ? "15" : "80"; applica(+t);
-    try{ localStorage.setItem("checucino.tono", t); }catch(e){}
+    const l = SFONDO.lista(), n = (SFONDO.sel() + 1) % l.length;
+    SFONDO.salva(l, n); SFONDO.applica(l[n]); aggiornaTastoSfondo();
+    if(document.getElementById("aspR")) apriImpostazioni();
   });
+  aggiornaTastoSfondo();
   /* lingua: il tasto mostra la lingua in cui passa toccandolo (in italiano la bandiera inglese, e viceversa) */
   const lb = document.getElementById("linguaBtn");
   lb.innerHTML = IN_INGLESE ? "\u{1F1EE}\u{1F1F9}<span class=\"cod\"> IT</span>" : "\u{1F1EC}\u{1F1E7}<span class=\"cod\"> EN</span>";
