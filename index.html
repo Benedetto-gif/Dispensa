@@ -242,6 +242,25 @@ body[data-filigrana="1"]::before{
 .tendina .tend-freccia{grid-column:2;grid-row:1 / span 2;font-size:.75rem;opacity:.85}
 .tendina.aperta > .chips,.tendina .orologio{padding:0 14px 14px}
 .tendina .tend-ok{display:block;margin:4px 14px 14px auto}
+/* "Cosa ti va oggi?": il box si apre come pagina a tutto schermo, nel suo colore */
+html.box-su, html.box-su body{overflow:hidden}
+.pcella.box-pagina{position:fixed;inset:0;z-index:50;margin:0;padding:0;border:0;border-radius:0;outline:0;
+  display:flex;flex-direction:column;cursor:default;transform:none;transition:none;will-change:clip-path}
+.pcella.box-pagina:active{transform:none}
+.bp-testa{display:flex;align-items:center;gap:12px;padding:calc(14px + env(safe-area-inset-top)) 16px 14px;
+  border-bottom:1px solid rgba(255,255,255,.28)}
+.bp-tit{flex:1;display:flex;align-items:center;gap:12px;font-size:1.3rem;font-weight:800;line-height:1.2}
+.pcella .bp-tit svg{width:34px;height:34px;margin:0;opacity:1;flex:none}
+.bp-emo{font-size:1.8rem;line-height:1}
+.bp-chiudi{flex:none;width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,255,255,.7);
+  background:rgba(255,255,255,.16);color:#fff;font-size:1.2rem;font-weight:800;cursor:pointer;display:grid;place-items:center}
+.bp-corpo{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px 24px;width:100%;max-width:620px;margin:0 auto;box-sizing:border-box}
+.bp-corpo .chips{gap:8px}
+.bp-corpo .chip{font-size:.98rem;padding:9px 14px}
+.bp-corpo .orologio{padding:0;max-width:340px;margin:0 auto}
+.bp-piede{padding:12px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.28)}
+.bp-piede .btn{display:block;width:100%;max-width:620px;margin:0 auto;background:#fff;color:#1F2A30;font-size:1.05rem}
+.tendina .tend-freccia{font-size:1rem}
 .tendina .orologio .tend-ok{margin:10px 0 0 auto}
 .pcella .orologio svg{display:block;width:min(250px,72vw)!important;height:auto!important;max-width:none;margin:4px auto 0!important;opacity:1!important;margin:0 auto;touch-action:none;cursor:grab;color:#fff}
 .pcella .orologio svg:active{cursor:grabbing}
@@ -974,7 +993,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v178</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v179</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2222,7 +2241,7 @@ const TAPPE = ["Chi cucina","A tavola","Dispensa","Cosa va","Ricette"];
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pulito = s => esc(String(s).replace(/<[^>]*>/g,""));
 
-function vai(n){ passo = n; window.scrollTo({top:0}); disegna(); }
+function vai(n){ lasciaBox(); passo = n; window.scrollTo({top:0}); disegna(); }
 function disegna(){
   const home = passo === 5;
   document.getElementById("rail").style.display = home ? "none" : "";
@@ -2586,6 +2605,65 @@ function tappaVoglia(){
   const suggerito = stilePiuStretto();
   if(RANGO[sess.stile] < RANGO[suggerito]) sess.stile = suggerito;
   const dep = S.dispensa.filter(k=>DEPERIBILI.some(c=>(CAT_DISP[c]||[]).includes(k)));
+  /* se una pagina-box e' aperta, ricordo dove eri arrivato a scorrere: ogni scelta ridisegna */
+  const corpoPrima = document.querySelector("#boxPag .bp-corpo");
+  const scorrPrima = corpoPrima ? corpoPrima.scrollTop : 0;
+  { const vecchia = document.getElementById("boxPag"); if(vecchia) vecchia.remove(); }
+
+  /* contenuto di ogni box quando si apre a tutto schermo */
+  const CORPO = {
+    idea: ()=>`<div class="idea-box"><label for="qIdea"><b>\u{1F50D} Che piatto hai in mente?</b></label>
+    <div class="idea-riga"><input type="search" id="qIdea" enterkeyhint="search" value="${esc(sess.cerca)}" placeholder="Es. cacciucco, melanzane, Sicilia\u2026">
+    <button type="button" id="qIdeaVai">Cerca</button></div></div>`,
+    recupero: ()=>{
+    const scelti = sess.recupero.filter(k=>!dep.includes(k));
+    const q = normTesto(cercaRec);
+    const tutte = chiaviDispensa().map(([k])=>k);
+    const trovati = q ? tutte.filter(k=>(normTesto(k).includes(q) || (IN_INGLESE && normTesto(nomeIng(k)).includes(q))) && !dep.includes(k) && !scelti.includes(k)).slice(0,14) : [];
+    const gia = tutte.some(k=>normTesto(k) === q || (IN_INGLESE && normTesto(nomeIng(k)) === q));
+    return `<div>
+    <div class="mini">Cosa va consumato</div>
+    ${dep.length||scelti.length?`<div class="chips" id="rec">${dep.concat(scelti).map(k=>
+        `<button class="chip ${sess.recupero.includes(k)?"on":""}" data-i="${esc(k)}">${k}</button>`).join("")}</div>`
+      :`<p class="mini">Nella dispensa non hai segnato freschi, latticini, carne, pesce o surgelati. Cercalo qui sotto: vale qualsiasi cosa, anche un avanzo.</p>`}
+    <label class="campo" style="margin-top:12px"><span>Non è in elenco? Cercalo o aggiungilo</span>
+      <input type="text" id="recCerca" value="${esc(cercaRec)}" placeholder="Scrivi le prime lettere"></label>
+    ${trovati.length?`<div class="chips" id="recTrova">${trovati.map(k=>
+        `<button class="chip" data-i="${esc(k)}">${k}</button>`).join("")}</div>`:""}
+    ${q && !gia ? `<button class="btn ghost small" id="recAdd" style="margin-top:8px">Aggiungi «${esc(cercaRec.trim())}» e mettilo in dispensa</button>` : ""}
+    <p class="mini" style="margin-top:8px">Quello che scegli qui entra anche nella dispensa, così le ricette lo contano come disponibile.</p>
+  </div>`;},
+    tema: ()=>`
+    <div class="mini">Scegli un paese</div>
+    <div class="chips" id="paesiTema" style="margin-top:8px">
+      ${PAESI_TEMA.map(p=>`<button class="chip" data-p="${esc(p.v)}">${p.bandiera} ${p.n}</button>`).join("")}
+    </div>
+    <div class="mini" style="margin-top:12px">${L("Oppure un tema o una festa","Or a theme or a holiday")}</div>
+    <div class="chips" id="temiSpeciali" style="margin-top:8px" data-no-tr>
+      ${TEMI_SPECIALI.map(t=>`<button class="chip" data-ts="${t.v}">${t.e} ${L(t.n,t.en)}</button>`).join("")}
+    </div>`,
+    port: ()=>`<div class="chips" id="port" style="margin-top:10px">
+        ${PORTATE.map(p2=>`<button class="chip ${sess.portate.includes(p2)?"on":""}" data-v="${p2}">${ICONA_PORTATA[p2]||""} ${p2.toLowerCase()}</button>`).join("")}
+        <button class="chip ${sess.unico?"on":""}" id="swUnico">\u{1F958} ${L("piatto unico","one-dish")}</button>
+      </div>`,
+    tempo: ()=>orologioTempo(),
+    pasto: ()=>`<div class="chips" id="pasto" style="margin-top:4px">
+        <button class="chip ${pastoAttuale()==="pranzo"?"on":""}" data-v="pranzo">\u2600\uFE0F ${L("pranzo","lunch")}</button>
+        <button class="chip ${pastoAttuale()==="cena"?"on":""}" data-v="cena">\u{1F319} ${L("cena","dinner")}</button>
+        <small style="display:block;width:100%;margin-top:6px;opacity:.9">${pastoAttuale()==="cena" ? L("La sera ti propongo prima i piatti più leggeri.","In the evening I suggest lighter dishes first.") : L("A pranzo vanno bene anche i piatti più sostanziosi.","At lunch heartier dishes are fine too.")}</small>
+      </div>`,
+    stile: ()=>`<div class="chips" id="stile" style="margin-top:4px">
+        ${["onnivoro","vegetariano","vegano"].map(v=>`<button class="chip ${sess.stile===v?"on":""}" data-v="${v}">${ICONA_STILE[v]} ${v}</button>`).join("")}
+      </div>
+      ${t.length>1?`<div class="chips" style="padding:0 14px 14px">
+        <button class="chip ${sess.accordo==="unico"?"on":""}" data-a="unico">\u{1F37D}\uFE0F un piatto per tutti</button>
+        <button class="chip ${sess.accordo==="diverso"?"on":""}" data-a="diverso">\u{1F374} preparazioni diverse</button>
+      </div>`:""}`
+  };
+  const b0 = boxAperto ? BOX_VOGLIA[boxAperto] : null;
+  const piede = !b0 ? "" :
+      boxAperto === "recupero" ? `<button class="btn" data-bp="ricette">${L("Vedi le ricette","See the recipes")}</button>`
+    : ["port","tempo","pasto","stile"].includes(boxAperto) ? `<button class="btn" data-bp="chiudi">${L("Fatto","Done")}</button>` : "";
 
   app.innerHTML = `
   <div class="intro"><h2>Cosa ti va oggi?</h2>
@@ -2610,95 +2688,58 @@ function tappaVoglia(){
       <b>Menu a tema</b><small>Un paese, il mare, la terra, leggero o le feste</small>
     </div>
   </div>
-  ${sess.modo==="tema"?`<div class="card" style="margin-bottom:12px">
-    <div class="mini">Scegli un paese</div>
-    <div class="chips" id="paesiTema" style="margin-top:8px">
-      ${PAESI_TEMA.map(p=>`<button class="chip" data-p="${esc(p.v)}">${p.bandiera} ${p.n}</button>`).join("")}
-    </div>
-    <div class="mini" style="margin-top:12px">${L("Oppure un tema o una festa","Or a theme or a holiday")}</div>
-    <div class="chips" id="temiSpeciali" style="margin-top:8px" data-no-tr>
-      ${TEMI_SPECIALI.map(t=>`<button class="chip" data-ts="${t.v}">${t.e} ${L(t.n,t.en)}</button>`).join("")}
-    </div>
-  </div>`:""}
-  ${sess.modo==="idea"?`<div class="idea-box"><label for="qIdea"><b>\u{1F50D} Che piatto hai in mente?</b></label>
-    <div class="idea-riga"><input type="search" id="qIdea" enterkeyhint="search" value="${esc(sess.cerca)}" placeholder="Es. cacciucco, melanzane, Sicilia\u2026">
-    <button type="button" id="qIdeaVai">Cerca</button></div></div>`:""}
-  ${sess.modo==="recupero"?(()=>{
-    const scelti = sess.recupero.filter(k=>!dep.includes(k));
-    const q = normTesto(cercaRec);
-    const tutte = chiaviDispensa().map(([k])=>k);
-    const trovati = q ? tutte.filter(k=>(normTesto(k).includes(q) || (IN_INGLESE && normTesto(nomeIng(k)).includes(q))) && !dep.includes(k) && !scelti.includes(k)).slice(0,14) : [];
-    const gia = tutte.some(k=>normTesto(k) === q || (IN_INGLESE && normTesto(nomeIng(k)) === q));
-    return `<div class="card">
-    <div class="mini">Cosa va consumato</div>
-    ${dep.length||scelti.length?`<div class="chips" id="rec">${dep.concat(scelti).map(k=>
-        `<button class="chip ${sess.recupero.includes(k)?"on":""}" data-i="${esc(k)}">${k}</button>`).join("")}</div>`
-      :`<p class="mini">Nella dispensa non hai segnato freschi, latticini, carne, pesce o surgelati. Cercalo qui sotto: vale qualsiasi cosa, anche un avanzo.</p>`}
-    <label class="campo" style="margin-top:12px"><span>Non è in elenco? Cercalo o aggiungilo</span>
-      <input type="text" id="recCerca" value="${esc(cercaRec)}" placeholder="Scrivi le prime lettere"></label>
-    ${trovati.length?`<div class="chips" id="recTrova">${trovati.map(k=>
-        `<button class="chip" data-i="${esc(k)}">${k}</button>`).join("")}</div>`:""}
-    ${q && !gia ? `<button class="btn ghost small" id="recAdd" style="margin-top:8px">Aggiungi «${esc(cercaRec.trim())}» e mettilo in dispensa</button>` : ""}
-    <p class="mini" style="margin-top:8px">Quello che scegli qui entra anche nella dispensa, così le ricette lo contano come disponibile.</p>
-  </div>`;})():""}
 
   <div class="pgrid" style="margin-top:0">
-    <div class="pcella c-crema tendina ${apertaPort||apertoTempo?"full":""} ${apertaPort?"aperta":""}">
-      <button type="button" class="tend-testa" id="tendPort" aria-expanded="${apertaPort}">
-        <span class="tend-tit">\u{1F37D}\uFE0F <b>${L("Portata","Course")}</b></span>
+    <div class="pcella c-crema tendina" data-box="port">
+      <button type="button" class="tend-testa" id="tendPort" aria-haspopup="dialog">
+        <span class="tend-tit">\u{1F37D}️ <b>${L("Portata","Course")}</b></span>
         <span class="tend-val">${sintesiPortata()}</span>
-        <span class="tend-freccia" aria-hidden="true">${apertaPort?"\u25B2":"\u25BC"}</span>
+        <span class="tend-freccia" aria-hidden="true">⤢</span>
       </button>
-      ${apertaPort?`<div class="chips" id="port" style="margin-top:10px">
-        ${PORTATE.map(p2=>`<button class="chip ${sess.portate.includes(p2)?"on":""}" data-v="${p2}">${ICONA_PORTATA[p2]||""} ${p2.toLowerCase()}</button>`).join("")}
-        <button class="chip ${sess.unico?"on":""}" id="swUnico">\u{1F958} ${L("piatto unico","one-dish")}</button>
-      </div>
-      <button type="button" class="btn small tend-ok" data-chiudi="port">${L("Fatto","Done")}</button>`:""}
     </div>
-    <div class="pcella c-menta tendina ${apertaPort||apertoTempo?"full":""} ${apertoTempo?"aperta":""}">
-      <button type="button" class="tend-testa" id="tendTempo" aria-expanded="${apertoTempo}">
-        <span class="tend-tit">\u23F1\uFE0F <b>${L("Tempo","Time")}</b></span>
+    <div class="pcella c-menta tendina" data-box="tempo">
+      <button type="button" class="tend-testa" id="tendTempo" aria-haspopup="dialog">
+        <span class="tend-tit">⏱️ <b>${L("Tempo","Time")}</b></span>
         <span class="tend-val" id="tempoSintesi">${sintesiTempo(sess.tempo)}</span>
-        <span class="tend-freccia" aria-hidden="true">${apertoTempo?"\u25B2":"\u25BC"}</span>
+        <span class="tend-freccia" aria-hidden="true">⤢</span>
       </button>
-      ${apertoTempo?orologioTempo():""}
     </div>
-    <div class="pcella c-senape tendina ${apertoPasto||apertoStile?"full":""} ${apertoPasto?"aperta":""}">
-      <button type="button" class="tend-testa" id="tendPasto" aria-expanded="${apertoPasto}">
-        <span class="tend-tit">\u{1F570}\uFE0F <b>${L("Pasto","Meal")}</b></span>
-        <span class="tend-val">${pastoAttuale()==="cena" ? "\u{1F319} " + L("cena","dinner") : "\u2600\uFE0F " + L("pranzo","lunch")}</span>
-        <span class="tend-freccia" aria-hidden="true">${apertoPasto?"\u25B2":"\u25BC"}</span>
+    <div class="pcella c-senape tendina" data-box="pasto">
+      <button type="button" class="tend-testa" id="tendPasto" aria-haspopup="dialog">
+        <span class="tend-tit">\u{1F570}️ <b>${L("Pasto","Meal")}</b></span>
+        <span class="tend-val">${pastoAttuale()==="cena" ? "\u{1F319} " + L("cena","dinner") : "☀️ " + L("pranzo","lunch")}</span>
+        <span class="tend-freccia" aria-hidden="true">⤢</span>
       </button>
-      ${apertoPasto?`<div class="chips" id="pasto" style="margin-top:4px">
-        <button class="chip ${pastoAttuale()==="pranzo"?"on":""}" data-v="pranzo">\u2600\uFE0F ${L("pranzo","lunch")}</button>
-        <button class="chip ${pastoAttuale()==="cena"?"on":""}" data-v="cena">\u{1F319} ${L("cena","dinner")}</button>
-        <small style="display:block;width:100%;margin-top:6px;opacity:.9">${pastoAttuale()==="cena" ? L("La sera ti propongo prima i piatti più leggeri.","In the evening I suggest lighter dishes first.") : L("A pranzo vanno bene anche i piatti più sostanziosi.","At lunch heartier dishes are fine too.")}</small>
-      </div>`:""}
     </div>
-    <div class="pcella c-verde tendina ${apertoPasto||apertoStile?"full":""} ${apertoStile?"aperta":""}">
-      <button type="button" class="tend-testa" id="tendStile" aria-expanded="${apertoStile}">
-        <span class="tend-tit">\u{1F468}\u200D\u{1F373} <b>${L("Come la prepariamo","How we make it")}</b></span>
+    <div class="pcella c-verde tendina" data-box="stile">
+      <button type="button" class="tend-testa" id="tendStile" aria-haspopup="dialog">
+        <span class="tend-tit">\u{1F468}‍\u{1F373} <b>${L("Come la prepariamo","How we make it")}</b></span>
         <span class="tend-val">${ICONA_STILE[sess.stile]||""} ${sess.stile}${t.length>1 ? " · " + (sess.accordo==="diverso" ? L("piatti diversi","different dishes") : L("un piatto per tutti","one dish for all")) : ""}</span>
-        <span class="tend-freccia" aria-hidden="true">${apertoStile?"\u25B2":"\u25BC"}</span>
+        <span class="tend-freccia" aria-hidden="true">⤢</span>
       </button>
-      ${apertoStile?`<div class="chips" id="stile" style="margin-top:4px">
-        ${["onnivoro","vegetariano","vegano"].map(v=>`<button class="chip ${sess.stile===v?"on":""}" data-v="${v}">${ICONA_STILE[v]} ${v}</button>`).join("")}
-      </div>
-      ${t.length>1?`<div class="chips" style="padding:0 14px 14px">
-        <button class="chip ${sess.accordo==="unico"?"on":""}" data-a="unico">\u{1F37D}\uFE0F un piatto per tutti</button>
-        <button class="chip ${sess.accordo==="diverso"?"on":""}" data-a="diverso">\u{1F374} preparazioni diverse</button>
-      </div>`:""}`:""}
     </div>
-  </div></div>`;
+  </div>
+  ${b0 ? `<div class="pcella ${b0.c} box-pagina" id="boxPag" role="dialog" aria-modal="true" aria-labelledby="bpTit">
+    <div class="bp-testa">
+      <div class="bp-tit" id="bpTit">${b0.ic()}<span>${b0.t()}</span></div>
+      <button type="button" class="bp-chiudi" data-bp="chiudi" aria-label="${L("Chiudi","Close")}">✕</button>
+    </div>
+    <div class="bp-corpo">${CORPO[boxAperto]()}</div>
+    ${piede ? `<div class="bp-piede">${piede}</div>` : ""}
+  </div>` : ""}`;
+  document.documentElement.classList.toggle("box-su", !!b0);
 
   app.querySelectorAll(".pgrid3 [data-m]").forEach(b=>b.onclick=()=>{
     const m = b.dataset.m;
-    if(m === "app" && sess.modo !== "app"){ sess.modo = "app"; vai(4); return; }
-    sess.modo = sess.modo===m?null:m; tappaVoglia();
-    if(sess.modo === "idea"){
-      const q = document.getElementById("qIdea");
-      if(q){ q.scrollIntoView({block:"center", behavior:"smooth"}); q.focus(); }
-    }
+    if(m === "app"){ sess.modo = "app"; vai(4); return; }
+    sess.modo = m; apriBox(m);
+  });
+  document.getElementById("tendPort").onclick = ()=>apriBox("port");
+  document.getElementById("tendTempo").onclick = ()=>apriBox("tempo");
+  document.getElementById("tendPasto").onclick = ()=>apriBox("pasto");
+  document.getElementById("tendStile").onclick = ()=>apriBox("stile");
+  app.querySelectorAll("[data-bp]").forEach(b=>b.onclick=()=>{
+    if(b.dataset.bp === "ricette") vai(4); else chiudiBox();
   });
   const qi = document.getElementById("qIdea");
   if(qi){ qi.oninput = e=>{ sess.cerca = e.target.value; };
@@ -2751,22 +2792,91 @@ function tappaVoglia(){
     const v=b.dataset.v, i=sess.portate.indexOf(v); i<0?sess.portate.push(v):sess.portate.splice(i,1); tappaVoglia(); });
   const su = document.getElementById("swUnico");
   if(su) su.onclick=()=>{ sess.unico=!sess.unico; tappaVoglia(); };
-  document.getElementById("tendPort").onclick=()=>{ apertaPort=!apertaPort; if(apertaPort) apertoTempo=false; tappaVoglia(); };
-  document.getElementById("tendTempo").onclick=()=>{ apertoTempo=!apertoTempo; if(apertoTempo) apertaPort=false; tappaVoglia();
-    if(apertoTempo){ const q=document.getElementById("quadrante"); if(q) q.scrollIntoView({block:"center", behavior:"smooth"}); } };
-  document.getElementById("tendPasto").onclick=()=>{ apertoPasto=!apertoPasto; if(apertoPasto) apertoStile=false; tappaVoglia(); };
-  document.getElementById("tendStile").onclick=()=>{ apertoStile=!apertoStile; if(apertoStile) apertoPasto=false; tappaVoglia(); };
-  app.querySelectorAll("[data-chiudi]").forEach(b=>b.onclick=()=>{ apertaPort=false; apertoTempo=false; tappaVoglia(); });
-  if(apertoTempo) collegaOrologio();
+  if(boxAperto === "tempo") collegaOrologio();
   app.querySelectorAll("#stile .chip").forEach(b=>b.onclick=()=>{ sess.stile=b.dataset.v; tappaVoglia(); });
-  app.querySelectorAll("#pasto .chip").forEach(b=>b.onclick=()=>{ sess.pasto=b.dataset.v; apertoPasto=false; tappaVoglia(); });
+  app.querySelectorAll("#pasto .chip").forEach(b=>b.onclick=()=>{ sess.pasto=b.dataset.v; chiudiBox(); });
   app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ sess.accordo=b.dataset.a; tappaVoglia(); });
+
+  /* la pagina-box: animazione d'apertura dal box, scorrimento conservato fra un ridisegno e l'altro */
+  const pag = document.getElementById("boxPag");
+  /* sta fuori da #app (che fa da contenitore con il suo livello): cosi' copre davvero tutto, intestazione e barra comprese */
+  if(pag) document.body.appendChild(pag);
+  if(pag){
+    const corpo = pag.querySelector(".bp-corpo");
+    if(boxAnima){
+      boxAnima = false;
+      const r = rettBox(boxAperto);
+      if(r && !motoRidotto())
+        pag.animate([{clipPath: clipDa(r)}, {clipPath: "inset(0px 0px 0px 0px round 0px)"}],
+                    {duration: 300, easing: "cubic-bezier(.2,.8,.2,1)"});
+      if(boxAperto === "idea"){ const q = document.getElementById("qIdea"); if(q) setTimeout(()=>q.focus({preventScroll:true}), 320); }
+    } else if(corpo) corpo.scrollTop = scorrPrima;
+  }
 
   pulsanti("Indietro", "Vedi le ricette", ()=>vai(4), ()=>vai(2));
 }
 
+/* ===========================================================
+   "Cosa ti va oggi?": ogni box si apre a tutto schermo e si richiude nel suo riquadro
+   =========================================================== */
+let boxAperto = null, boxAnima = false, ignoraPop = false;
+const BOX_VOGLIA = {
+  idea:     {c:"c-senape",   ic:()=>`<svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="12" r="7" stroke="currentColor" stroke-width="2"/><path d="M11 19h6M12 22h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`, t:()=>L("Ho in mente un piatto","I have a dish in mind")},
+  recupero: {c:"c-mattone",  ic:()=>`<svg viewBox="0 0 28 28" fill="none"><rect x="7" y="10" width="14" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 10h18M11 10V7a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 14v5M12 16l2-2 2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`, t:()=>L("Devo consumare","I need to use up")},
+  tema:     {c:"c-bordeaux", ic:()=>`<svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="10" stroke="currentColor" stroke-width="2"/><path d="M4 14h20M14 4c3 3 4 7 4 10s-1 7-4 10c-3-3-4-7-4-10s1-7 4-10z" stroke="currentColor" stroke-width="1.8"/></svg>`, t:()=>L("Menu a tema","Themed menu")},
+  port:     {c:"c-crema",    ic:()=>`<span class="bp-emo">\u{1F37D}️</span>`, t:()=>L("Portata","Course")},
+  tempo:    {c:"c-menta",    ic:()=>`<span class="bp-emo">⏱️</span>`, t:()=>L("Tempo","Time")},
+  pasto:    {c:"c-senape",   ic:()=>`<span class="bp-emo">\u{1F570}️</span>`, t:()=>L("Pasto","Meal")},
+  stile:    {c:"c-verde",    ic:()=>`<span class="bp-emo">\u{1F468}‍\u{1F373}</span>`, t:()=>L("Come la prepariamo","How we make it")}
+};
+function motoRidotto(){ try{ return matchMedia("(prefers-reduced-motion: reduce)").matches; }catch(e){ return false; } }
+function rettBox(k){
+  const el = app.querySelector(`[data-m="${k}"], [data-box="${k}"]`);
+  return el ? el.getBoundingClientRect() : null;
+}
+function clipDa(r){
+  const W = innerWidth, H = innerHeight;
+  return `inset(${Math.max(0,r.top)}px ${Math.max(0,W-r.right)}px ${Math.max(0,H-r.bottom)}px ${Math.max(0,r.left)}px round 14px)`;
+}
+function apriBox(k){
+  boxAperto = k; boxAnima = true;
+  /* il tasto Indietro del telefono richiude la pagina invece di uscire dall'app */
+  try{ history.pushState({box:k}, ""); }catch(e){}
+  tappaVoglia();
+}
+/* esce senza animazione (es. si passa all'elenco ricette) */
+function lasciaBox(){
+  if(!boxAperto) return;
+  boxAperto = null; boxAnima = false;
+  document.documentElement.classList.remove("box-su");
+  { const pag = document.getElementById("boxPag"); if(pag) pag.remove(); }
+  if(history.state && history.state.box){ ignoraPop = true; try{ history.back(); }catch(e){ ignoraPop = false; } }
+}
+function chiudiBox(daStoria){
+  const k = boxAperto, pag = document.getElementById("boxPag");
+  if(!k) return;
+  if(!daStoria && history.state && history.state.box){ ignoraPop = true; try{ history.back(); }catch(e){ ignoraPop = false; } }
+  const fine = ()=>{
+    if(boxAperto !== k) return;
+    boxAperto = null;
+    /* un box di partenza chiuso senza scegliere nulla non resta selezionato */
+    if(k === sess.modo && (k === "tema" || (k === "idea" && !sess.cerca.trim()) || (k === "recupero" && !sess.recupero.length))) sess.modo = null;
+    tappaVoglia();
+  };
+  const r = rettBox(k);
+  if(pag && r && !motoRidotto()){
+    pag.style.pointerEvents = "none";
+    const an = pag.animate([{clipPath: "inset(0px 0px 0px 0px round 0px)"}, {clipPath: clipDa(r)}],
+                           {duration: 260, easing: "cubic-bezier(.4,0,.6,1)", fill: "forwards"});
+    an.onfinish = fine;
+  } else fine();
+}
+window.addEventListener("popstate", ()=>{
+  if(ignoraPop){ ignoraPop = false; return; }
+  if(boxAperto){ if(veloAperto) chiudiVelo(); else chiudiBox(true); }
+});
+document.addEventListener("keydown", e=>{ if(e.key === "Escape" && boxAperto && !veloAperto) chiudiBox(); });
 /* --- Portata e Tempo: tendine chiuse che mostrano solo la scelta fatta --- */
-let apertaPort = false, apertoTempo = false, apertoPasto = false, apertoStile = false;
 const TEMPO_MAX = 180;   /* il quadrante copre 3 ore, a scatti di 5 minuti */
 function sintesiPortata(){
   const pz = sess.portate.map(p2=>(ICONA_PORTATA[p2]||"") + " " + p2.toLowerCase());
@@ -2816,7 +2926,6 @@ function orologioTempo(){
         .map(([v,t2])=>`<button type="button" class="chip ${sess.tempo===v?"on":""}" data-tr="${v}">${t2}</button>`).join("")}
     </div>
     <p class="mini" style="margin:6px 0 0">${L("Trascina la lancetta o usa i tasti.","Drag the hand or use the buttons.")}</p>
-    <button type="button" class="btn small tend-ok" data-chiudi="tempo">${L("Fatto","Done")}</button>
   </div>`;
 }
 function settore(m){
