@@ -1,14 +1,15 @@
 /* Che cucino? — service worker
  *
  * Cambia VERSIONE a ogni aggiornamento dei file: basta questo
- * per far scaricare al telefono la versione nuova.
+ * per far scaricare al telefono la versione nuova. Allinea anche l'etichetta
+ * <span class="ver"> del tasto "i" in index.html (vale come ripiego al primo avvio).
  *
  * La pagina viene sempre chiesta prima alla rete e solo in sua
  * assenza alla cache, così un aggiornamento si vede subito e
  * l'app continua comunque a funzionare senza connessione.
  */
 
-const VERSIONE = 'checucino-v177';
+const VERSIONE = 'checucino-v178';
 
 const FILE = [
   './',

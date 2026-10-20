@@ -974,7 +974,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v176</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v178</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -7361,12 +7361,19 @@ if("serviceWorker" in navigator){
   });
 }
 /* ===== Aggiorna l'app: scarica da capo i file nuovi senza toccare i tuoi dati ===== */
+/* un solo punto che scrive la versione: tasto "i" e schermata iniziale insieme, cosi' non si disallineano */
+function scriviVersione(v){
+  const el = document.querySelector("#infoBtn .ver"), sp = document.getElementById("verSplash");
+  if(el) el.textContent = v;
+  if(sp) sp.textContent = v;
+  document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
+}
 function versioneMia(){ return ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
 /* la versione vera e' quella della cache installata dal service worker: l'etichetta si allinea da sola */
 async function versioneInstallata(){
   try{
     const n = (await caches.keys()).map(k=>(k.match(/^checucino-v(\d+)$/)||[])[1]).filter(Boolean).map(Number);
-    if(n.length){ const v = "v" + Math.max(...n); const el = document.querySelector("#infoBtn .ver"); if(el) el.textContent = v; return v; }
+    if(n.length){ const v = "v" + Math.max(...n); scriviVersione(v); return v; }
   }catch(e){}
   return versioneMia();
 }
@@ -7394,6 +7401,7 @@ async function aggiornaApp(btn){
   try{ const ks = await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }catch(e){}
   location.replace(location.pathname + "?agg=" + Date.now());
 }
+versioneInstallata();   /* subito, prima che la schermata iniziale mostri il numero */
 window.addEventListener("load", ()=>{ versioneInstallata(); });
 /* dopo l'aggiornamento tolgo il segno dall'indirizzo */
 if(/[?&]agg=/.test(location.search)){ try{ history.replaceState(null, "", location.pathname); }catch(e){} }
