@@ -682,6 +682,11 @@ body[data-filigrana="1"]::before{
 #splash.via{opacity:0;pointer-events:none}
 #splash svg{width:min(44vw,180px);height:auto}
 #splash .ver-splash{margin-top:-8px;font:700 .85rem/1 Inter,system-ui,sans-serif;letter-spacing:.06em;color:#F0DFB8;opacity:0;animation:sp-nome .5s ease .9s forwards}
+#avvisoAgg{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:9999;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#2E6B3F;color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.35);font-weight:600}
+#avvisoAgg span{flex:1;line-height:1.3}
+#avvisoAgg button{border:0;border-radius:10px;padding:9px 12px;font:inherit;font-weight:800;background:#fff;color:#2E6B3F;cursor:pointer}
+#avvisoAgg .agg-x{background:transparent;color:#fff;padding:6px 8px}
+.perche-agg{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--verde) 14%,transparent)}
 #infoBtn .ver{font:700 .62rem/1 Inter,system-ui,sans-serif;font-style:normal;margin-left:3px;opacity:.75;letter-spacing:.02em}
 #splash .autore-splash{margin-top:-10px;font:italic 500 1rem/1.2 Newsreader,Georgia,serif;letter-spacing:.01em;color:#F0DFB8;text-align:center;opacity:0;animation:sp-nome .5s ease .85s forwards}
 .perche .autore{margin:-4px 0 14px;font:italic 500 1rem/1.3 Newsreader,Georgia,serif;opacity:.8}
@@ -925,7 +930,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v168</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v169</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -5875,6 +5880,12 @@ const PERCHE_EN = `<div class="perche">
     <div class="azioni" style="margin-top:22px"><button class="btn" onclick="chiudiVelo()">Close</button></div>
     </div>`;
 function apriPerche(){
+  apriPercheTesto();
+  const top = velo.querySelector(".velo-top");
+  if(top) top.insertAdjacentHTML("afterend", `<div class="perche-agg"><span>${L("Versione","Version")} <b>${versioneMia()}</b></span>
+    <button type="button" class="btn small" data-aggiorna>\u{1F504} ${L("Aggiorna l\u2019app","Update the app")}</button></div>`);
+}
+function apriPercheTesto(){
   if(IN_INGLESE){ apriVelo("perche", PERCHE_EN); return; }
   apriVelo("perche", `<div class="perche">
     <div class="velo-top"><h2>Perch\u00e9 questa app?</h2>
@@ -6655,6 +6666,7 @@ function disegnaMenu(){
     </div>
     <div class="menu-box mb-bordeaux">
       <div class="sez">${L("Salva / azzera","Save / reset")}</div>
+      <button data-aggiorna>\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L("hai la","you have")} ${versioneMia()})</span></button>
       <button id="mSalva">Salva i miei dati (su Drive o in un file)</button>
       <button id="mCarica">${L("Importa i dati da un file","Import data from a file")}</button>
       ${haBackupAzzera() ? `<button id="mRecupera">${L("\u21A9\uFE0F Recupera i dati azzerati","\u21A9\uFE0F Restore the erased data")}</button>` : ""}
@@ -7122,6 +7134,55 @@ if("serviceWorker" in navigator){
     navigator.serviceWorker.register("service-worker.js").catch(()=>{});
   });
 }
+/* ===== Aggiorna l'app: scarica da capo i file nuovi senza toccare i tuoi dati ===== */
+function versioneMia(){ return ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
+async function versioneOnline(){
+  const t = await (await fetch("service-worker.js?n=" + Date.now(), {cache:"no-store"})).text();
+  const m = t.match(/checucino-v(\d+)/);
+  return m ? "v" + m[1] : "";
+}
+async function aggiornaApp(btn){
+  const scrivi = t=>{ if(btn) btn.textContent = t; };
+  scrivi("⏳ " + L("Controllo…","Checking…"));
+  let online = "";
+  try{ online = await versioneOnline(); }
+  catch(e){ scrivi("\u{1F504} " + L("Aggiorna l’app","Update the app")); alert(L("Per aggiornare serve la connessione a internet.","An internet connection is needed to update.")); return; }
+  const mia = versioneMia();
+  if(online && online === mia &&
+     !confirm(L(`Hai già l’ultima versione (${mia}).\nRicarico comunque l’app da capo? I tuoi dati restano dove sono.`,
+                `You already have the latest version (${mia}).\nReload the app from scratch anyway? Your data stays where it is.`))){
+    scrivi("\u{1F504} " + L("Aggiorna l’app","Update the app")); return; }
+  scrivi("⏳ " + L("Scarico la versione nuova…","Downloading the new version…"));
+  /* i dati (ricette, dispensa, cantina, foto) non stanno nella cache dei file: non vengono toccati */
+  const file = ["./","./index.html","./dati/ricette.js","./dati/ricette-en.js","./dati/scuola.js","./dati/icone-scuola.js","./dati/stagioni.js","./manifest.json"];
+  await Promise.all(file.map(f=>fetch(f, {cache:"reload"}).catch(()=>{})));
+  try{ const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }catch(e){}
+  try{ const ks = await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }catch(e){}
+  location.replace(location.pathname + "?agg=" + Date.now());
+}
+/* dopo l'aggiornamento tolgo il segno dall'indirizzo */
+if(/[?&]agg=/.test(location.search)){ try{ history.replaceState(null, "", location.pathname); }catch(e){} }
+/* all'apertura controllo in silenzio se online c'e' una versione nuova: se si', compare un avviso col tasto */
+window.addEventListener("load", ()=>{
+  setTimeout(async ()=>{
+    if(!navigator.onLine) return;
+    try{
+      const online = await versioneOnline(), mia = versioneMia();
+      const n = x=>parseInt(String(x).replace(/\D/g, "")) || 0;
+      if(!online || n(online) <= n(mia) || document.getElementById("avvisoAgg")) return;
+      const d = document.createElement("div");
+      d.id = "avvisoAgg";
+      d.innerHTML = `<span>✨ ${L(`È pronta la ${online} (tu hai la ${mia})`,`Version ${online} is ready (you have ${mia})`)}</span>
+        <button type="button" data-aggiorna>\u{1F504} ${L("Aggiorna","Update")}</button>
+        <button type="button" class="agg-x" aria-label="${L("Più tardi","Later")}" onclick="this.parentNode.remove()">✕</button>`;
+      document.body.appendChild(d);
+    }catch(e){}
+  }, 2500);
+});
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-aggiorna]"); if(!b) return;
+  e.preventDefault(); aggiornaApp(b);
+});
 </script>
 <script id="condividi-app">
 /* Tasto Condividi: manda il link dell'app con le istruzioni per installarla */
