@@ -641,6 +641,26 @@ body[data-filigrana="1"]::before{
   background:var(--carta);color:inherit;font-size:1.1rem;line-height:1;cursor:pointer}
 .dosi b{color:var(--inchiostro);font-variant-numeric:tabular-nums;min-width:1.2em;text-align:center}
 .azioni{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+/* fondo della scheda ricetta: azione principale, due riquadri a tasti con icona, gestione in piccolo */
+.az-prim{display:grid;grid-template-columns:1fr;gap:8px;margin-top:16px}
+.az-prim:has(.btn + .btn){grid-template-columns:1fr 1fr}
+.az-prim .btn{font-size:1rem;line-height:1.25;padding:12px 10px}
+.az-prim .btn.ghost{font-size:.9rem;font-weight:600}
+.az-box{margin-top:12px;padding:12px;border-radius:14px;color:#fff}
+.az-mia{background:#2F5D8C}
+.az-web{background:#0F6E78}
+.az-tit{display:block;font-size:.92rem;margin-bottom:8px}
+.az-griglia{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.az-griglia.az-tre{grid-template-columns:repeat(3,1fr)}
+.az-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  min-height:64px;padding:8px 6px;border-radius:11px;border:1px solid rgba(255,255,255,.45);
+  background:rgba(255,255,255,.13);color:#fff!important;font:inherit;font-size:.82rem;font-weight:600;
+  line-height:1.2;text-align:center;text-decoration:none!important;cursor:pointer}
+.az-tile:active{background:rgba(255,255,255,.28)}
+.az-ic{font-size:1.45rem;line-height:1}
+.az-piede{display:flex;gap:14px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
+.az-link{border:0;background:none;padding:6px 2px;font:inherit;font-size:.82rem;color:var(--inchiostro-soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.az-link.az-rosso{color:var(--mattone)}
 .spesa-l{list-style:none;margin:10px 0 0;padding:0}
 .spesa-l li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--linea)}
 .spesa-l li:last-child{border-bottom:0}
@@ -3313,6 +3333,61 @@ function abbinamentoBevanda(r){
     cant:{prime:["bianco","rosato"], seconde:["spumante","birra"], vitigni:["Vermentino","Grillo","Falanghina","Catarratto","Inzolia","Pinot grigio","Trebbiano","Frappato","Carricante"]}});
 }
 
+/* ===========================================================
+   Fondo della scheda ricetta: le opzioni in ordine
+   1) l'azione principale (Cuciniamo) ben in vista, con la spesa se manca qualcosa
+   2) riquadro "La tua ricetta": preferita, menu della settimana, cucinata, voto
+   3) riquadro "Cerca e condividi": web, foto di impiattamento, manda a un amico
+   4) in fondo, piccole, le voci di gestione (modifica/elimina o non propormela piu')
+   =========================================================== */
+function tastoAz(azione, id, icona, testo, extra){
+  return `<button class="az-tile" data-azione="${azione}" data-id="${id}"${extra||""}><span class="az-ic" aria-hidden="true">${icona}</span><span class="az-tx">${testo}</span></button>`;
+}
+function linkAz(href, icona, testo){
+  return `<a class="az-tile" target="_blank" rel="noopener" href="${href}"><span class="az-ic" aria-hidden="true">${icona}</span><span class="az-tx">${testo}</span></a>`;
+}
+/* aggiorna icona e testo di un tasto a riquadro senza rompere la sua struttura */
+function scriviTasto(b, testo, icona){
+  if(!b) return;
+  const tx = b.querySelector(".az-tx"), ic = b.querySelector(".az-ic");
+  if(tx){ tx.textContent = testo; if(ic && icona) ic.textContent = icona; }
+  else b.textContent = (icona ? icona + " " : "") + testo;
+}
+function statoPref(id){ return S.preferite.includes(id) ? ["\u2605", L("Tra le preferite","In favourites")] : ["\u2606", L("Preferita","Favourite")]; }
+function statoMenu(id){ return nelMenu(id) ? ["\u2705", L("Nel menu della settimana","In this week’s menu")] : ["\u{1F4C5}", L("Menu della settimana","Week’s menu")]; }
+function htmlAzioniRicetta(r, o){
+  const [icP, txP] = statoPref(r.id), [icM, txM] = statoMenu(r.id);
+  const qWeb = encodeURIComponent(L("ricetta ","recipe ")+(IN_INGLESE ? r.n + (r.n_en ? " " + r.n_en : "") : r.n));
+  const qFoto = encodeURIComponent(nomeR(r)+L(" impiattamento elegante professionale"," elegant professional plating"));
+  return `
+      <div class="az-prim">
+        <button class="btn" data-azione="cucina" data-id="${r.id}">\u{1F373} ${L("Cuciniamo","Let’s cook")}</button>
+        ${o.mancanti.length?`<button class="btn ghost" data-azione="spesa" data-id="${r.id}">\u{1F6D2} ${L("Aggiungi alla spesa","Add to shopping list")}</button>`:""}
+      </div>
+      <div class="az-box az-mia">
+        <b class="az-tit">\u{1F4D2} ${L("La tua ricetta","Your recipe")}</b>
+        <div class="az-griglia">
+          ${tastoAz("pref", r.id, icP, txP)}
+          ${tastoAz("menu", r.id, icM, txM)}
+          ${tastoAz("fatta", r.id, "\u{1F37D}\uFE0F", L("L’ho cucinata","I cooked it"))}
+          ${tastoAz("giudizio", r.id, "\u{1F4DD}", L("Voto e nota","Rating and note"))}
+        </div>
+      </div>
+      <div class="az-box az-web">
+        <b class="az-tit">\u{1F310} ${L("Cerca e condividi","Search and share")}</b>
+        <div class="az-griglia az-tre">
+          ${linkAz("https://www.google.com/search?q="+qWeb, "\u{1F50E}", L("La ricetta sul web","Recipe online"))}
+          ${linkAz("https://www.google.com/search?q="+qFoto+"&tbm=isch", "\u{1F4F8}", L("Foto di impiattamento","Plating photos"))}
+          ${tastoAz("manda", r.id, "\u{1F4E4}", L("Manda a un amico","Send to a friend"))}
+        </div>
+      </div>
+      <div class="az-piede">${r.id<0
+        ? `<button class="az-link" data-azione="modifica" data-id="${r.id}">\u270F\uFE0F ${L("Modifica","Edit")}</button>
+           <button class="az-link az-rosso" data-azione="elimina" data-id="${r.id}">\u{1F5D1}\uFE0F ${L("Elimina","Delete")}</button>`
+        : `<button class="az-link" data-azione="nascondi" data-id="${r.id}">\u{1F6AB} ${L("Non propormela più","Don’t suggest it again")}</button>`}
+      </div>`;
+}
+
 function scheda(o){
   const r = o.r, tot = o.pieno + o.sost;
   const liv = tot===100 ? "v-alta" : tot>=70 ? "v-media" : "v-bassa";
@@ -3371,23 +3446,7 @@ function scheda(o){
         <a class="cerca-web" target="_blank" rel="noopener"
            href="https://www.google.com/search?q=${encodeURIComponent(IN_INGLESE ? (trTesto(b.tipo)||b.tipo)+" "+(trTesto(b.car)||b.car)+" recommended bottle" : b.tipo+" "+b.car+" etichetta consigliata")}">Cerca un'etichetta con queste caratteristiche</a>
       </div>`; })()}
-      <div class="azioni">
-        <button class="btn small" data-azione="cucina" data-id="${r.id}">Cuciniamo</button>
-        ${o.mancanti.length?`<button class="btn ghost small" data-azione="spesa" data-id="${r.id}">Aggiungi alla spesa</button>`:""}
-        <button class="btn ghost small" data-azione="fatta" data-id="${r.id}">L\u2019ho cucinata</button>
-        <button class="btn ghost small" data-azione="pref" data-id="${r.id}">${o.pref?"★":"☆"} Preferita</button>
-        <button class="btn ghost small" data-azione="menu" data-id="${r.id}">${nelMenu(r.id)?"✓ "+L("Nel menu della settimana","In this week’s menu"):"\u{1F4C5} "+L("Nel menu della settimana","Add to this week’s menu")}</button>
-        <button class="btn ghost small" data-azione="giudizio" data-id="${r.id}">\u{1F4DD} ${L("Voto e nota","Rating and note")}</button>
-        <button class="btn ghost small" data-azione="manda" data-id="${r.id}">\u{1F4E4} ${L("Manda a un amico","Send to a friend")}</button>
-        ${r.id<0
-          ? `<button class="btn ghost small" data-azione="modifica" data-id="${r.id}">Modifica</button>
-             <button class="btn ghost small" data-azione="elimina" data-id="${r.id}">Elimina</button>`
-          : `<button class="btn ghost small" data-azione="nascondi" data-id="${r.id}">Non propormela più</button>`}
-      </div>
-      <a class="cerca-web" target="_blank" rel="noopener"
-         href="https://www.google.com/search?q=${encodeURIComponent(L("ricetta ","recipe ")+(IN_INGLESE ? r.n + (r.n_en ? " " + r.n_en : "") : r.n))}">Cerca questa ricetta sul web</a>
-      <a class="cerca-web" target="_blank" rel="noopener"
-         href="https://www.google.com/search?q=${encodeURIComponent(nomeR(r)+L(" impiattamento elegante professionale"," elegant professional plating"))}&tbm=isch">\u{1F4F8} Foto di impiattamento elegante</a>
+      ${htmlAzioniRicetta(r, o)}
     </div></details>`;
 }
 
@@ -4034,7 +4093,7 @@ async function mandaRicetta(r, bottone){
   try{
     if(navigator.share){ await navigator.share({title: nomeR(r), text: testo}); return; }
   }catch(e){ if(e && e.name === "AbortError") return; }
-  try{ await navigator.clipboard.writeText(testo); if(bottone) bottone.textContent = "✅ " + L("Copiata: incollala dove vuoi","Copied: paste it anywhere"); }
+  try{ await navigator.clipboard.writeText(testo); if(bottone) scriviTasto(bottone, L("Copiata: incollala dove vuoi","Copied: paste it anywhere"), "✅"); }
   catch(e){ prompt(L("Copia la ricetta:","Copy the recipe:"), testo); }
 }
 /* chi apre il link ricevuto: vede la ricetta e la aggiunge alle sue */
@@ -4317,10 +4376,10 @@ document.addEventListener("click", e=>{
   if(!r) return;
   switch(t.dataset.azione){
     case "cucina": apriCucina(r); break;
-    case "spesa":  aggiungiSpesa(r); t.textContent = "Nella lista \u2713"; t.disabled = true; break;
+    case "spesa":  aggiungiSpesa(r); t.textContent = "\u2713 " + L("Nella lista della spesa","On the shopping list"); t.disabled = true; break;
     case "fatta":  apriFine(r); break;
     case "pref":   togglePref(r.id);
-                   t.textContent = (S.preferite.includes(r.id) ? "\u2605" : "\u2606") + " Preferita";
+                   { const [ic,tx] = statoPref(r.id); scriviTasto(t, tx, ic); }
                    break;
     case "nascondi": if(!S.nascoste.includes(r.id)) S.nascoste.push(r.id);
                      salva(); tappaRicette(); break;
@@ -4328,7 +4387,7 @@ document.addEventListener("click", e=>{
     case "giudizio": apriGiudizio(r); break;
     case "manda": mandaRicetta(r, t); break;
     case "menu": toggleMenu(r);
-                 t.textContent = nelMenu(r.id) ? "✓ " + L("Nel menu della settimana","In this week’s menu") : "\u{1F4C5} " + L("Nel menu della settimana","Add to this week’s menu");
+                 { const [ic,tx] = statoMenu(r.id); scriviTasto(t, tx, ic); }
                  break;
     case "modifica": apriEditor(r); break;
     case "elimina":  if(confirm("Elimino «" + r.n + "» dalle tue ricette?")){
