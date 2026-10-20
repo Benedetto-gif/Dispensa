@@ -1916,7 +1916,7 @@ function apriAzzera(){
     <p>${L("Cancello profilo, ospiti, dispensa, lista della spesa, preferite e ricette cucinate.","I\u2019ll erase your profile, guests, pantry, shopping list, favourites and cooked recipes.")}</p>
     ${nR || nS ? `<div class="card" style="margin-top:10px">
       <b>${L("Cosa vuoi tenere?","What do you want to keep?")}</b>
-      ${nR ? `<label class="az-riga"><input type="checkbox" id="azMie" checked> ${L(`Tieni le mie ricette (${nR}), anche quelle scaricate dal web`, `Keep my recipes (${nR}), including those from the web`)}</label>` : ""}
+      ${nR ? `<label class="az-riga"><input type="checkbox" id="azMie" checked> ${L(`Tieni le ricette che hai aggiunto tu (${nR}), anche quelle scaricate dal web`, `Keep the recipes you added (${nR}), including those from the web`)}</label>` : ""}
       ${nS ? `<label class="az-riga"><input type="checkbox" id="azSchede" checked> ${L(`Tieni le mie schede di \u00abImpariamo a cucinare\u00bb (${nS})`, `Keep my \u00abLet\u2019s learn to cook\u00bb cards (${nS})`)}</label>` : ""}
     </div>` : ""}
     <p class="mini" style="margin-top:10px">${L("Tengo da parte una copia di quello che cancello: se ci ripensi, la recuperi da Extra \u2192 \u00abRecupera i dati azzerati\u00bb.","I keep a copy of what I erase: if you change your mind, restore it from Extras \u2192 \u00abRestore the erased data\u00bb.")}</p>
@@ -5372,18 +5372,20 @@ function apriMie(){
       <button type="button" class="mie-modo mm-scrivi" data-mia="nuova"><span class="mm-ic" aria-hidden="true">\u270F\uFE0F</span>
         <b>${L("La scrivo io","I\u2019ll write it")}</b><small>${L("Nome, ingredienti e passaggi","Name, ingredients and steps")}</small></button>
     </div>
-    ${S.mie.length ? `<details class="mie-elenco"><summary>\u{1F4DA} ${L("Le tue ricette","Your recipes")} (${S.mie.length})${(()=>{ const dc = S.mie.filter(x=>!x.validata && !x.soloFoto).length, dt = S.mie.filter(x=>x.soloFoto).length, p = [];
-        if(dc) p.push(`<span class="mia-dacontr">${dc} ${L("da controllare","to check")}</span>`);
-        if(dt) p.push(`<span class="mia-dacontr mia-datrasc">${dt} ${L("da trascrivere","to transcribe")}</span>`);
-        return p.length ? " \u00b7 " + p.join(" ") : ` \u00b7 ${L("tutte convalidate \u2713","all validated \u2713")}`; })()}</summary>
-      <p class="mini" style="margin:6px 0 2px">${L("Tocca una ricetta per vederla com\u2019\u00e8 nell\u2019app: se \u00e8 giusta la tieni, altrimenti la correggi o la elimini.","Tap a recipe to see it as it is in the app: if it\u2019s right keep it, otherwise correct it or delete it.")}</p>
-      <ul class="mie-l">${S.mie.slice().sort((a,b)=>String(nomeR(a)||"").localeCompare(String(nomeR(b)||""),"it",{sensitivity:"base",numeric:true})).map(r=>
+    ${(()=>{ const att = S.mie.filter(x=>x.soloFoto || !x.validata), nOk = S.mie.length - att.length;
+      const notaOk = nOk ? `<p class="mini" style="margin:8px 0 0">\u2713 ${L(nOk === 1 ? "1 ricetta convalidata \u00e8 ormai nell\u2019archivio, come tutte le altre: la trovi nelle ricerche e la modifichi dalla sua scheda." : nOk + " ricette convalidate sono ormai nell\u2019archivio, come tutte le altre: le trovi nelle ricerche e le modifichi dalla loro scheda.", nOk === 1 ? "1 validated recipe is now in the archive like all the others: find it in searches and edit it from its card." : nOk + " validated recipes are now in the archive like all the others: find them in searches and edit them from their card.")}</p>` : "";
+      if(!att.length) return notaOk;
+      const dc = att.filter(x=>!x.soloFoto).length, dt = att.length - dc, p = [];
+      if(dc) p.push(`<span class="mia-dacontr">${dc} ${L("da controllare","to check")}</span>`);
+      if(dt) p.push(`<span class="mia-dacontr mia-datrasc">${dt} ${L("da trascrivere","to transcribe")}</span>`);
+      return `<details class="mie-elenco" open><summary>\u23F3 ${L("In attesa","Waiting")} (${att.length}) \u00b7 ${p.join(" ")}</summary>
+      <p class="mini" style="margin:6px 0 2px">${L("Tocca una ricetta per vederla com\u2019\u00e8 nell\u2019app: se \u00e8 giusta la convalidi ed entra nell\u2019archivio con tutte le altre, altrimenti la correggi o la elimini.","Tap a recipe to see it as it is in the app: if it\u2019s right, validate it and it joins the archive with all the others; otherwise correct it or delete it.")}</p>
+      <ul class="mie-l">${att.slice().sort((a,b)=>String(nomeR(a)||"").localeCompare(String(nomeR(b)||""),"it",{sensitivity:"base",numeric:true})).map(r=>
       `<li><button type="button" class="mia-riga${r.validata?" mia-ok":""}" data-mia="vedi" data-id="${r.id}" aria-expanded="false">
           <span class="mia-ic" aria-hidden="true">${r.soloFoto?"\u{1F4DC}":eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"\u{1F37D}\uFE0F")}</span>
           <span class="mia-nome"><span data-no-tr>${esc(nomeR(r))}</span> <span class="mini">${esc(r.cat)} \u00b7 ${r.soloFoto ? L("da trascrivere","to transcribe") : r.tempo + " min"}${(r.foto||[]).length ? " \u00b7 \u{1F5BC}\uFE0F" : ""}</span></span>
           <span class="mia-car" aria-hidden="true">\u25B8</span></button>
-        <div class="mia-anteprima" id="miaPrev${r.id}" hidden></div></li>`).join("")}</ul></details>`
-      : `<div class="vuoto"><p>${L("Non hai ancora ricette tue: scegli qui sopra da dove prenderne una.","You have no recipes of your own yet: choose above where to take one from.")}</p></div>`}`);
+        <div class="mia-anteprima" id="miaPrev${r.id}" hidden></div></li>`).join("")}</ul></details>` + notaOk; })()}`);
 }
 document.addEventListener("click", e=>{
   const b = e.target.closest("[data-mia]");
@@ -6719,7 +6721,7 @@ function tappaHome(){
   <circle cx="33" cy="33" r="7" stroke="currentColor" stroke-width="2"/>
   <path d="M33 29.5v7M29.5 33h7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
 </svg>
-        ${(S.mie||[]).length?`<span class="badge">${S.mie.length}</span>`:""}
+        ${(()=>{ const n = (S.mie||[]).filter(x=>x.soloFoto || !x.validata).length; return n ? `<span class="badge">${n}</span>` : ""; })()}
         <b>${L("Aggiungi ricette","Add recipes")}</b>
         <small>${(()=>{ const m = S.mie || [], dt = m.filter(x=>x.soloFoto).length, dc = m.filter(x=>!x.soloFoto && !x.validata).length;
           const extra = [dt ? `${dt} ${L("da trascrivere","to transcribe")}` : "", dc ? `${dc} ${L("da controllare","to check")}` : ""].filter(Boolean).join(" \u00b7 ");
@@ -6817,7 +6819,7 @@ function disegnaMenu(){
     <div class="menu-box mb-teal">
       <div class="sez">Scorciatoia</div>
       <button id="mSalta" ${pronta?"":"disabled"}>${pronta?"Vai diretto alle ricette fattibili":"Prima carica la dispensa"}</button>
-      <button id="mConvalida" ${daConv?"":"disabled"}>${daConv ? L(`\u2705 Convalida tutte le mie ricette (${daConv} da controllare)`,`\u2705 Validate all my recipes (${daConv} to check)`) : L("\u2705 Le mie ricette sono tutte convalidate","\u2705 All my recipes are validated")}</button>
+      <button id="mConvalida" ${daConv?"":"disabled"}>${daConv ? L(`\u2705 Convalida tutte le ricette da controllare (${daConv})`,`\u2705 Validate all recipes to check (${daConv})`) : L("\u2705 Nessuna ricetta da convalidare","\u2705 No recipes to validate")}</button>
     </div>
     <div class="menu-box mb-blu">
       <div class="sez">Strumenti</div>
@@ -6843,8 +6845,8 @@ function disegnaMenu(){
   document.getElementById("mConvalida").onclick=()=>{
     const da = (S.mie || []).filter(x=>!x.validata && !x.soloFoto);
     if(!da.length) return;
-    if(!confirm(L(`Convalido in un colpo solo ${da.length === 1 ? "la ricetta da controllare" : "le " + da.length + " ricette da controllare"}? Potrai sempre rimetterne una \u00abda ricontrollare\u00bb da \u00abAggiungi ricette\u00bb.`,
-      `Validate ${da.length === 1 ? "the recipe to check" : "all " + da.length + " recipes to check"} at once? You can always set one back to \u201ccheck again\u201d from \u201cAdd recipes\u201d.`))) return;
+    if(!confirm(L(`Convalido in un colpo solo ${da.length === 1 ? "la ricetta da controllare" : "le " + da.length + " ricette da controllare"}? Entreranno nell\u2019archivio come tutte le altre: potrai sempre correggerle dalla loro scheda.`,
+      `Validate ${da.length === 1 ? "the recipe to check" : "all " + da.length + " recipes to check"} at once? They\u2019ll join the archive like all the others: you can always correct them from their card.`))) return;
     const ora = Date.now(); da.forEach(x=>x.validata = ora); salva();
     menuAperto=false; disegnaMenu();
     const nt = (S.mie || []).filter(x=>x.soloFoto).length;
