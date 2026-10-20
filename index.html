@@ -204,6 +204,13 @@ body[data-filigrana="1"]::before{
 .cant-stato.cant-avviso{color:#A0402A;font-weight:600}
 .cant-testo{margin-top:6px;font-weight:400;color:var(--inchiostro-soft)}
 .cant-testo pre{white-space:pre-wrap;font:inherit;font-size:.85rem;margin:6px 0 0;max-height:160px;overflow:auto}
+.cant-dom{font-weight:700;font-size:1.05rem;margin:10px 0 8px}
+.cant-scelta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.cant-scelta.uno{grid-template-columns:1fr;margin-top:12px}
+.cant-sc{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:14px 12px;border:0;border-radius:14px;color:#fff;font:inherit;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.cant-sc span{font-size:1.8rem;line-height:1}
+.cant-sc small{opacity:.9;font-size:.8rem;line-height:1.3}
+.cs-si{background:#2E6B3F}.cs-det{background:#6E1E35}
 [data-cantina] input.cant-letto{border-color:#2E6B3F;box-shadow:0 0 0 3px rgba(46,107,63,.25)}
 [data-cantina] input{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--linea);border-radius:10px;background:var(--carta);color:var(--inchiostro);font:inherit}
 :root[data-scuro] .pcella.cat-cantina{background:#7A2640}
@@ -933,7 +940,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v170</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v171</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2471,7 +2478,7 @@ function collegaRepartiDisp(){
     b.addEventListener("contextmenu", ev=>{ ev.preventDefault(); ferma(); apriIngOpz(b.dataset.i); });
     b.onclick = ()=>{
       if(lungo){ lungo = false; return; }
-      if(b.closest(".cat-cantina")){ cantinaInModifica = -1; apriCantina(b.dataset.i); return; }
+      if(b.closest(".cat-cantina")){ cantinaInModifica = -1; cantinaDettagli = false; apriCantina(b.dataset.i); return; }
       const v=b.dataset.i, i=S.dispensa.indexOf(v);
       if(i<0){ S.dispensa.push(v); if(BASE.has(v)) S.spesa = S.spesa.filter(x=>x.k!==v); }
       else{ S.dispensa.splice(i,1); if(BASE.has(v)) metti(v, v, ""); if(S.scad) delete S.scad[v]; const bs = b.querySelector(".scad-b"); if(bs) bs.remove(); }
@@ -3110,6 +3117,7 @@ document.addEventListener("click", e=>{
   const b = e.target.closest("[data-dalcantina]");
   if(!b) return;
   e.preventDefault(); e.stopPropagation();
+  cantinaInModifica = -1; cantinaDettagli = false;
   apriCantina(b.dataset.dalcantina);
 });
 
@@ -4404,7 +4412,7 @@ function cercaBottigliaURL(b, k, dove){
   return dove === "vivino" ? "https://www.vivino.com/search/wines?q=" + encodeURIComponent(q)
                            : "https://www.google.com/search?q=" + encodeURIComponent(q + (RE_VINO.test(normTesto(k)) && !/vin/i.test(q) ? L(" vino"," wine") : ""));
 }
-let cantinaInModifica = -1;
+let cantinaInModifica = -1, cantinaDettagli = false;
 function apriCantina(k){
   const vino = RE_VINO.test(normTesto(k));
   const lista = bottiglie(k);
@@ -4431,6 +4439,7 @@ function apriCantina(k){
       <button class="chiudi" data-cn="chiudi">${L("Chiudi","Close")}</button></div>
     ${lista.length ? `<div class="sez">${L("Le tue bottiglie","Your bottles")} (${nBottiglie(k)})</div>${lista.map(card).join("")}`
                    : `<p class="mini">${L("Nessuna bottiglia registrata. Compila la scheda qui sotto, oppure segna solo che ce l’hai.","No bottles recorded yet. Fill in the card below, or just mark that you have some.")}</p>`}
+    ${ed || cantinaDettagli ? `
     <div class="sez">${ed ? L("Modifica la bottiglia","Edit the bottle") : L("Aggiungi una bottiglia","Add a bottle")}</div>
     <div class="cant-leggi">
       <button class="btn small" data-cn="foto">\u{1F4F7} ${L("Fotografa l\u2019etichetta","Photograph the label")}</button>
@@ -4452,12 +4461,24 @@ function apriCantina(k){
     <div class="azioni">
       <button class="btn" data-cn="salva">\u{1F4BE} ${ed ? L("Salva le modifiche","Save changes") : L("Salva la bottiglia","Save the bottle")}</button>
       <button class="btn ghost" data-cn="webform">\u{1F50D} ${L("Cerca sul web","Search the web")}</button>
-      ${ed ? `<button class="btn ghost" data-cn="annulla">${L("Annulla","Cancel")}</button>` : ""}
+      <button class="btn ghost" data-cn="annulla">${ed ? L("Annulla","Cancel") : "\u2190 " + L("Indietro","Back")}</button>
     </div>
     <p class="mini">${L("La ricerca usa quello che hai scritto (etichetta, azienda, annata): trovi scheda tecnica, vitigno e abbinamenti, poi completi tu i campi.","The search uses what you typed (label, producer, vintage): you’ll find the tech sheet, grape and pairings, then fill in the fields yourself.")}</p>
+    ` : `
+    ${!ce && !lista.length ? `
+    <p class="cant-dom">${L("Ce l\u2019hai in casa?","Do you have some at home?")}</p>
+    <div class="cant-scelta">
+      <button class="cant-sc cs-si" data-cn="segna"><span aria-hidden="true">\u2705</span><b>${L("S\u00ec, ce l\u2019ho","Yes, I have some")}</b><small>${L("Basta cos\u00ec, senza dettagli","That\u2019s enough, no details")}</small></button>
+      <button class="cant-sc cs-det" data-cn="dettagli"><span aria-hidden="true">\u{1F3F7}\uFE0F</span><b>${L("S\u00ec, e la descrivo","Yes, and I\u2019ll describe it")}</b><small>${L("Etichetta, azienda, vitigno, annata","Label, producer, grape, vintage")}</small></button>
+    </div>
+    <p class="mini">${L("I dettagli sono facoltativi: se li metti, nelle ricette ti consiglio proprio quella bottiglia quando \u00e8 adatta al piatto.","Details are optional: if you add them, recipes will suggest that very bottle when it suits the dish.")}</p>`
+    : `${!lista.length ? `<p class="cant-dom">\u2705 ${L("Ce l\u2019hai in cantina, senza dettagli.","It\u2019s in your cellar, without details.")}</p>` : ""}
+    <div class="cant-scelta uno">
+      <button class="cant-sc cs-det" data-cn="dettagli"><span aria-hidden="true">${lista.length ? "\u2795" : "\u{1F3F7}\uFE0F"}</span><b>${lista.length ? L("Aggiungi un\u2019altra bottiglia","Add another bottle") : L("Vuoi precisare i dettagli?","Want to add details?")}</b><small>${L("Facoltativo: etichetta, azienda, vitigno, annata","Optional: label, producer, grape, vintage")}</small></button>
+    </div>`}
+    `}
     <div class="azioni" style="margin-top:20px">
-      ${ce ? `<button class="btn ghost" data-cn="togli">${L("Non ne ho più: togli dalla cantina","None left: remove from the cellar")}</button>`
-           : `<button class="btn ghost" data-cn="segna">✓ ${L("Ce l’ho, senza dettagli","I have some, no details")}</button>`}
+      ${ce ? `<button class="btn ghost" data-cn="togli">${L("Non ne ho più: togli dalla cantina","None left: remove from the cellar")}</button>` : ""}
     </div>
   </div>`);
 }
@@ -4794,7 +4815,7 @@ document.addEventListener("click", e=>{
   const campo = id=>(document.getElementById(id)?.value || "").trim();
   const dalForm = ()=>({ etichetta: campo("cnEtichetta"), azienda: campo("cnAzienda"), vitigno: campo("cnVitigno"),
                          annata: campo("cnAnnata"), n: Math.max(1, parseInt(campo("cnN")) || 1), ean: campo("cnEan") });
-  if(a === "chiudi"){ cantinaInModifica = -1; chiudiVelo(); aggiornaRepartiCantina(); return; }
+  if(a === "chiudi"){ cantinaInModifica = -1; cantinaDettagli = false; chiudiVelo(); aggiornaRepartiCantina(); return; }
   if(a === "web" || a === "vivino"){ apriFuori(cercaBottigliaURL(lista[i], k, a)); return; }
   if(a === "webform"){ apriFuori(cercaBottigliaURL(dalForm(), k, "web")); return; }
   if(a === "link"){
@@ -4812,14 +4833,15 @@ document.addEventListener("click", e=>{
     inp.click(); return;
   }
   if(a === "mod"){ cantinaInModifica = i; apriCantina(k); return; }
-  if(a === "annulla"){ cantinaInModifica = -1; apriCantina(k); return; }
+  if(a === "annulla"){ cantinaInModifica = -1; cantinaDettagli = false; apriCantina(k); return; }
+  if(a === "dettagli"){ cantinaDettagli = true; apriCantina(k); setTimeout(()=>{ const x = document.getElementById("cnEtichetta"); if(x) x.scrollIntoView({block:"center"}); }, 60); return; }
   if(a === "salva"){
     const nuova = dalForm();
     if(!nuova.etichetta && !nuova.azienda && !nuova.vitigno && !nuova.annata){
       document.getElementById("cnEtichetta").focus(); return;
     }
     if(cantinaInModifica >= 0) lista[cantinaInModifica] = nuova; else lista.push(nuova);
-    cantinaInModifica = -1;
+    cantinaInModifica = -1; cantinaDettagli = false;
     if(!S.dispensa.includes(k)) S.dispensa.push(k);
   }
   if(a === "meno"){
@@ -4828,7 +4850,11 @@ document.addEventListener("click", e=>{
     if(!lista.length && confirm(L("Era l’ultima bottiglia registrata. Tolgo «"+nomeIng(k)+"» dalla cantina?","That was the last recorded bottle. Remove “"+nomeIng(k)+"” from the cellar?")))
       S.dispensa = S.dispensa.filter(x=>x !== k);
   }
-  if(a === "segna" && !S.dispensa.includes(k)) S.dispensa.push(k);
+  if(a === "segna"){
+    if(!S.dispensa.includes(k)) S.dispensa.push(k);
+    S.dispensaData = new Date().toLocaleDateString("it-IT"); salva();
+    cantinaDettagli = false; chiudiVelo(); aggiornaRepartiCantina(); return;
+  }
   if(a === "togli"){
     if(lista.length && !confirm(L("Tolgo «"+nomeIng(k)+"» dalla cantina e cancello le "+lista.length+" bottiglie registrate?","Remove “"+nomeIng(k)+"” from the cellar and delete the "+lista.length+" recorded bottles?"))) return;
     S.dispensa = S.dispensa.filter(x=>x !== k); S.cantina[k] = [];
