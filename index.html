@@ -817,6 +817,16 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 .bevanda{border-left:3px solid var(--verde);background:color-mix(in srgb,var(--verde) 8%,transparent);
   padding:10px 12px;border-radius:0 8px 8px 0;font-size:.88rem;margin:12px 0 0}
 .bevanda .cerca-web{margin-top:8px}
+.cant-bere{margin:8px 0 6px;padding:8px 10px;border-radius:10px;background:#6E1E35;color:#fff}
+.cant-bere ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.cant-bere-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 10px;border-radius:9px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;font:inherit;cursor:pointer}
+.cant-bere li.cb-3 .cant-bere-btn{background:#2E6B3F;border-color:#fff}
+.cant-bere li.cb-2 .cant-bere-btn{background:rgba(46,107,63,.55)}
+.cb-ic{font-size:1.5em;line-height:1}
+.cb-tx{flex:1;display:flex;flex-direction:column;gap:2px}
+.cb-tx .mini{opacity:.85}
+.cb-giu{font-size:.8em;font-weight:700;white-space:nowrap}
+.cant-bere-no{margin:6px 0;opacity:.85}
 .attrezzi{border-left:3px solid var(--senape);background:color-mix(in srgb,var(--senape) 8%,transparent);
   padding:10px 12px;border-radius:0 8px 8px 0;font-size:.88rem;margin:12px 0 0}
 .attrezzi-l{list-style:none;margin:8px 0 0;padding:0}
@@ -3004,6 +3014,84 @@ function apriNutrizione(r){
 }
 
 
+/* ===== Da bere, dalla tua cantina: prima le bottiglie che hai, poi il consiglio generico ===== */
+const VITIGNI_BIANCHI = ["Carricante","Catarratto","Chardonnay","Falanghina","Fiano","Friulano","Garganega","Gewürztraminer","Glera","Greco","Grillo","Inzolia","Malvasia","Moscato","Passerina","Pecorino","Pinot bianco","Pinot grigio","Ribolla gialla","Riesling","Sauvignon blanc","Trebbiano","Verdicchio","Vermentino","Zibibbo"];
+/* che tipo di bevanda e' una voce o una bottiglia: rosso, bianco, rosato, spumante, dolce, birra (null = liquori e distillati) */
+function classeVino(testo){
+  const n = normTesto(testo);
+  if(!n) return null;
+  if(/birr|\bipa\b|lager|stout|weiss/.test(n)) return "birra";
+  if(/spumant|prosecc|champagn|franciacort|\bbrut\b|cremant|\bcava\b|metodo classico|trento ?doc|\bglera\b/.test(n)) return "spumante";
+  if(/passit|moscat|vin santo|marsala|zibibb|recioto|sauternes|\bporto\b|vendemmia tardiva|\bdolce\b/.test(n)) return "dolce";
+  if(/rosat|\brose\b|cerasuolo/.test(n)) return "rosato";
+  if(/ross/.test(n)) return "rosso";
+  if(/bianc/.test(n)) return "bianco";
+  const v = VITIGNI.find(x=>n.includes(normTesto(x)));
+  if(v) return VITIGNI_BIANCHI.includes(v) ? "bianco" : "rosso";
+  if(/\bvin[oi]\b/.test(n)) return "vino";
+  return null;
+}
+const ICONA_CLASSE = {rosso:"\u{1F377}", bianco:"\u{1F942}", rosato:"\u{1F338}", spumante:"\u{1F37E}", dolce:"\u{1F36F}", birra:"\u{1F37A}", vino:"\u{1F377}"};
+/* punteggio: 3 = vitigno indicato per il piatto, 2 = tipo giusto, 1 = va bene anche, 0 = non adatto */
+function punteggioVino(classe, testo, c){
+  const n = normTesto(testo);
+  if(c.vitigni.some(v=>n.includes(normTesto(v))) && classe !== "birra") return 3;
+  if(c.prime.includes(classe)) return 2;
+  if(c.seconde.includes(classe)) return 1;
+  /* "vino" senza colore: lo proponiamo solo come ripiego */
+  if(classe === "vino" && c.prime.some(x=>["rosso","bianco","rosato"].includes(x))) return 1;
+  return 0;
+}
+function dallaCantina(b){
+  const c = b.cant; if(!c) return [];
+  const trovati = [];
+  S.dispensa.filter(eCantina).forEach(k=>{
+    const lista = ((S.cantina || {})[k] || []);
+    if(lista.length){
+      lista.forEach(bt=>{
+        const descr = [bt.etichetta, bt.vitigno].filter(Boolean).join(" ");
+        const cl = classeVino(descr) || classeVino(k);
+        const testo = k + " " + descr;
+        const pt = punteggioVino(cl, testo, c);
+        if(pt) trovati.push({k, b:bt, cl, pt});
+      });
+    } else {
+      const cl = classeVino(k), pt = punteggioVino(cl, k, c);
+      if(pt) trovati.push({k, b:null, cl, pt});
+    }
+  });
+  return trovati.sort((x, y)=>y.pt - x.pt || (+(!!y.b) - +(!!x.b))).slice(0, 4);
+}
+function htmlDallaCantina(b){
+  if(!b.cant) return "";
+  const t = dallaCantina(b);
+  if(!t.length){
+    const haCantina = S.dispensa.some(eCantina);
+    return `<p class="mini cant-bere-no">\u{1F5C4}️ ${haCantina
+      ? L("Nella tua cantina non c’è una bottiglia adatta a questo piatto: ecco cosa cercare.","There’s no suitable bottle in your cellar for this dish: here’s what to look for.")
+      : L("La tua cantina è vuota: ecco cosa cercare.","Your cellar is empty: here’s what to look for.")}</p>`;
+  }
+  const giudizio = pt=>pt===3 ? L("perfetto per questo piatto","perfect for this dish") : pt===2 ? L("adatto","suitable") : L("va bene anche questo","this works too");
+  return `<div class="cant-bere">
+    <b>\u{1F5C4}️ ${L("Dalla tua cantina","From your cellar")}</b>
+    <ul>${t.map(x=>{
+      const nome = x.b ? (x.b.etichetta || nomeIng(x.k)) : nomeIng(x.k);
+      const det = x.b ? [x.b.azienda, x.b.vitigno, x.b.annata].filter(Boolean).join(" · ") : "";
+      return `<li class="cb-${x.pt}"><button type="button" class="cant-bere-btn" data-dalcantina="${esc(x.k)}" onclick="event.preventDefault()">
+        <span class="cb-ic" aria-hidden="true">${ICONA_CLASSE[x.cl] || "\u{1F377}"}</span>
+        <span class="cb-tx"><span data-no-tr>${esc(nome)}</span>${det ? `<span class="mini" data-no-tr>${esc(det)}</span>` : ""}</span>
+        <span class="cb-giu">${x.pt===3 ? "★ " : x.pt===2 ? "✓ " : ""}${giudizio(x.pt)}</span></button></li>`;
+    }).join("")}</ul>
+    ${t[0].pt < 2 ? `<p class="mini" style="margin-top:6px">${L("Non hai il tipo ideale: questi sono un ripiego. Se vuoi comprarne uno, ecco cosa cercare.","You don’t have the ideal type: these are a fallback. If you want to buy one, here’s what to look for.")}</p>` : ""}
+  </div>`;
+}
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-dalcantina]");
+  if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  apriCantina(b.dataset.dalcantina);
+});
+
 function abbinamentoBevanda(r){
   const chiavi = r.ing.map(i=>i.k.toLowerCase());
   const nome = r.n.toLowerCase();
@@ -3016,38 +3104,48 @@ function abbinamentoBevanda(r){
   const formaggioStag = contiene(chiavi, ["parmigiano","pecorino","grana","gorgonzola","taleggio","provolone","stravecchio","stagionat"]);
   const funghiTartufo = contiene(chiavi, ["fungh","tartufo","porcini"]);
   const pizza = nome.includes("pizza");
-  const bibita = it=>({tipo:it.tipo, car:it.car, alt:it.alt});
+  const bibita = it=>({tipo:it.tipo, car:it.car, alt:it.alt, cant:it.cant||null});
 
   if(r.cat==="Dolci")
     return bibita({tipo:"Vino dolce o passito", car:"morbido, aromatico, con note di miele, frutta secca o frutta candita",
-      alt:"In alternativa: una birra scura e dolce (stout), oppure un tè freddo poco zuccherato o una spuma nera per restare analcolici."});
+      alt:"In alternativa: una birra scura e dolce (stout), oppure un tè freddo poco zuccherato o una spuma nera per restare analcolici.",
+      cant:{prime:["dolce"], seconde:["spumante"], vitigni:["Moscato","Zibibbo","Malvasia"]}});
   if(pizza)
     return bibita({tipo:"Birra chiara, tipo lager o pilsner", car:"fresca, ben frizzante, leggermente amara",
-      alt:"In alternativa: un vino rosso giovane e frizzante (es. Lambrusco), o un'acqua molto fredda e frizzante."});
+      alt:"In alternativa: un vino rosso giovane e frizzante (es. Lambrusco), o un'acqua molto fredda e frizzante.",
+      cant:{prime:["birra"], seconde:["spumante"], vitigni:["Lambrusco"]}});
   if(pesce)
     return bibita({tipo:fritto?"Vino bianco frizzante o spumante Brut":"Vino bianco secco",
       car:fritto?"bollicine fini, acidità decisa, utili a sgrassare il fritto":
           piccante?"aromatico e sapido, per bilanciare la nota piccante (es. Vermentino, Falanghina)":
           "fresco, minerale, con note floreali e agrumate (es. Vermentino, Falanghina, Verdicchio)",
-      alt:"In alternativa: una birra chiara leggera, o acqua frizzante con una fetta di limone."});
+      alt:"In alternativa: una birra chiara leggera, o acqua frizzante con una fetta di limone.",
+      cant:fritto ? {prime:["spumante"], seconde:["bianco","birra"], vitigni:["Glera"]}
+                  : {prime:["bianco"], seconde:["spumante","rosato"], vitigni:["Vermentino","Falanghina","Verdicchio","Grillo","Carricante","Fiano","Greco","Inzolia","Catarratto","Pecorino","Friulano","Ribolla gialla","Sauvignon blanc","Trebbiano"]}});
   if(carneRossa)
     return bibita({tipo:"Vino rosso"+(r.leggero?" di medio corpo":" corposo"),
       car:r.leggero?"morbido, fruttato, tannini non troppo marcati (es. Chianti giovane, Montepulciano)":
                      "strutturato, tannico, adatto a un piatto sostanzioso (es. Nero d'Avola, Chianti Classico, Montepulciano d'Abruzzo)",
-      alt:"In alternativa: una birra ambrata o doppio malto, dal corpo pieno."});
+      alt:"In alternativa: una birra ambrata o doppio malto, dal corpo pieno.",
+      cant:{prime:["rosso"], seconde:["birra"], vitigni:r.leggero ? ["Sangiovese","Montepulciano","Barbera","Dolcetto","Merlot","Frappato","Nerello Mascalese","Teroldego"]
+                                                         : ["Nero d'Avola","Sangiovese","Montepulciano","Aglianico","Primitivo","Nebbiolo","Cannonau","Sagrantino","Cabernet Sauvignon","Syrah","Negroamaro","Nerello Mascalese","Nero di Troia"]}});
   if(carneBianca)
     return bibita({tipo:"Vino rosso leggero o bianco strutturato",
       car:"poco tannico, fruttato se rosso; morbido e con un breve affinamento se bianco (es. Vermentino strutturato, Chardonnay)",
-      alt:"In alternativa: una birra chiara artigianale dal profilo morbido."});
+      alt:"In alternativa: una birra chiara artigianale dal profilo morbido.",
+      cant:{prime:["rosso","bianco"], seconde:["rosato","birra"], vitigni:["Frappato","Pinot nero","Nerello Mascalese","Dolcetto","Barbera","Chardonnay","Vermentino","Fiano","Grillo","Carricante"]}});
   if(formaggioStag)
     return bibita({tipo:"Vino rosso robusto o, per i più stagionati, un passito",
       car:"sapido e strutturato, capace di reggere il gusto deciso del formaggio",
-      alt:"In alternativa: una birra ambrata o un vino bianco molto strutturato."});
+      alt:"In alternativa: una birra ambrata o un vino bianco molto strutturato.",
+      cant:{prime:["rosso","dolce"], seconde:["birra","bianco"], vitigni:["Nero d'Avola","Aglianico","Primitivo","Nebbiolo","Sagrantino","Montepulciano","Cannonau","Zibibbo","Moscato"]}});
   if(funghiTartufo)
     return bibita({tipo:"Vino rosso elegante", car:"terroso, delicato, non troppo tannico (es. Nebbiolo, Barbera)",
-      alt:"In alternativa: un bianco strutturato e maturo."});
+      alt:"In alternativa: un bianco strutturato e maturo.",
+      cant:{prime:["rosso"], seconde:["bianco"], vitigni:["Nebbiolo","Barbera","Pinot nero","Nerello Mascalese","Sangiovese"]}});
   return bibita({tipo:"Vino bianco leggero o rosato", car:"fresco, snello, facile da abbinare a un piatto delicato di verdure o legumi",
-    alt:"In alternativa: una birra chiara leggera, o acqua frizzante con erbe aromatiche."});
+    alt:"In alternativa: una birra chiara leggera, o acqua frizzante con erbe aromatiche.",
+    cant:{prime:["bianco","rosato"], seconde:["spumante","birra"], vitigni:["Vermentino","Grillo","Falanghina","Catarratto","Inzolia","Pinot grigio","Trebbiano","Frappato","Carricante"]}});
 }
 
 function scheda(o){
@@ -3102,6 +3200,7 @@ function scheda(o){
       ${(()=>{ const b = abbinamentoBevanda(r); return `
       <div class="bevanda">
         <b>\u{1F377} Da bere: ${esc(b.tipo)}</b>
+        ${htmlDallaCantina(b)}
         <p class="mini" style="margin-top:4px">${esc(b.car)}</p>
         <p class="mini" style="margin-top:4px;opacity:.85">${esc(b.alt)}</p>
         <a class="cerca-web" target="_blank" rel="noopener"
