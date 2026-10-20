@@ -235,6 +235,20 @@ body[data-filigrana="1"]::before{
 .pag-intro{padding:2px 2px 12px}
 .pag-intro h2{font-size:1.35rem;font-weight:700;margin:0 0 4px;letter-spacing:-.02em}
 .pag-intro p{font-size:.9rem;color:var(--inchiostro-soft);margin:0}
+.pcella.tendina{padding:0;overflow:hidden}
+.tendina .tend-testa{all:unset;box-sizing:border-box;width:100%;padding:12px 14px;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;color:inherit}
+.tendina .tend-tit{font-size:.95rem}
+.tendina .tend-val{grid-column:1;font-size:.86rem;font-weight:600;opacity:.95;line-height:1.3}
+.tendina .tend-freccia{grid-column:2;grid-row:1 / span 2;font-size:.75rem;opacity:.85}
+.tendina.aperta > .chips,.tendina .orologio{padding:0 14px 14px}
+.tendina .tend-ok{display:block;margin:4px 14px 14px auto}
+.tendina .orologio .tend-ok{margin:10px 0 0 auto}
+.pcella .orologio svg{display:block;width:min(250px,72vw)!important;height:auto!important;max-width:none;margin:4px auto 0!important;opacity:1!important;margin:0 auto;touch-action:none;cursor:grab;color:#fff}
+.pcella .orologio svg:active{cursor:grabbing}
+.oro-tasti{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:8px}
+.oro-tasti b{min-width:9em;text-align:center;font-size:1.05rem}
+.oro-tasti .chip{font-weight:700;font-size:1rem;padding:6px 14px}
+.oro-rapidi{justify-content:center;margin-top:10px}
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .pgrid .full{grid-column:1/-1}
 .pgrid3{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
@@ -940,7 +954,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v171</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v172</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2609,21 +2623,25 @@ function tappaVoglia(){
   </div>`;})():""}
 
   <div class="pgrid" style="margin-top:0">
-    <div class="pcella c-crema" style="cursor:default">
-      <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="10" stroke="currentColor" stroke-width="2"/><path d="M9 14l3 3 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <b>Portata</b>
-      <div class="chips" id="port" style="margin-top:8px">
-        ${PORTATE.map(p2=>`<button class="chip ${sess.portate.includes(p2)?"on":""}" data-v="${p2}" style="font-size:.78rem">${p2.toLowerCase()}</button>`).join("")}
-        <button class="chip ${sess.unico?"on":""}" id="swUnico" style="font-size:.78rem">unico</button>
+    <div class="pcella c-crema tendina ${apertaPort||apertoTempo?"full":""} ${apertaPort?"aperta":""}">
+      <button type="button" class="tend-testa" id="tendPort" aria-expanded="${apertaPort}">
+        <span class="tend-tit">\u{1F37D}\uFE0F <b>${L("Portata","Course")}</b></span>
+        <span class="tend-val">${sintesiPortata()}</span>
+        <span class="tend-freccia" aria-hidden="true">${apertaPort?"\u25B2":"\u25BC"}</span>
+      </button>
+      ${apertaPort?`<div class="chips" id="port" style="margin-top:10px">
+        ${PORTATE.map(p2=>`<button class="chip ${sess.portate.includes(p2)?"on":""}" data-v="${p2}">${ICONA_PORTATA[p2]||""} ${p2.toLowerCase()}</button>`).join("")}
+        <button class="chip ${sess.unico?"on":""}" id="swUnico">\u{1F958} ${L("piatto unico","one-dish")}</button>
       </div>
+      <button type="button" class="btn small tend-ok" data-chiudi="port">${L("Fatto","Done")}</button>`:""}
     </div>
-    <div class="pcella c-menta" style="cursor:default">
-      <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="10" stroke="currentColor" stroke-width="2"/><path d="M14 9v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <b>Tempo</b>
-      <div class="chips" id="tempo" style="margin-top:8px">
-        ${[["30","½ ora"],["60","1 ora"],["120","2 ore"],["999","libero"]]
-          .map(([v,t2])=>`<button class="chip ${sess.tempo===v?"on":""}" data-v="${v}" style="font-size:.78rem">${t2}</button>`).join("")}
-      </div>
+    <div class="pcella c-menta tendina ${apertaPort||apertoTempo?"full":""} ${apertoTempo?"aperta":""}">
+      <button type="button" class="tend-testa" id="tendTempo" aria-expanded="${apertoTempo}">
+        <span class="tend-tit">\u23F1\uFE0F <b>${L("Tempo","Time")}</b></span>
+        <span class="tend-val" id="tempoSintesi">${sintesiTempo(sess.tempo)}</span>
+        <span class="tend-freccia" aria-hidden="true">${apertoTempo?"\u25B2":"\u25BC"}</span>
+      </button>
+      ${apertoTempo?orologioTempo():""}
     </div>
     <div class="pcella full c-senape" style="cursor:default">
       <svg viewBox="0 0 28 28" fill="none"><circle cx="10" cy="14" r="5" stroke="currentColor" stroke-width="2"/><path d="M10 5v2M10 21v2M3 14h2M15 14h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M24 17a6 6 0 0 1-7-8 6 6 0 1 0 7 8z" fill="currentColor"/></svg>
@@ -2704,14 +2722,124 @@ function tappaVoglia(){
     tappaVoglia();
   };
   app.querySelectorAll("#port .chip[data-v]").forEach(b=>b.onclick=()=>{
-    const v=b.dataset.v, i=sess.portate.indexOf(v); i<0?sess.portate.push(v):sess.portate.splice(i,1); b.classList.toggle("on"); });
-  document.getElementById("swUnico").onclick=()=>{ sess.unico=!sess.unico; tappaVoglia(); };
+    const v=b.dataset.v, i=sess.portate.indexOf(v); i<0?sess.portate.push(v):sess.portate.splice(i,1); tappaVoglia(); });
+  const su = document.getElementById("swUnico");
+  if(su) su.onclick=()=>{ sess.unico=!sess.unico; tappaVoglia(); };
+  document.getElementById("tendPort").onclick=()=>{ apertaPort=!apertaPort; if(apertaPort) apertoTempo=false; tappaVoglia(); };
+  document.getElementById("tendTempo").onclick=()=>{ apertoTempo=!apertoTempo; if(apertoTempo) apertaPort=false; tappaVoglia();
+    if(apertoTempo){ const q=document.getElementById("quadrante"); if(q) q.scrollIntoView({block:"center", behavior:"smooth"}); } };
+  app.querySelectorAll("[data-chiudi]").forEach(b=>b.onclick=()=>{ apertaPort=false; apertoTempo=false; tappaVoglia(); });
+  if(apertoTempo) collegaOrologio();
   app.querySelectorAll("#stile .chip").forEach(b=>b.onclick=()=>{ sess.stile=b.dataset.v; tappaVoglia(); });
-  app.querySelectorAll("#tempo .chip").forEach(b=>b.onclick=()=>{ sess.tempo=b.dataset.v; tappaVoglia(); });
   app.querySelectorAll("#pasto .chip").forEach(b=>b.onclick=()=>{ sess.pasto=b.dataset.v; tappaVoglia(); });
   app.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ sess.accordo=b.dataset.a; tappaVoglia(); });
 
   pulsanti("Indietro", "Vedi le ricette", ()=>vai(4), ()=>vai(2));
+}
+
+/* --- Portata e Tempo: tendine chiuse che mostrano solo la scelta fatta --- */
+let apertaPort = false, apertoTempo = false;
+const TEMPO_MAX = 180;   /* il quadrante copre 3 ore, a scatti di 5 minuti */
+function sintesiPortata(){
+  const pz = sess.portate.map(p2=>(ICONA_PORTATA[p2]||"") + " " + p2.toLowerCase());
+  if(sess.unico) pz.push("\u{1F958} " + L("unico","one-dish"));
+  return pz.length ? pz.join(" · ") : L("tutte","all");
+}
+function sintesiTempo(v){
+  const m = +v;
+  if(!m || m >= 999) return "\u267E\uFE0F " + L("libero","no limit");
+  const h = Math.floor(m/60), r = m%60;
+  return L("entro ","within ") + (h ? h + " h" + (r ? " " + r + " min" : "") : r + " min");
+}
+function lancettaXY(m, raggio){
+  const a = (m / TEMPO_MAX) * 2 * Math.PI - Math.PI/2;
+  return [100 + raggio*Math.cos(a), 100 + raggio*Math.sin(a)];
+}
+function orologioTempo(){
+  const m = +sess.tempo >= 999 ? 0 : +sess.tempo;
+  let tacche = "";
+  for(let t=0; t<TEMPO_MAX; t+=5){
+    const lunga = t%30===0, [x1,y1] = lancettaXY(t, lunga?76:82), [x2,y2] = lancettaXY(t, 88);
+    tacche += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="currentColor" stroke-width="${lunga?2.5:1}" opacity="${lunga?1:.55}"/>`;
+    if(lunga){
+      const [tx,ty] = lancettaXY(t, 62);
+      const et = t===0 ? "3h" : t%60===0 ? (t/60)+"h" : (t<60 ? t+"'" : Math.floor(t/60)+"h30");
+      tacche += `<text x="${tx.toFixed(1)}" y="${(ty+4).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="currentColor">${et}</text>`;
+    }
+  }
+  const [hx,hy] = lancettaXY(m, 80);
+  return `<div class="orologio">
+    <svg viewBox="0 0 200 200" id="quadrante" role="slider" tabindex="0" aria-label="${L("Tempo a disposizione","Time available")}"
+      aria-valuemin="0" aria-valuemax="${TEMPO_MAX}" aria-valuenow="${m}">
+      <circle cx="100" cy="100" r="94" fill="rgba(255,255,255,.12)" stroke="currentColor" stroke-width="2"/>
+      <path id="settore" d="${settore(m)}" fill="rgba(255,255,255,.28)"/>
+      ${tacche}
+      <line id="lancetta" x1="100" y1="100" x2="${hx.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      <circle id="pomello" cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="10" fill="#fff" stroke="currentColor" stroke-width="3"/>
+      <circle cx="100" cy="100" r="6" fill="currentColor"/>
+    </svg>
+    <div class="oro-tasti">
+      <button type="button" class="chip" id="tMeno" aria-label="${L("5 minuti in meno","5 minutes less")}">− 5'</button>
+      <b id="tempoGrande">${sintesiTempo(sess.tempo)}</b>
+      <button type="button" class="chip" id="tPiu" aria-label="${L("5 minuti in più","5 minutes more")}">+ 5'</button>
+    </div>
+    <div class="chips oro-rapidi">
+      ${[["30","½ h"],["60","1 h"],["120","2 h"],["999","\u267E\uFE0F " + L("libero","no limit")]]
+        .map(([v,t2])=>`<button type="button" class="chip ${sess.tempo===v?"on":""}" data-tr="${v}">${t2}</button>`).join("")}
+    </div>
+    <p class="mini" style="margin:6px 0 0">${L("Trascina la lancetta o usa i tasti.","Drag the hand or use the buttons.")}</p>
+    <button type="button" class="btn small tend-ok" data-chiudi="tempo">${L("Fatto","Done")}</button>
+  </div>`;
+}
+function settore(m){
+  if(!m) return "";
+  if(m >= TEMPO_MAX) return "M100,6 A94,94 0 1,1 99.9,6 Z";
+  const a = (m / TEMPO_MAX) * 2 * Math.PI - Math.PI/2;
+  const x = 100 + 94*Math.cos(a), y = 100 + 94*Math.sin(a);
+  return `M100,100 L100,6 A94,94 0 ${m > TEMPO_MAX/2 ? 1 : 0},1 ${x.toFixed(1)},${y.toFixed(1)} Z`;
+}
+function collegaOrologio(){
+  const q = document.getElementById("quadrante");
+  if(!q) return;
+  const imposta = (m, ridisegna)=>{
+    m = Math.max(5, Math.min(TEMPO_MAX, Math.round(m/5)*5));
+    sess.tempo = String(m);
+    const [hx,hy] = lancettaXY(m, 80);
+    const l = document.getElementById("lancetta"), p = document.getElementById("pomello");
+    l.setAttribute("x2", hx.toFixed(1)); l.setAttribute("y2", hy.toFixed(1));
+    p.setAttribute("cx", hx.toFixed(1)); p.setAttribute("cy", hy.toFixed(1));
+    document.getElementById("settore").setAttribute("d", settore(m));
+    q.setAttribute("aria-valuenow", m);
+    document.getElementById("tempoGrande").textContent = sintesiTempo(m);
+    document.getElementById("tempoSintesi").textContent = sintesiTempo(m);
+    document.querySelectorAll(".oro-rapidi .chip").forEach(c=>c.classList.toggle("on", c.dataset.tr === String(m)));
+    if(ridisegna) tappaVoglia();
+  };
+  let ultimo = +sess.tempo >= 999 ? 0 : +sess.tempo, trascina = false;
+  const daPuntatore = e=>{
+    const r = q.getBoundingClientRect();
+    const dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
+    let ang = Math.atan2(dy, dx) + Math.PI/2; if(ang < 0) ang += 2*Math.PI;
+    let m = ang / (2*Math.PI) * TEMPO_MAX;
+    /* niente salto da 3 ore a 0 (e viceversa) passando per la cima */
+    if(ultimo > TEMPO_MAX*0.75 && m < TEMPO_MAX*0.25) m = TEMPO_MAX;
+    else if(ultimo < TEMPO_MAX*0.25 && m > TEMPO_MAX*0.75) m = 5;
+    ultimo = m;
+    imposta(m, false);
+  };
+  q.addEventListener("pointerdown", e=>{ trascina = true; q.setPointerCapture(e.pointerId); daPuntatore(e); e.preventDefault(); });
+  q.addEventListener("pointermove", e=>{ if(trascina) daPuntatore(e); });
+  const fine = ()=>{ trascina = false; };
+  q.addEventListener("pointerup", fine); q.addEventListener("pointercancel", fine);
+  q.addEventListener("keydown", e=>{
+    const m = +sess.tempo >= 999 ? 0 : +sess.tempo;
+    if(e.key === "ArrowRight" || e.key === "ArrowUp"){ imposta(m + 5); e.preventDefault(); }
+    if(e.key === "ArrowLeft" || e.key === "ArrowDown"){ imposta(m - 5); e.preventDefault(); }
+  });
+  const passo = d=>{ const m = +sess.tempo >= 999 ? 60 : +sess.tempo; ultimo = m + d; imposta(m + d); };
+  document.getElementById("tMeno").onclick = ()=>passo(-5);
+  document.getElementById("tPiu").onclick = ()=>passo(5);
+  document.querySelectorAll(".oro-rapidi .chip").forEach(c=>c.onclick=()=>{ sess.tempo = c.dataset.tr; tappaVoglia(); });
 }
 
 /* --- 5. ricette --- */
