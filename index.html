@@ -7576,12 +7576,14 @@ vai(S.profilo.fatto ? 5 : 0);
     sp.classList.add("via");
     setTimeout(()=>sp.remove(), 500);
   };
-  const minimo = new Promise(r=>setTimeout(r, 1600));
+  /* resta in vista qualche secondo per godersi l'animazione; un tocco la chiude subito */
+  const minimo = new Promise(r=>setTimeout(r, 3800));
+  sp.addEventListener("click", ()=>chiudi());
   const pronta = new Promise(r=>{
     document.readyState === "complete" ? r() : window.addEventListener("load", r, {once:true});
   });
   Promise.all([minimo, pronta]).then(chiudi);
-  setTimeout(chiudi, 4000);
+  setTimeout(chiudi, 6000);
 })();
 
 if("serviceWorker" in navigator){
