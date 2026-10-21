@@ -2197,16 +2197,12 @@ function nuovaSessione(){
    =========================================================== */
 function tavolata(){
   const p = S.profilo;
-  return [{nome:p.nome||"Io", stile:p.stile, allergeni:p.allergeni, relig:p.relig||"", io:true}].concat(sess.ospiti);
+  return [{nome:p.nome||"Io", stile:p.stile, allergeni:p.allergeni, relig:(RELIGIONI[p.relig] ? p.relig : ""), io:true}].concat(sess.ospiti);
 }
 /* regole religiose: valgono per chi siede a tavola, come gli allergeni (si riconoscono dagli ingredienti) */
 const RELIGIONI = {
   halal:     {e:"☪️", it:"halal (islam)", en:"halal (Islam)", nota:["Niente maiale né alcol. La carne andrebbe da macellazione halal: controlla la provenienza.","No pork or alcohol. Meat should come from halal slaughter: check where it's from."]},
-  kosher:    {e:"✡️", it:"kosher (ebraismo)", en:"kosher (Judaism)", nota:["Niente maiale, coniglio, cavallo, molluschi e crostacei; mai carne e latticini insieme. La carne andrebbe kosher: controlla la provenienza.","No pork, rabbit, horse or shellfish; never meat and dairy together. Meat should be kosher: check where it's from."]},
-  induista:  {e:"\u{1F549}️", it:"induista (niente manzo)", en:"Hindu (no beef)", nota:["Niente carne bovina. Molti induisti sono anche vegetariani: in quel caso scegli anche lo stile vegetariano.","No beef. Many Hindus are also vegetarian: if so, choose the vegetarian style too."]},
-  giainista: {e:"\u{1FAB7}", it:"giainista", en:"Jain", nota:["Vegetariano senza uova né miele, e niente radici, tuberi, cipolla, aglio e funghi.","Vegetarian without eggs or honey, and no roots, tubers, onion, garlic or mushrooms."]},
-  magro:     {e:"✝️", it:"venerdì di magro (cattolico)", en:"meatless Friday (Catholic)", nota:["Niente carne; pesce, uova e latticini sì.","No meat; fish, eggs and dairy are fine."]},
-  ortodosso: {e:"☦️", it:"digiuno ortodosso", en:"Orthodox fast", nota:["Niente carne, pesce, latticini e uova; molluschi e crostacei sì.","No meat, fish, dairy or eggs; shellfish are fine."]}
+  kosher:    {e:"✡️", it:"kosher (ebraismo)", en:"kosher (Judaism)", nota:["Niente maiale, coniglio, cavallo, molluschi e crostacei; mai carne e latticini insieme. La carne andrebbe kosher: controlla la provenienza.","No pork, rabbit, horse or shellfish; never meat and dairy together. Meat should be kosher: check where it's from."]}
 };
 const RE_MAIALE = /maial|guancial|pancett|prosciutt|salsicc|salam|lard|mortadell|speck|nduja|cotechin|zampon|\bcoppa|capocollo|strutto|cotenn|porchett|soppressat|ciccioli|wurstel|chorizo|bacon|culatell|finocchiona|\blonza|cinghial|gelatina/;
 const RE_ALCOL = /\bvino\b|birra|marsala|\brum\b|liquor|brandy|grappa|vermout|cognac|limoncell|alchermes|whisk|vodka|\bsake\b|mirin|spumante|champagne|prosecco|sherry|passito|maraschin|kirsch|cointreau|calvados/;
@@ -2253,7 +2249,7 @@ function violaRegola(r, rel){
   }
   return "";
 }
-function regoleTavolo(){ const s = new Set(); tavolata().forEach(c=>{ if(c.relig) s.add(c.relig); }); return [...s]; }
+function regoleTavolo(){ const s = new Set(); tavolata().forEach(c=>{ if(c.relig && RELIGIONI[c.relig]) s.add(c.relig); }); return [...s]; }
 function violaTavolo(r){ for(const rel of regoleTavolo()){ const v = violaRegola(r, rel); if(v) return {rel, v}; } return null; }
 function nomeRelig(rel){ const x = RELIGIONI[rel]; return x ? x.e + " " + L(x.it, x.en) : ""; }
 function chipsRelig(id, val){
@@ -2340,7 +2336,7 @@ function diStagione(r){
   return {tot: st.length, in: st.filter(m=>m.includes(meseStagione())).length};
 }
 function chiEsclude(r){
-  return tavolata().filter(c=> RANGO[r.stile] < RANGO[c.stile] || c.allergeni.some(a=>r.all.includes(a)) || (c.relig && violaRegola(r, c.relig)));
+  return tavolata().filter(c=> RANGO[r.stile] < RANGO[c.stile] || c.allergeni.some(a=>r.all.includes(a)) || (c.relig && RELIGIONI[c.relig] && violaRegola(r, c.relig)));
 }
 /* ricerca: senza accenti, su nome, ingredienti, regione e tag */
 function testoRicetta(r){
@@ -2657,7 +2653,7 @@ function tappaOspiti(){
 
   ${sess.ospiti.length ? `<div class="card">${sess.ospiti.map((o,i)=>`
     <div class="riga"><div><b>${esc(o.nome)}</b>
-      <div class="mini">${o.stile}${o.relig?" · "+nomeRelig(o.relig):""}${o.allergeni.length?" · niente "+o.allergeni.map(nomeAll).join(", "):""}${o.salvato?" · ricorrente":""}</div></div>
+      <div class="mini">${o.stile}${o.relig && RELIGIONI[o.relig]?" · "+nomeRelig(o.relig):""}${o.allergeni.length?" · niente "+o.allergeni.map(nomeAll).join(", "):""}${o.salvato?" · ricorrente":""}</div></div>
       <button class="btn ghost small" data-tog="${i}">Togli</button></div>`).join("")}</div>`
     : `<div class="card"><div class="mini">Per ora cucini solo per te.</div></div>`}
 
@@ -2975,7 +2971,7 @@ function tappaVoglia(){
   app.innerHTML = `
   <div class="intro"><h2>Cosa ti va oggi?</h2>
     <p>${t.length>1?`Siete in ${t.length}.`:"Cucini per te."} Scegli da dove partire.</p>
-    <div class="riep">${t.map(c=>`<span>${esc(c.nome)} · ${c.stile}${c.relig?" · "+nomeRelig(c.relig):""}${c.allergeni.length?" · no "+c.allergeni.map(nomeAll).join("/"):""}</span>`).join("")}</div></div>
+    <div class="riep">${t.map(c=>`<span>${esc(c.nome)} · ${c.stile}${c.relig && RELIGIONI[c.relig]?" · "+nomeRelig(c.relig):""}${c.allergeni.length?" · no "+c.allergeni.map(nomeAll).join("/"):""}</span>`).join("")}</div></div>
 
   <div class="pgrid3">
     <div class="pcella c-senape ${sess.modo==="idea"?"sel":""}" data-m="idea">
