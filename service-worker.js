@@ -9,7 +9,7 @@
  * l'app continua comunque a funzionare senza connessione.
  */
 
-const VERSIONE = 'checucino-v181';
+const VERSIONE = 'checucino-v182';
 
 const FILE = [
   './',
