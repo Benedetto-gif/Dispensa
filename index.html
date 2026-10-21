@@ -7577,13 +7577,13 @@ vai(S.profilo.fatto ? 5 : 0);
     setTimeout(()=>sp.remove(), 500);
   };
   /* resta in vista qualche secondo per godersi l'animazione; un tocco la chiude subito */
-  const minimo = new Promise(r=>setTimeout(r, 6500));
+  const minimo = new Promise(r=>setTimeout(r, 5000));
   sp.addEventListener("click", ()=>chiudi());
   const pronta = new Promise(r=>{
     document.readyState === "complete" ? r() : window.addEventListener("load", r, {once:true});
   });
   Promise.all([minimo, pronta]).then(chiudi);
-  setTimeout(chiudi, 9000);
+  setTimeout(chiudi, 7500);
 })();
 
 if("serviceWorker" in navigator){
