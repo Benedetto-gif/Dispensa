@@ -107,7 +107,10 @@ window.SFONDO = (function(){
     aOklch:aOklch, daOklch:daOklch, riq:riq, salvaRiq:salvaRiq, applicaRiq:applicaRiq};
 })();
 try{ SFONDO.applica(SFONDO.lista()[SFONDO.sel()]); SFONDO.applicaRiq(SFONDO.riq()); }catch(e){}
+/* durante l'animazione d'apertura barra di stato e fondo hanno il colore dell'icona: nessuno stacco fra avvio del telefono e app */
+try{ document.documentElement.classList.add("avvio"); var mt = document.getElementById("metaTema"); window.TEMA_DOPO = mt.content; mt.content = "#17281A"; }catch(e){}
 </script>
+<style>html.avvio,html.avvio body{background:#17281A !important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
@@ -741,7 +744,7 @@ html.box-su, html.box-su body{overflow:hidden}
 
 /* schermata d'apertura */
 #splash{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;align-content:center;gap:16px;
-  background:#2E5B43;transition:opacity .45s ease}
+  background:#17281A;transition:opacity .45s ease}
 #splash.via{opacity:0;pointer-events:none}
 #splash svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(56vw,230px);height:auto}
 #splash{align-content:start !important;padding-top:calc(50vh + min(28vw,115px) + 16px)}
@@ -7681,11 +7684,13 @@ vai(S.profilo.fatto ? 5 : 0);
    =========================================================== */
 (function(){
   const sp = document.getElementById("splash");
-  if(!sp) return;
+  if(!sp){ document.documentElement.classList.remove("avvio"); return; }
   let chiuso = false;
   const chiudi = ()=>{
     if(chiuso) return; chiuso = true;
     sp.classList.add("via");
+    document.documentElement.classList.remove("avvio");
+    try{ const c = getComputedStyle(document.documentElement).getPropertyValue("--carta").trim(); document.getElementById("metaTema").content = c || window.TEMA_DOPO; }catch(e){}
     setTimeout(()=>sp.remove(), 500);
   };
   /* barra di caricamento: avanza a scatti come un download e arriva al 100% allo scadere dei 5 secondi */
