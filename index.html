@@ -7415,6 +7415,7 @@ async function rbCerca(){
   rbStato = L("L’archivio delle radio non risponde adesso: riprova tra poco (serve la connessione).","The radio directory isn’t answering right now: try again shortly (you need a connection).");
   disegnaCercaRadio();
 }
+let rbInCima = "";
 function apriCercaRadio(){ disegnaCercaRadio(true); }
 function rigaRadio(r, mia){
   const ico = r.ico ? `<img class="rb-ico" src="${esc(r.ico)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'rb-ico',textContent:'\u{1F4FB}'}))">` : `<span class="rb-ico">\u{1F4FB}</span>`;
@@ -7444,6 +7445,8 @@ function disegnaCercaRadio(nuova){
   const vi = velo.querySelector(".velo"), y = vi && !nuova ? vi.scrollTop : 0;
   apriVelo("radio-cerca", html);
   const vi2 = velo.querySelector(".velo"); if(vi2 && y) vi2.scrollTop = y;
+  if(rbInCima){ const b = velo.querySelector(`.rb-l [data-u="${CSS.escape(rbInCima)}"]`); rbInCima = "";
+    const li = b && b.closest("ul.rb-l"); if(li && vi2){ const d = li.getBoundingClientRect().top - vi2.getBoundingClientRect().top - 40; vi2.scrollTop += d; } }
   const t = document.getElementById("rbTesto");
   document.getElementById("rbVai").onclick = ()=>{ rbTesto = t.value.trim(); rbCerca(); };
   t.onkeydown = e=>{ if(e.key === "Enter"){ rbTesto = t.value.trim(); rbCerca(); } };
@@ -7457,8 +7460,12 @@ document.addEventListener("click", e=>{
   if(a === "stop"){ fermaRadio(); }
   else if(a === "ascolta"){
     const r = trova(); if(!r) return;
-    const j = (S.radioMie||[]).findIndex(x=>x.u[0] === u);
     if(radioSel >= 0) fermaRadio();
+    /* la radio che ascolti sale in testa alla sua lista */
+    const k = rbRisultati.findIndex(x=>x.u[0] === u); if(k > 0) rbRisultati.unshift(rbRisultati.splice(k, 1)[0]);
+    let j = (S.radioMie||[]).findIndex(x=>x.u[0] === u);
+    if(j > 0){ S.radioMie.unshift(S.radioMie.splice(j, 1)[0]); j = 0; salva(); }
+    rbInCima = u;
     if(j >= 0){ radioProva = null; accendiRadio(RADIO.length + j); }
     else{ radioProva = {n:r.n, u:r.u.slice(), cc:r.cc, ico:r.ico, tags:r.tags, br:r.br}; accendiRadio(stazioni().length - 1); }
     try{ fetch(RB_SERVER[0] + "/json/url/" + encodeURIComponent(r.id || "")).catch(()=>{}); }catch(err){}
