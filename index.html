@@ -963,6 +963,10 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;displ
 .cb-voce:active{background:var(--verde);color:#fff}
 .cb-fissa{font-style:italic;opacity:.8}
 .cb-vuoto{padding:12px;font-size:.9rem;opacity:.75}
+
+.spiega-disp summary::-webkit-details-marker{display:none}
+.spiega-disp .freccia-sp{display:inline-block;transition:transform .2s}
+.spiega-disp[open] .freccia-sp{transform:rotate(180deg)}
 </style>
 </head>
 <body>
@@ -2576,9 +2580,12 @@ function tappaDispensa(){
         </div></label>
       <datalist id="ingDatalist">${TUTTI_ING.map(i=>`<option value="${esc(i)}">`).join("")}</datalist>
       <div id="ingRisposta">${htmlRispostaDisp()}</div>
+      <details class="spiega-disp" style="margin-top:10px">
+        <summary style="cursor:pointer;font-weight:600;list-style:none;display:inline-flex;align-items:center;gap:6px;opacity:.95" data-no-tr>ℹ️ ${L("Come funziona","How it works")} <span class="freccia-sp" aria-hidden="true">▾</span></summary>
       <p class="mini" style="margin-top:10px;opacity:.85">Tieni premuto un ingrediente qui sotto per segnare la scadenza, spostarlo di reparto o toglierlo dall'elenco.</p>
       <p class="mini" style="margin-top:6px;opacity:.85" data-no-tr>\u{1F377} ${L("Nella Cantina tocca una bottiglia per aprire la sua scheda: etichetta, azienda, vitigno, annata.","In the Wine cellar, tap a bottle to open its card: label, producer, grape, vintage.")}</p>
       <p class="mini" style="margin-top:4px;opacity:.85" data-no-tr>${suEmisferoSud() ? L("\u{1F5D3}\uFE0F accanto a un ingrediente: \u00e8 di stagione ora dove vivi, nell\u2019emisfero sud; sbiadito: non \u00e8 la sua stagione.","\u{1F5D3}\uFE0F next to an ingredient: in season now where you live, in the southern hemisphere; faded: out of season.") : L("\u{1F5D3}\uFE0F accanto a un ingrediente: \u00e8 di stagione ora qui da noi, nell\u2019emisfero nord; sbiadito: non \u00e8 la sua stagione.","\u{1F5D3}\uFE0F next to an ingredient: in season now here, in the northern hemisphere; faded: out of season.")}</p>
+      </details>
     </div>
   </div>
   <div class="pgrid" style="margin-top:2px">${htmlCardScadenze()}</div>
