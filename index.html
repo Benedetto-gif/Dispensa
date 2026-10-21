@@ -964,6 +964,9 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 .cw-vai{font-size:1.2rem}.cw-voce.cw-scelta{border-color:var(--verde);box-shadow:0 0 0 2px var(--verde)}
 .cw-attesa{animation:ideaLuce 1.6s ease-in-out infinite}
 .cw-link summary{cursor:pointer}
+.gia-box{background:var(--superficie);color:var(--inchiostro);border:2px solid #FFD45C;border-radius:14px;padding:12px;margin:6px 0 12px}
+.gia-box > b{display:block;font-size:1.02rem;margin-bottom:4px}
+.gia-grid{margin:8px 0 10px}
 .link-box{background:#0F6E78;box-shadow:0 0 0 3px #FFD45C,0 6px 22px rgba(15,110,120,.45)}
 .link-box .idea-riga button{color:#0B3F45;white-space:nowrap}
 .link-box .link-vai{display:block;width:100%;margin-top:10px;border:0;border-radius:11px;padding:13px;font-weight:700;font-size:1.02rem;
@@ -5804,7 +5807,39 @@ function esameImport(ric){
 }
 /* decide: se la ricetta e' pulita la apro nell'editor (togliendo le righe che non sono ingredienti),
    altrimenti spiego che non ha un formato idoneo e lascio scegliere */
+
+/* ===== ricette gia' presenti: prima di cercare o salvare dal web controllo l'archivio ===== */
+const PAROLE_VUOTE = new Set(["alla","alle","allo","agli","della","delle","dello","degli","dei","del","con","per","nel","nella","nei","sul","sulla","ricetta","ricette","the","and","with","recipe","style"]);
+function paroleNome(t){ return normTesto(t || "").split(" ").filter(w=>w.length > 2 && !PAROLE_VUOTE.has(w)); }
+function giaInArchivio(nome, dueVersi){
+  const p = paroleNome(nome); if(!p.length) return [];
+  const n = normTesto(nome);
+  return archivio().filter(r=>{
+    if(tutteTrovate(p, nomeRicetta(r))) return true;
+    if(!dueVersi) return false;
+    const q = paroleNome(r.n); return q.length >= 1 && tutteTrovate(q, n);
+  }).sort((a,b)=>nomeRicetta(a).length - nomeRicetta(b).length).slice(0, 5);
+}
+function htmlGiaPresenti(lista){
+  return `<div class="ric-grid gia-grid">${lista.map(valutaCompleta).map(scheda).join("")}</div>`;
+}
 function consegnaImport(ric){
+  if(!ric._dupOk){
+    const gia = giaInArchivio(ric.n, true);
+    const box = document.getElementById("impEsame");
+    if(gia.length && box){
+      velo._impDup = ric;
+      box.innerHTML = `<div class="imp-ko gia-box">
+        <b>\u{1F4DA} ${L(`«${esc(ric.n)}» sembra già nell’app`, `“${esc(ric.n)}” seems to be in the app already`)}</b>
+        <p class="mini">${L("Ecco le ricette con un nome simile. Se è un’altra versione, puoi salvarla comunque.","Here are the recipes with a similar name. If it’s a different version, you can save it anyway.")}</p>
+        ${htmlGiaPresenti(gia)}
+        <div class="azioni"><button class="btn" data-imp="dup-salva">${L("Salvala comunque","Save it anyway")}</button>
+          <button class="btn ghost" data-imp="lascia">${L("Lascia perdere","Never mind")}</button></div></div>`;
+      const es = document.getElementById("impEsito"); if(es) es.textContent = "";
+      box.scrollIntoView({block:"nearest", behavior:"smooth"});
+      return;
+    }
+  }
   const e = esameImport(ric);
   if(e.idonea){ apriEditor(e.pulita, e.spazzatura); return; }
   const box = document.getElementById("impEsame");
@@ -6286,6 +6321,17 @@ async function avviaCercaWeb(){
   if(!q){ inp.focus(); return; }
   inp.blur();
   box._lista = null;
+  if(!box._forza){
+    const gia = giaInArchivio(q);
+    if(gia.length){
+      box.innerHTML = `<div class="gia-box gia-cerca"><b>\u{1F4DA} ${L(gia.length === 1 ? "Nell’app c’è già questa ricetta" : "Nell’app ci sono già " + gia.length + " ricette con questo nome", gia.length === 1 ? "This recipe is already in the app" : gia.length + " recipes with this name are already in the app")}</b>
+        <p class="mini">${L("Toccala per vederla. Se cerchi un’altra versione, puoi cercare comunque sul web.","Tap it to see it. If you want a different version, you can still search the web.")}</p>
+        ${htmlGiaPresenti(gia)}
+        <button type="button" class="btn" id="impCercaComunque">\u{1F50E} ${L("Cerca comunque sul web","Search the web anyway")}</button></div>`;
+      return;
+    }
+  }
+  box._forza = false;
   box.innerHTML = `<p class="mini cw-attesa">⏳ ${L("Cerco «" + esc(q) + "» nei siti di cucina…","Searching “" + esc(q) + "” on cooking sites…")}</p>`;
   const disegna = l=>{
     if(!l.length || document.getElementById("impRisultati") !== box) return;
@@ -6301,6 +6347,7 @@ async function avviaCercaWeb(){
 }
 document.addEventListener("click", e=>{
   if(e.target.closest("#impCercaVai")){ avviaCercaWeb(); return; }
+  if(e.target.closest("#impCercaComunque")){ const box = document.getElementById("impRisultati"); if(box) box._forza = true; avviaCercaWeb(); return; }
   const b = e.target.closest("[data-cw]"); if(!b) return;
   const box = document.getElementById("impRisultati"); const r = box && box._lista && box._lista[+b.dataset.cw]; if(!r) return;
   const u = document.getElementById("impUrl"); if(u) u.value = r.url;
@@ -6386,6 +6433,7 @@ document.addEventListener("click", e=>{
     return;
   }
   if(a === "sistemo"){ const e = velo._impScarta; if(e) apriEditor(e.pulita, e.spazzatura); return; }
+  if(a === "dup-salva"){ const r = velo._impDup; if(r){ r._dupOk = true; document.getElementById("impEsame").innerHTML = ""; consegnaImport(r); } return; }
   if(a === "lascia"){ document.getElementById("impEsame").innerHTML = ""; document.getElementById("impEsito").textContent = "Va bene, non salvo niente. Puoi provare con un altro sito."; return; }
 });
 
