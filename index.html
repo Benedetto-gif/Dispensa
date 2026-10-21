@@ -955,6 +955,15 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
   background:var(--linea);color:var(--inchiostro);font-size:.95rem;line-height:32px;padding:0;cursor:pointer}
 .idea-riga .cx-x{background:#E9E2F3;color:#3A1F5C}
 /* casella del link nella "Ricetta dal web": stessa evidenza, colore petrolio */
+.cw-box{background:#B4501E;box-shadow:0 0 0 3px #FFD45C,0 6px 22px rgba(180,80,30,.45)}
+.cw-box .idea-riga button{color:#5A2A0A;white-space:nowrap}
+.cw-lista{list-style:none;margin:6px 0 12px;padding:0;display:grid;gap:8px}
+.cw-voce{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1.5px solid var(--linea);border-radius:12px;background:var(--superficie);color:var(--inchiostro);padding:8px;cursor:pointer;font:inherit}
+.cw-voce img,.cw-voce .cw-ic{width:56px;height:56px;border-radius:9px;object-fit:cover;flex:none;display:flex;align-items:center;justify-content:center;font-size:1.6rem;background:var(--linea)}
+.cw-tx{flex:1;min-width:0}.cw-tx b{display:block;font-size:1rem;line-height:1.25}.cw-tx small{opacity:.75}
+.cw-vai{font-size:1.2rem}.cw-voce.cw-scelta{border-color:var(--verde);box-shadow:0 0 0 2px var(--verde)}
+.cw-attesa{animation:ideaLuce 1.6s ease-in-out infinite}
+.cw-link summary{cursor:pointer}
 .link-box{background:#0F6E78;box-shadow:0 0 0 3px #FFD45C,0 6px 22px rgba(15,110,120,.45)}
 .link-box .idea-riga button{color:#0B3F45;white-space:nowrap}
 .link-box .link-vai{display:block;width:100%;margin-top:10px;border:0;border-radius:11px;padding:13px;font-weight:700;font-size:1.02rem;
@@ -4084,22 +4093,17 @@ function avvisoSito(url){
 }
 function linkWebHTML(q){
   const siti = IN_INGLESE ? SITI_OK_EN : SITI_OK_IT;
-  const parola = L("ricetta ","recipe ");
-  const consigliati = parola + q + " (" + siti.map(([d])=>"site:" + d).join(" OR ") + ")";
+  const consigliati = L("ricetta ","recipe ") + q + " (" + siti.map(([d])=>"site:" + d).join(" OR ") + ")";
   return `<div class="ws-links ws-google">
-            <a href="https://www.google.com/search?q=${encodeURIComponent(consigliati)}" target="_blank" rel="noopener">\u{1F50D} ${L("Cerca su Google nei siti consigliati","Search Google on recommended sites")}</a>
-            <a href="https://www.google.com/search?q=${encodeURIComponent(parola + q)}" target="_blank" rel="noopener">\u{1F310} ${L("Cerca su tutto Google","Search all of Google")}</a>
-          </div>
-          <div class="ws-guida">
-            <b>${L("Come fare","How to")}</b>
-            <ol>
-              <li>${L("Apri una ricetta di","Open a recipe from")} <span data-no-tr>${siti.map(([,n])=>n).join(", ")}</span>.</li>
-              <li>${L("Tocca i <b>tre puntini \u22EE</b> in alto a destra, poi <b>Condividi</b> \u2192 <b>Che cucino?</b>. La ricetta arriva qui da sola.","tap the <b>three dots \u22EE</b> at the top right, then <b>Share</b> \u2192 <b>Che cucino?</b>. The recipe comes here on its own.")}</li>
-            </ol>
-            <p class="mini" style="color:#fff;margin:6px 0 0">${L("Con altri siti funziona lo stesso, ma la ricetta pu\u00f2 arrivare incompleta: te lo segnalo io.","It works with other sites too, but the recipe may arrive incomplete: I\u2019ll tell you.")}</p>
-          </div>
-          <p class="mini" style="margin-top:10px">${L("Su iPhone Condividi non arriva all\u2019app: copia il link e poi","On iPhone Share can\u2019t reach the app: copy the link, then")} <button class="link-mini" data-importa-copiato>\u{1F4CB} ${L("importa il link copiato","import the copied link")}</button></p>`;
+          <button type="button" class="btn" data-cerca-web="${esc(q)}">\u{1F50E} ${L("Cerca la ricetta e scaricala qui","Find the recipe and download it here")}</button>
+          <p class="mini" style="margin:8px 0 0">${L("Cerco nei siti di cucina consigliati; tocchi la ricetta che ti piace e la salvo nell’app.","I search the recommended cooking sites; tap the recipe you like and I save it in the app.")}
+          <a href="https://www.google.com/search?q=${encodeURIComponent(consigliati)}" target="_blank" rel="noopener">${L("Oppure cerca su Google","Or search on Google")}</a></p>
+        </div>`;
 }
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-cerca-web]"); if(!b) return;
+  apriImport("web", b.dataset.cercaWeb || "");
+});
 function apriVelo(nome, html){
   veloAperto = nome;
   velo.innerHTML = `<div class="velo"><div class="velo-in">${html}</div></div>`;
@@ -6154,7 +6158,7 @@ function apriIncollaTrascrizione(r){
     }
   };
 }
-function apriImport(modo){
+function apriImport(modo, cerca){
   const foto = modo === "foto";
   const testo = `<textarea id="impTesto" rows="10" placeholder="Nome del piatto&#10;Ingredienti&#10;320 gr di pasta&#10;2 melanzane&#10;Procedimento&#10;Taglia le melanzane\u2026"></textarea>
     <div class="azioni"><button class="btn" data-imp="leggi">\u2705 ${L("Prepara la ricetta","Prepare the recipe")}</button></div>`;
@@ -6179,19 +6183,134 @@ function apriImport(modo){
     ${testo}` : `
     <div class="velo-top"><h2>\u{1F310} ${L("Ricetta da un sito web","Recipe from a website")}</h2>
       <button class="chiudi" data-imp="chiudi">Chiudi</button></div>
-    <ol class="imp-passi">
-      <li><span class="ip-ic" aria-hidden="true">\u{1F50E}</span><span class="ip-tx">${L("Cerca la ricetta su Google, meglio in un sito di cucina (GialloZafferano, Fatto in casa da Benedetta, Misya, Ricette della Nonna, Cookaround).","Search for the recipe on Google, preferably on a recipe site (BBC Good Food, Allrecipes, Serious Eats, Simply Recipes).")}</span></li>
-      <li><span class="ip-ic" aria-hidden="true">\u{1F4F2}</span><span class="ip-tx">${L("Tocca <b class=\"ip-tasto\">\u22EE</b>, poi <b>Condividi</b>, poi <img class=\"ip-app\" src=\"icon-192.png\" alt=\"Che cucino?\">: si salva da sola.","Tap <b class=\"ip-tasto\">\u22EE</b>, then <b>Share</b>, then <img class=\"ip-app\" src=\"icon-192.png\" alt=\"What\u2019s cooking?\">: it saves itself.")}</span></li>
-      <li><span class="ip-ic" aria-hidden="true">\u{1F517}</span><span class="ip-tx">${L("Oppure copia il link e incollalo qui sotto (su iPhone si fa cos\u00ec).","Or copy the link and paste it below (this is the way on iPhone).")}</span></li>
-    </ol>
-    <div class="idea-box link-box"><label for="impUrl"><b>\u{1F517} ${L("Link della ricetta","Recipe link")}</b></label>
-      <div class="idea-riga"><input type="url" id="impUrl" inputmode="url" enterkeyhint="go" placeholder="https://\u2026">
-      <button type="button" id="impIncolla" title="Incolla il link copiato">\u{1F4CB} Incolla</button></div>
-      <button type="button" class="link-vai" data-imp="scarica">${L("Leggi la ricetta dal link","Read the recipe from the link")}</button></div>
+    <div class="idea-box cw-box"><label for="impCerca"><b>\u{1F50E} ${L("Che ricetta cerchi?","What recipe are you looking for?")}</b></label>
+      <div class="idea-riga"><input type="search" id="impCerca" enterkeyhint="search" autocomplete="off" placeholder="${L("es. parmigiana di melanzane","e.g. aubergine parmigiana")}" value="${esc(cerca || "")}">
+      <button type="button" id="impCercaVai">${L("Cerca","Search")}</button></div>
+      <p class="mini" style="color:#fff;margin:8px 0 0">${L("Cerco nei siti di cucina consigliati. Tocchi una ricetta e la salvo nell’app.","I search the recommended cooking sites. Tap a recipe and I save it in the app.")}</p></div>
+    <div id="impRisultati"></div>
     ${comuni}
-    <details class="imp-testo" id="impTestoBox"><summary>\u{1F4CB} ${L("Il sito non si lascia leggere? Incolla qui il testo","Site can\u2019t be read? Paste the text here")}</summary>
+    <details class="imp-testo cw-link"><summary>\u{1F517} ${L("Hai già il link? Incollalo qui","Already have the link? Paste it here")}</summary>
+      <div class="idea-box link-box" style="margin-top:10px"><div class="idea-riga"><input type="url" id="impUrl" inputmode="url" enterkeyhint="go" placeholder="https://…">
+        <button type="button" id="impIncolla" title="Incolla il link copiato">\u{1F4CB} Incolla</button></div>
+        <button type="button" class="link-vai" data-imp="scarica">${L("Leggi la ricetta dal link","Read the recipe from the link")}</button></div>
+      <p class="mini">${L("Dal telefono puoi anche aprire la ricetta nel browser e toccare ⋮ → Condividi → Che cucino?: arriva qui da sola.","On your phone you can also open the recipe in the browser and tap ⋮ → Share → What’s cooking?: it arrives here on its own.")}</p></details>
+    <details class="imp-testo" id="impTestoBox"><summary>\u{1F4CB} ${L("Il sito non si lascia leggere? Incolla qui il testo","Site can’t be read? Paste the text here")}</summary>
       ${testo}</details>`);
+  if(!foto && cerca) setTimeout(avviaCercaWeb, 50);
+  else if(!foto){ const c = document.getElementById("impCerca"); if(c) setTimeout(()=>c.focus(), 80); }
 }
+
+/* ===== Cerca una ricetta sul web dentro l'app =====
+   Cerco nei siti consigliati (GialloZafferano e motori di ricerca ristretti a quei siti),
+   passando dagli stessi "ponti" usati per leggere le ricette; tocchi un risultato e la scarico. */
+function pontiPagina(url){
+  return [
+    ()=>scaricaConLimite("https://api.allorigins.win/raw?url=" + encodeURIComponent(url)),
+    ()=>scaricaConLimite("https://corsproxy.io/?url=" + encodeURIComponent(url)),
+    ()=>scaricaConLimite("https://r.jina.ai/" + url, {headers: {"X-Return-Format": "html"}})
+  ];
+}
+function primaPagina(url){
+  return new Promise((ok, ko)=>{
+    const vie = pontiPagina(url); let falliti = 0;
+    vie.forEach(v=>v().then(t=>{ if(t && t.length > 500) ok(t); else if(++falliti === vie.length) ko(); })
+                      .catch(()=>{ if(++falliti === vie.length) ko(); }));
+  });
+}
+function linkVero(h){
+  try{
+    if(!h) return "";
+    if(h.startsWith("//")) h = "https:" + h;
+    const u = new URL(h, "https://duckduckgo.com/");
+    if(/duckduckgo\.com$/.test(u.hostname) && u.searchParams.get("uddg")) return u.searchParams.get("uddg");
+    if(/bing\.com$/.test(u.hostname) && u.pathname.startsWith("/ck/") && u.searchParams.get("u")){
+      let b = u.searchParams.get("u").replace(/^a1/, "").replace(/-/g, "+").replace(/_/g, "/");
+      while(b.length % 4) b += "=";
+      return atob(b);
+    }
+    return u.href;
+  }catch(e){ return ""; }
+}
+function sembraRicetta(url){
+  let u; try{ u = new URL(url); }catch(e){ return false; }
+  if(!/^https?:$/.test(u.protocol) || !sitoConsigliato(url)) return false;
+  const parti = decodeURIComponent(u.pathname).toLowerCase().split("/").filter(Boolean);
+  if(!parti.length) return false;                                   /* home del sito */
+  if(/ricerca-ricette|\/categori|\/tag\/|\/tags\/|\/author\/|\/autore\/|\/page\/\d|\/feed|[?&]s=|\/search/.test(u.href.toLowerCase())) return false;
+  if(/(^|\.)giallozafferano\.it$/.test(u.hostname) && /^(www\.)?giallozafferano\.it$/.test(u.hostname)) return false;   /* www. = indici, le ricette sono su ricette. e blog. */
+  return true;
+}
+function titoloPulito(t, url){
+  t = (t || "").replace(/\s+/g, " ").trim().replace(/\s*[-|–—]\s*(GialloZafferano|Giallo Zafferano|Fatto in casa da Benedetta|Misya\.info|Misya|Ricette della Nonna|Cookaround|BBC Good Food|Allrecipes|Serious Eats|Simply Recipes).*$/i, "");
+  if(!t || t.length < 3 || /^https?:/.test(t)){
+    try{ t = decodeURIComponent(new URL(url).pathname).split("/").filter(Boolean).pop().replace(/\.\w+$/, "").replace(/[-_]+/g, " "); }catch(e){}
+  }
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+function risultatiDaPagina(html){
+  const doc = new DOMParser().parseFromString(html, "text/html"), out = [];
+  doc.querySelectorAll("a[href]").forEach(a=>{
+    const url = linkVero(a.getAttribute("href")); if(!url || !sembraRicetta(url)) return;
+    const card = a.closest("article, li, .gz-card, .result, .b_algo");
+    const im = card && card.querySelector("img");
+    let foto = im ? (im.getAttribute("data-src") || im.getAttribute("data-lazy-src") || im.getAttribute("src") || "") : "";
+    if(!/^https:\/\//.test(foto)) foto = "";
+    out.push({url: url.split("#")[0], t: titoloPulito(a.getAttribute("title") || a.textContent, url), foto});
+  });
+  return out;
+}
+async function cercaRicetteWeb(q, quando){
+  const siti = IN_INGLESE ? SITI_OK_EN : SITI_OK_IT;
+  const filtro = siti.map(([d])=>"site:" + d).join(" OR ");
+  const parola = L("ricetta ","recipe ");
+  const fonti = [];
+  if(!IN_INGLESE) fonti.push("https://www.giallozafferano.it/ricerca-ricette/" + encodeURIComponent(q.trim().replace(/\s+/g, " ")) + "/");
+  fonti.push("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(parola + q + " " + filtro));
+  fonti.push("https://www.bing.com/search?q=" + encodeURIComponent(parola + q + " (" + filtro + ")"));
+  const visti = new Set(), tutti = [];
+  await Promise.allSettled(fonti.map(f=>primaPagina(f).then(html=>{
+    risultatiDaPagina(html).forEach(r=>{ const k = r.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""); if(visti.has(k)) return; visti.add(k);
+      const vecchio = tutti.find(x=>x.t.toLowerCase() === r.t.toLowerCase() && nomeSito(x.url) === nomeSito(r.url)); if(vecchio){ if(!vecchio.foto && r.foto) vecchio.foto = r.foto; return; }
+      tutti.push(r); });
+    quando(tutti.slice(0, 15));
+  })));
+  return tutti.slice(0, 15);
+}
+function nomeSito(url){
+  try{ const h = new URL(url).hostname.replace(/^www\./, ""); const s = SITI_OK_IT.concat(SITI_OK_EN).find(([d])=>h === d || h.endsWith("." + d)); return s ? s[1] : h; }catch(e){ return ""; }
+}
+async function avviaCercaWeb(){
+  const inp = document.getElementById("impCerca"), box = document.getElementById("impRisultati");
+  if(!inp || !box) return;
+  const q = inp.value.trim();
+  if(!q){ inp.focus(); return; }
+  inp.blur();
+  box._lista = null;
+  box.innerHTML = `<p class="mini cw-attesa">⏳ ${L("Cerco «" + esc(q) + "» nei siti di cucina…","Searching “" + esc(q) + "” on cooking sites…")}</p>`;
+  const disegna = l=>{
+    if(!l.length || document.getElementById("impRisultati") !== box) return;
+    box.innerHTML = `<p class="mini">${L("Tocca la ricetta che vuoi: la leggo e la salvo nell’app.","Tap the recipe you want: I read it and save it in the app.")}</p>
+      <ul class="cw-lista">${l.map((r,i)=>`<li><button type="button" class="cw-voce" data-cw="${i}">
+        ${r.foto ? `<img src="${esc(r.foto)}" alt="" loading="lazy" onerror="this.remove()">` : `<span class="cw-ic" aria-hidden="true">\u{1F37D}️</span>`}
+        <span class="cw-tx"><b data-no-tr>${esc(r.t)}</b><small data-no-tr>${esc(nomeSito(r.url))}</small></span><span class="cw-vai" aria-hidden="true">⬇️</span></button></li>`).join("")}</ul>`;
+    box._lista = l;
+  };
+  const fin = await cercaRicetteWeb(q, disegna);
+  if(!fin.length && document.getElementById("impRisultati") === box)
+    box.innerHTML = `<p class="mini">${L("Non ho trovato ricette per «" + esc(q) + "»: prova con un nome più semplice, oppure incolla il link qui sotto.","I found no recipes for “" + esc(q) + "”: try a simpler name, or paste the link below.")}</p>`;
+}
+document.addEventListener("click", e=>{
+  if(e.target.closest("#impCercaVai")){ avviaCercaWeb(); return; }
+  const b = e.target.closest("[data-cw]"); if(!b) return;
+  const box = document.getElementById("impRisultati"); const r = box && box._lista && box._lista[+b.dataset.cw]; if(!r) return;
+  const u = document.getElementById("impUrl"); if(u) u.value = r.url;
+  box.querySelectorAll(".cw-voce").forEach(x=>x.classList.toggle("cw-scelta", x === b));
+  const prog = document.getElementById("impProg"); if(prog) setTimeout(()=>prog.scrollIntoView({block:"center", behavior:"smooth"}), 50);
+  scaricaDaWeb(r.url, document.getElementById("impEsito"));
+});
+document.addEventListener("keydown", e=>{
+  if(e.key === "Enter" && e.target && e.target.id === "impCerca"){ e.preventDefault(); avviaCercaWeb(); }
+});
 function apriTestoImport(){ const d = document.getElementById("impTestoBox"); if(d) d.open = true; }
 /* "Cerco altro": apre/chiude i link ai siti di cucina sotto i risultati */
 document.addEventListener("click", e=>{
