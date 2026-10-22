@@ -974,7 +974,8 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 .cw-voce{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1.5px solid var(--linea);border-radius:12px;background:var(--superficie);color:var(--inchiostro);padding:8px;cursor:pointer;font:inherit}
 .cw-voce img,.cw-voce .cw-ic{width:56px;height:56px;border-radius:9px;object-fit:cover;flex:none;display:flex;align-items:center;justify-content:center;font-size:1.6rem;background:var(--linea)}
 .cw-tx{flex:1;min-width:0}.cw-tx b{display:block;font-size:1rem;line-height:1.25}.cw-tx small{opacity:.75}
-.cw-vai{font-size:1.2rem}.cw-voce.cw-scelta{border-color:var(--verde);box-shadow:0 0 0 2px var(--verde)}
+.cw-vai{font-size:1.2rem}.cw-gia{display:inline-block;margin-top:4px;background:#FFD45C;color:#3a2a00;font-size:.78rem;font-weight:700;border-radius:8px;padding:1px 7px}
+#impEsame,#impRisultati{scroll-margin-top:12px}.cw-voce.cw-scelta{border-color:var(--verde);box-shadow:0 0 0 2px var(--verde)}
 .cw-attesa{animation:ideaLuce 1.6s ease-in-out infinite}
 .cw-link summary{cursor:pointer}
 .gia-box{background:var(--superficie);color:var(--inchiostro);border:2px solid #FFD45C;border-radius:14px;padding:12px;margin:6px 0 12px}
@@ -6053,7 +6054,7 @@ function consegnaImport(ric){
         <div class="azioni"><button class="btn" data-imp="dup-salva">${L("Salvala comunque","Save it anyway")}</button>
           <button class="btn ghost" data-imp="lascia">${L("Lascia perdere","Never mind")}</button></div></div>`;
       const es = document.getElementById("impEsito"); if(es) es.textContent = "";
-      box.scrollIntoView({block:"nearest", behavior:"smooth"});
+      box.scrollIntoView({block:"start", behavior:"smooth"});
       return;
     }
   }
@@ -6441,8 +6442,8 @@ function apriImport(modo, cerca){
       <div class="idea-riga"><input type="search" id="impCerca" enterkeyhint="search" autocomplete="off" placeholder="${L("es. parmigiana di melanzane","e.g. aubergine parmigiana")}" value="${esc(cerca || "")}">
       <button type="button" id="impCercaVai">${L("Cerca","Search")}</button></div>
       <p class="mini" style="color:#fff;margin:8px 0 0">${L("Cerco nei siti di cucina consigliati. Tocchi una ricetta e la salvo nell’app.","I search the recommended cooking sites. Tap a recipe and I save it in the app.")}</p></div>
-    <div id="impRisultati"></div>
     ${comuni}
+    <div id="impRisultati"></div>
     <details class="imp-testo cw-link"><summary>\u{1F517} ${L("Hai già il link? Incollalo qui","Already have the link? Paste it here")}</summary>
       <div class="idea-box link-box" style="margin-top:10px"><div class="idea-riga"><input type="url" id="impUrl" inputmode="url" enterkeyhint="go" placeholder="https://…">
         <button type="button" id="impIncolla" title="Incolla il link copiato">\u{1F4CB} Incolla</button></div>
@@ -6547,6 +6548,7 @@ async function avviaCercaWeb(){
         <p class="mini">${L("Toccala per vederla. Se cerchi un’altra versione, puoi cercare comunque sul web.","Tap it to see it. If you want a different version, you can still search the web.")}</p>
         ${htmlGiaPresenti(gia)}
         <button type="button" class="btn" id="impCercaComunque">\u{1F50E} ${L("Cerca comunque sul web","Search the web anyway")}</button></div>`;
+      box.scrollIntoView({block:"start", behavior:"smooth"});
       return;
     }
   }
@@ -6554,10 +6556,11 @@ async function avviaCercaWeb(){
   box.innerHTML = `<p class="mini cw-attesa">⏳ ${L("Cerco «" + esc(q) + "» nei siti di cucina…","Searching “" + esc(q) + "” on cooking sites…")}</p>`;
   const disegna = l=>{
     if(!l.length || document.getElementById("impRisultati") !== box) return;
+    l.forEach(r=>{ if(r._gia === undefined) r._gia = giaInArchivio(r.t, true).length > 0; });
     box.innerHTML = `<p class="mini">${L("Tocca la ricetta che vuoi: la leggo e la salvo nell’app.","Tap the recipe you want: I read it and save it in the app.")}</p>
       <ul class="cw-lista">${l.map((r,i)=>`<li><button type="button" class="cw-voce" data-cw="${i}">
         ${r.foto ? `<img src="${esc(r.foto)}" alt="" loading="lazy" onerror="this.remove()">` : `<span class="cw-ic" aria-hidden="true">\u{1F37D}️</span>`}
-        <span class="cw-tx"><b data-no-tr>${esc(r.t)}</b><small data-no-tr>${esc(nomeSito(r.url))}</small></span><span class="cw-vai" aria-hidden="true">⬇️</span></button></li>`).join("")}</ul>`;
+        <span class="cw-tx"><b data-no-tr>${esc(r.t)}</b><small data-no-tr>${esc(nomeSito(r.url))}</small>${r._gia ? `<span class="cw-gia">\u{1F4DA} ${L("Già nell’app","Already in the app")}</span>` : ""}</span><span class="cw-vai" aria-hidden="true">⬇️</span></button></li>`).join("")}</ul>`;
     box._lista = l;
   };
   const fin = await cercaRicetteWeb(q, disegna);
