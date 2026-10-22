@@ -581,7 +581,7 @@ html.box-su, html.box-su body{overflow:hidden}
 .imp-testo summary{cursor:pointer;font-weight:700}
 .imp-testo textarea{margin-top:10px}
 /* le caselle di testo crescono con il contenuto: si vede tutta la ricetta senza scorrere dentro */
-textarea{overflow-y:hidden;resize:vertical;min-height:3.2em;line-height:1.45}
+textarea{display:block;width:100%;max-width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--linea);border-radius:10px;background:var(--carta);color:var(--inchiostro);font:inherit;font-size:1rem;overflow-y:hidden;resize:vertical;min-height:3.2em;line-height:1.45}
 .mie-come{margin:12px 0;padding:10px 14px;border-radius:14px;background:#1F6F8B;color:#fff}
 .mie-come summary{cursor:pointer;font-weight:700}
 .mie-come ol{margin:8px 0 2px;padding-left:1.3em}
