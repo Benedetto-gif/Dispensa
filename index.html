@@ -846,6 +846,9 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .chip{background:var(--carta);color:var(--inchiostro);border:1px solid var(--linea);border-radius:999px;padding:7px 13px;font-size:.87rem;cursor:pointer;user-select:none}
 .chip.on{background:var(--verde);border-color:var(--verde);color:#fff;font-weight:700}
+.rep-chiudi-riga{display:flex;justify-content:center;margin-top:12px}
+.rep-chiudi{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.22);color:inherit;border:1.5px solid currentColor;border-radius:999px;padding:7px 16px;font:inherit;font-weight:600;font-size:.92rem;cursor:pointer}
+.rep-chiudi svg{width:18px;height:18px}
 .chip.appena{animation:appena 2.2s ease-out}
 @keyframes appena{0%,40%{box-shadow:0 0 0 4px #FFD45C;transform:scale(1.08)}100%{box-shadow:0 0 0 0 transparent;transform:none}}
 .chip.on::before{content:"\2713 ";font-weight:700}
@@ -2806,6 +2809,7 @@ function htmlRepartiDisp(){
       <div class="corpo">${sotto
         ? sotto.map(([nome, l])=>`<div class="sotto-rep">${nome}</div><div class="chips">${ordinaPerEtichetta(l).map(chip).join("")}</div>`).join("")
         : `<div class="chips">${ordinaPerEtichetta(vis).map(chip).join("")}</div>`}
+        <div class="rep-chiudi-riga"><button type="button" class="rep-chiudi" data-rep-chiudi="${esc(tit)}"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg> ${L("Chiudi","Close")} ${nomeRep(tit)}</button></div>
       </div></details>`;
   }).join("")}`;
 }
@@ -2880,6 +2884,14 @@ function aggiornaChiudiTutto(){
   };
 }
 function collegaRepartiDisp(){
+  /* "Chiudi" in fondo a ogni reparto: lo chiude e riporta la sua intestazione sotto gli occhi */
+  app.querySelectorAll("[data-rep-chiudi]").forEach(b=>b.onclick = ()=>{
+    const d = b.closest("details[data-rep]"); if(!d) return;
+    d.open = false; repAperti.delete(d.dataset.rep); aggiornaChiudiTutto();
+    const h = document.querySelector("header.top");
+    const y = d.getBoundingClientRect().top + scrollY - (h ? h.offsetHeight : 0) - 70;
+    if(scrollY > y) try{ scrollTo({top: Math.max(0, y)}); }catch(err){}
+  });
   app.querySelectorAll("details[data-rep]").forEach(d=>d.addEventListener("toggle", ()=>{
     aggiornaChiudiTutto();
     if(cercaDisp.trim()) return;
