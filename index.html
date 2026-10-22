@@ -580,6 +580,8 @@ html.box-su, html.box-su body{overflow:hidden}
 .imp-testo{margin:14px 0;padding:10px 14px;border-radius:14px;background:color-mix(in srgb,var(--verde) 10%,transparent)}
 .imp-testo summary{cursor:pointer;font-weight:700}
 .imp-testo textarea{margin-top:10px}
+/* le caselle di testo crescono con il contenuto: si vede tutta la ricetta senza scorrere dentro */
+textarea{overflow-y:hidden;resize:vertical;min-height:3.2em;line-height:1.45}
 .mie-come{margin:12px 0;padding:10px 14px;border-radius:14px;background:#1F6F8B;color:#fff}
 .mie-come summary{cursor:pointer;font-weight:700}
 .mie-come ol{margin:8px 0 2px;padding-left:1.3em}
@@ -6358,7 +6360,25 @@ document.addEventListener("click", e=>{
 document.addEventListener("keydown", e=>{
   if(e.key === "Enter" && e.target && e.target.id === "impCerca"){ e.preventDefault(); avviaCercaWeb(); }
 });
-function apriTestoImport(){ const d = document.getElementById("impTestoBox"); if(d) d.open = true; }
+
+/* ===== caselle di testo proporzionali al contenuto ===== */
+function adattaCasella(t){
+  if(!t || t.tagName !== "TEXTAREA" || t.offsetParent === null) return;
+  t.style.height = "auto";
+  t.style.height = (t.scrollHeight + 4) + "px";
+}
+function adattaCaselle(radice){ (radice || document).querySelectorAll("textarea").forEach(adattaCasella); }
+document.addEventListener("input", e=>{ if(e.target && e.target.tagName === "TEXTAREA") adattaCasella(e.target); });
+document.addEventListener("toggle", e=>{ if(e.target && e.target.open) requestAnimationFrame(()=>adattaCaselle(e.target)); }, true);
+window.addEventListener("resize", ()=>adattaCaselle());
+new MutationObserver(lista=>{
+  let serve = false;
+  for(const m of lista){ for(const n of m.addedNodes){ if(n.nodeType === 1 && (n.tagName === "TEXTAREA" || n.querySelector && n.querySelector("textarea"))){ serve = true; break; } } if(serve) break; }
+  if(serve) requestAnimationFrame(()=>adattaCaselle());
+}).observe(document.documentElement, {childList:true, subtree:true});
+/* il valore scritto dal programma (testo letto dal web o dalla foto) non fa scattare "input": controllo ogni tanto quelle visibili */
+setInterval(()=>{ document.querySelectorAll("textarea").forEach(t=>{ if(t.value !== t._ultimo){ t._ultimo = t.value; adattaCasella(t); } }); }, 700);
+function apriTestoImport(){ const d = document.getElementById("impTestoBox"); if(d){ d.open = true; requestAnimationFrame(()=>adattaCaselle(d)); } }
 /* "Cerco altro": apre/chiude i link ai siti di cucina sotto i risultati */
 document.addEventListener("click", e=>{
   const b = e.target.closest("[data-cerco-altro]"); if(!b) return;
