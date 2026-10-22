@@ -969,6 +969,8 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 .gia-box{background:var(--superficie);color:var(--inchiostro);border:2px solid #FFD45C;border-radius:14px;padding:12px;margin:6px 0 12px}
 .gia-box > b{display:block;font-size:1.02rem;margin-bottom:4px}
 .gia-grid{margin:8px 0 10px}
+.gia-tit{font-size:1rem;margin:12px 0 6px}
+.gia-nuova{margin:6px 0 4px}
 .link-box{background:#0F6E78;box-shadow:0 0 0 3px #FFD45C,0 6px 22px rgba(15,110,120,.45)}
 .link-box .idea-riga button{color:#0B3F45;white-space:nowrap}
 .link-box .link-vai{display:block;width:100%;margin-top:10px;border:0;border-radius:11px;padding:13px;font-weight:700;font-size:1.02rem;
@@ -5833,6 +5835,16 @@ function giaInArchivio(nome, dueVersi){
     const q = paroleNome(r.n); return q.length >= 1 && tutteTrovate(q, n);
   }).sort((a,b)=>nomeRicetta(a).length - nomeRicetta(b).length).slice(0, 5);
 }
+function anteprimaImport(ric){
+  try{
+    const r = preparaRicetta(JSON.parse(JSON.stringify(Object.assign({}, ric, {id: -999, tags: ric.tags || [], ing: ric.ing || [], proc: ric.proc || []}))));
+    r.ing.forEach(i=>{ if(!i.k) i.k = normTesto(i.n || ""); });
+    return `<div class="ric-grid gia-nuova">${scheda(valutaCompleta(r)).replace("<details ", "<details open ")}</div>`;
+  }catch(e){
+    return `<div class="gia-nuova"><b data-no-tr>${esc(ric.n || "")}</b><ul>${(ric.ing||[]).map(i=>`<li data-no-tr>${esc(((i.q && i.q !== "q.b." ? i.q + " " : "") + i.n))}</li>`).join("")}</ul>
+      <ol>${(ric.proc||[]).map(t=>`<li data-no-tr>${esc(t)}</li>`).join("")}</ol></div>`;
+  }
+}
 function htmlGiaPresenti(lista){
   return `<div class="ric-grid gia-grid">${lista.map(valutaCompleta).map(scheda).join("")}</div>`;
 }
@@ -5845,7 +5857,10 @@ function consegnaImport(ric){
       velo._impDup = ric;
       box.innerHTML = `<div class="imp-ko gia-box">
         <b>\u{1F4DA} ${L(`«${esc(ric.n)}» sembra già nell’app`, `“${esc(ric.n)}” seems to be in the app already`)}</b>
-        <p class="mini">${L("Ecco le ricette con un nome simile. Se è un’altra versione, puoi salvarla comunque.","Here are the recipes with a similar name. If it’s a different version, you can save it anyway.")}</p>
+        <h3 class="gia-tit">⬇️ ${L("Quella che hai scaricato","The one you downloaded")}</h3>
+        ${anteprimaImport(ric)}
+        <h3 class="gia-tit">\u{1F4DA} ${L("Già nell’app","Already in the app")}</h3>
+        <p class="mini">${L("Toccale per aprirle e confrontarle. Se è un’altra versione, puoi salvarla comunque.","Tap them to open and compare. If it’s a different version, you can save it anyway.")}</p>
         ${htmlGiaPresenti(gia)}
         <div class="azioni"><button class="btn" data-imp="dup-salva">${L("Salvala comunque","Save it anyway")}</button>
           <button class="btn ghost" data-imp="lascia">${L("Lascia perdere","Never mind")}</button></div></div>`;
