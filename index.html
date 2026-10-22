@@ -4760,18 +4760,18 @@ function htmlPromemoriaSalva(){
   const mese = ora - da > 30 * GIORNO_MS;
   if(!n && !mese) return "";
   const testo = n
-    ? L(`Hai ${n === 1 ? "una ricetta o scheda nuova" : n + " ricette o schede nuove"} non ancora ${n === 1 ? "salvata" : "salvate"}.`, `You have ${n === 1 ? "a new recipe or card" : n + " new recipes or cards"} not saved yet.`)
-    : (S.ultimoSalvataggio ? L("\u00c8 passato pi\u00f9 di un mese dall\u2019ultimo salvataggio.","It\u2019s been over a month since your last save.") : L("Non hai ancora salvato i tuoi dati.","You haven\u2019t saved your data yet."));
+    ? L(`Hai ${n === 1 ? "una ricetta o scheda nuova" : n + " ricette o schede nuove"} non ancora ${n === 1 ? "salvata" : "salvate"} su Drive.`, `You have ${n === 1 ? "a new recipe or card" : n + " new recipes or cards"} not yet saved to Drive.`)
+    : (S.ultimoSalvataggio ? L("\u00c8 passato pi\u00f9 di un mese dall\u2019ultimo salvataggio su Drive.","It\u2019s been over a month since your last save to Drive.") : L("Non hai ancora salvato i tuoi dati su Drive.","You haven\u2019t saved your data yet."));
   return `<div class="promemoria-salva" data-no-tr>
     <b>\u{1F4BE} ${testo}</b>
-    <span class="mini">${L("Salva i tuoi dati su Drive, nella cartella Dispensa: se cambi telefono o azzeri, non perdi niente.","Save your data to Drive, in the Dispensa folder: if you change phone or reset, you lose nothing.")}</span>
+    <span class="mini">${L("Salva i tuoi dati su Google Drive, nella cartella Dispensa: se cambi telefono o azzeri, non perdi niente. Tocca «Salva su Drive», poi nel menu Condividi scegli <b>Drive</b> e la cartella <b>Dispensa</b>.","Save your data to Google Drive, in the Dispensa folder: if you change phone or reset, you lose nothing. Tap “Save to Drive”, then in the Share menu choose <b>Drive</b> and the <b>Dispensa</b> folder.")}</span>
     ${(()=>{ const l = elencoDaSalvare(); if(!l.length) return "";
       const ic = {ricetta:"\u{1F37D}️", mano:"\u{1F4DC}", foto:"\u{1F5BC}️", scheda:"\u{1F4D8}"};
       const tipoTxt = {ricetta:L("ricetta","recipe"), mano:L("ricetta scritta a mano","handwritten recipe"), foto:L("foto aggiunte","photos added"), scheda:L("lezione o attrezzo","lesson or tool")};
       return `<details class="prom-elenco"><summary>${L("Vedi quali","See which")} (${l.length})</summary><ul>${l.map(x=>`<li><span aria-hidden="true">${ic[x.tipo]||"\u{1F4C4}"}</span>
         <span><b>${esc(x.nome || L("senza nome","untitled"))}</b> <small>${tipoTxt[x.tipo]||""} · ${new Date(x.quando).toLocaleDateString(IN_INGLESE?"en-GB":"it-IT",{day:"numeric",month:"short"})}</small></span>
         ${x.tipo !== "scheda" ? `<button type="button" class="link-mini" data-prom-apri="${x.id}">${L("apri","open")}</button>` : ""}</li>`).join("")}</ul></details>`; })()}
-    <div class="azioni"><button class="btn" id="promSalva">${L("Salva ora","Save now")}</button><button class="btn ghost" id="promDopo">${L("Pi\u00f9 tardi","Later")}</button></div></div>`;
+    <div class="azioni"><button class="btn" id="promSalva">☁️ ${L("Salva su Drive","Save to Drive")}</button><button class="btn ghost" id="promDopo">${L("Pi\u00f9 tardi","Later")}</button></div></div>`;
 }
 async function esportaDati(){
   /* le foto delle ricette (scritte a mano e originali) viaggiano nel salvataggio, cosi' non si perdono */
