@@ -9,7 +9,7 @@
  * l'app continua comunque a funzionare senza connessione.
  */
 
-const VERSIONE = 'checucino-v225';
+const VERSIONE = 'checucino-v226';
 
 const FILE = [
   './',
@@ -19,6 +19,7 @@ const FILE = [
   './dati/scuola.js',
   './dati/icone-scuola.js',
   './dati/stagioni.js',
+  './dati/info-ing.js',
   './manifest.json',
   './icon-192.png',
   './icon-180.png',

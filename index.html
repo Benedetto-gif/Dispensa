@@ -895,6 +895,10 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 .tag.zona{background:var(--verde-chiaro);color:var(--verde);font-weight:700}
 .tag.stag{background:color-mix(in srgb,var(--senape) 16%,transparent);color:var(--senape);font-weight:700}
 .ing-stag{font-size:.82em;opacity:.9}
+.ing-info{display:inline-flex;align-items:center;justify-content:center;width:1.25em;height:1.25em;margin-left:2px;border-radius:50%;background:#2F6FB3;color:#fff;font:italic 700 .78em/1 Georgia,serif;vertical-align:.1em;cursor:help;flex:none}
+.chip.on .ing-info{background:#fff;color:#2F6FB3}
+.info-ing-testo{font-size:1.05rem;line-height:1.55;margin:10px 0 14px}
+.info-ing-testo .ing-info{margin-right:6px;font-size:.9em}
 .ing-stag-no{opacity:.28;filter:grayscale(1)}
 .fatt{height:6px;border-radius:3px;background:var(--superficie2);margin:10px 0 8px;overflow:hidden;display:flex}
 .fatt i{display:block;height:100%}
@@ -1482,6 +1486,7 @@ if(IN_INGLESE){
 <script src="dati/scuola.js"></script>
 <script src="dati/icone-scuola.js"></script>
 <script src="dati/stagioni.js"></script>
+<script src="dati/info-ing.js"></script>
 <script src="dati/ricette.js"></script>
 <script src="dati/ricette-en.js"></script>
 <script>
@@ -2783,6 +2788,25 @@ function htmlRispostaDisp(){
         </div>
         <p class="mini" id="ingEsito" aria-live="polite"></p>` : ""}`;
 }
+/* la "i" accanto agli ingredienti poco conosciuti: un tocco spiega cos'e', senza segnarlo in dispensa */
+function infoIng(k){ const t = ((window.DATI || {})["info-ing"] || {})[k]; return t ? (IN_INGLESE ? t[1] : t[0]) : ""; }
+function apriInfoIng(k){
+  const t = infoIng(k); if(!t) return;
+  if(passo === 2 && !ioRitorno) ioRitorno = {y: scrollY};
+  apriVelo("infoing", `
+    <div class="velo-top"><h2 data-no-tr>${esc(etichettaDisp(nomeIng(k)))}</h2>
+      <button class="chiudi" data-infoing="chiudi">${L("Chiudi","Close")}</button></div>
+    <p class="info-ing-testo" data-no-tr>${esc(t)}</p>
+    <div class="azioni"><button class="btn" data-infoing="chiudi">${L("Ho capito","Got it")}</button></div>`);
+}
+document.addEventListener("click", e=>{
+  const i = e.target.closest("[data-info-ing]");
+  if(i){ e.preventDefault(); e.stopImmediatePropagation(); apriInfoIng(i.dataset.infoIng); return; }
+  const c = e.target.closest("[data-infoing]");
+  if(c){ chiudiVelo(); tornaDovEro(); }
+}, true);
+/* sulla "i" il tocco lungo non deve partire */
+["mousedown","touchstart"].forEach(ev=>document.addEventListener(ev, e=>{ if(e.target.closest && e.target.closest("[data-info-ing]")) e.stopPropagation(); }, true));
 /* reparti aperti a mano: restano aperti se la pagina si ridisegna (es. dopo aver segnato una scadenza) */
 const repAperti = new Set();
 function htmlRepartiDisp(){
@@ -2802,7 +2826,7 @@ function htmlRepartiDisp(){
     const chip = i=>{ const mesi = D.stagioni[i];
           const stag = mesi ? (mesi.includes(meseStagione())?` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
           const nb = tit === "Cantina" ? nBottiglie(i) : 0;
-          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${esc(etichettaDisp(i))}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}${badgeScad(i)}</button>`; };
+          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${esc(etichettaDisp(i))}${infoIng(i) ? ` <span class="ing-info" data-info-ing="${esc(i)}" role="button" aria-label="${L("Cos’è?","What is it?")}" title="${L("Cos’è?","What is it?")}">i</span>` : ""}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}${badgeScad(i)}</button>`; };
     const sotto = sottoReparti(tit, vis);
     return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||repAperti.has(tit)?"open":""} data-rep="${esc(tit)}">
       <summary>${nomeRep(tit)} <em>${presi?presi+" segnati":lista.length+" voci"}</em></summary>
@@ -5123,6 +5147,7 @@ function apriIngOpz(k){
     <div class="velo-top"><h2>${esc(k)}</h2>
       <button class="chiudi" data-io="chiudi">Chiudi</button></div>
     <p class="mini">Adesso sta in «${esc(attuale || "nessun reparto")}».</p>
+    ${infoIng(k) ? `<p class="info-ing-testo" data-no-tr><span class="ing-info" aria-hidden="true">i</span> ${esc(infoIng(k))}</p>` : ""}
     <div class="card io-correggi" style="margin:12px 0">
       <b>✏️ ${L("Correggi il nome","Fix the name")}</b>
       <p class="mini" style="margin:4px 0 6px">${L("Per esempio «uova 4» diventa «uova». Resta nello stesso reparto e le tue ricette che lo usano si aggiornano da sole.","For example “uova 4” becomes “uova”. It stays in the same aisle and your recipes that use it update by themselves.")}</p>
@@ -8216,7 +8241,7 @@ async function aggiornaApp(btn){
     scrivi("\u{1F504} " + L("Aggiorna l’app","Update the app")); return; }
   scrivi("⏳ " + L("Scarico la versione nuova…","Downloading the new version…"));
   /* i dati (ricette, dispensa, cantina, foto) non stanno nella cache dei file: non vengono toccati */
-  const file = ["./","./index.html","./dati/ricette.js","./dati/ricette-en.js","./dati/scuola.js","./dati/icone-scuola.js","./dati/stagioni.js","./manifest.json"];
+  const file = ["./","./index.html","./dati/ricette.js","./dati/ricette-en.js","./dati/scuola.js","./dati/icone-scuola.js","./dati/stagioni.js","./dati/info-ing.js","./manifest.json"];
   await Promise.all(file.map(f=>fetch(f, {cache:"reload"}).catch(()=>{})));
   try{ const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }catch(e){}
   try{ const ks = await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }catch(e){}
