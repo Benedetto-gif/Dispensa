@@ -6580,6 +6580,15 @@ document.addEventListener("click", e=>{
 document.addEventListener("keydown", e=>{
   if(e.key === "Enter" && e.target && e.target.id === "impCerca"){ e.preventDefault(); avviaCercaWeb(); }
 });
+/* casella di ricerca svuotata: chiudo anche risultati, avvisi e ricetta aperta */
+document.addEventListener("input", e=>{
+  if(!e.target || e.target.id !== "impCerca" || e.target.value.trim()) return;
+  const r = document.getElementById("impRisultati"); if(r){ r.innerHTML = ""; r._lista = null; r._forza = false; }
+  const es = document.getElementById("impEsame"); if(es) es.innerHTML = "";
+  const t = document.getElementById("impEsito"); if(t) t.textContent = "";
+  const u = document.getElementById("impUrl"); if(u && u.type === "url") u.value = "";
+  if(typeof velo !== "undefined" && velo){ velo._impDup = null; velo._impScarta = null; }
+});
 
 /* ===== caselle di testo proporzionali al contenuto ===== */
 function adattaCasella(t){
