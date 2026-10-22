@@ -1982,6 +1982,17 @@ const VUOTO = {
   nascoste:[], mie:[], ingMiei:{}, ingTolti:[], ingSpostati:{}, schedeMie:[]
 };
 let S = carica();
+/* GialloZafferano (e altri) scrivono nei passaggi i numeri delle foto, es. "(1)", "(2-3)", "(4, 5)", "[6]":
+   nell'app le foto non ci sono, quindi li tolgo. Tocco solo parentesi con soli numeri piccoli. */
+const RE_RIMANDI_FOTO = /\s*[\(\[]\s*\d{1,2}(?:\s*(?:[-–,;\/]|e|ed|and)\s*\d{1,2})*\s*[\)\]]/g;
+function senzaRimandiFoto(t){ return String(t || "").replace(RE_RIMANDI_FOTO, "").replace(/\s+([.,;:!?])/g, "$1").replace(/\s{2,}/g, " ").trim(); }
+(function(){
+  let cambiate = false;
+  (S.mie || []).forEach(r=>{ if(!Array.isArray(r.proc)) return;
+    const n = r.proc.map(senzaRimandiFoto).filter(Boolean);
+    if(JSON.stringify(n) !== JSON.stringify(r.proc)){ r.proc = n; cambiate = true; } });
+  if(cambiate) try{ localStorage.setItem("checucino.v3", JSON.stringify(S)); }catch(e){}
+})();
 if(!S.primoUso){ S.primoUso = Date.now(); salva(); }
 /* al primo avvio, gli ingredienti di base risultano già in dispensa: l'utente toglie solo quelli che non ha */
 if(!S.baseMigrato){
@@ -5826,6 +5837,7 @@ function htmlGiaPresenti(lista){
   return `<div class="ric-grid gia-grid">${lista.map(valutaCompleta).map(scheda).join("")}</div>`;
 }
 function consegnaImport(ric){
+  if(Array.isArray(ric.proc)) ric.proc = ric.proc.map(senzaRimandiFoto).filter(Boolean);
   if(!ric._dupOk){
     const gia = giaInArchivio(ric.n, true);
     const box = document.getElementById("impEsame");
