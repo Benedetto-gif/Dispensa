@@ -846,6 +846,8 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .chip{background:var(--carta);color:var(--inchiostro);border:1px solid var(--linea);border-radius:999px;padding:7px 13px;font-size:.87rem;cursor:pointer;user-select:none}
 .chip.on{background:var(--verde);border-color:var(--verde);color:#fff;font-weight:700}
+.chip.appena{animation:appena 2.2s ease-out}
+@keyframes appena{0%,40%{box-shadow:0 0 0 4px #FFD45C;transform:scale(1.08)}100%{box-shadow:0 0 0 0 transparent;transform:none}}
 .chip.on::before{content:"\2713 ";font-weight:700}
 .pcella[class*="c-"] .chip.on{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
 .chip.rossa.on{background:var(--mattone);border-color:var(--mattone);color:#fff}
@@ -1696,7 +1698,7 @@ function finitaConfezione(k){
   }
   scriviScad(k, []); salva(); return true;
 }
-function ridisegnaDopoScad(){ if(passo === 2) tappaDispensa(); else if(passo === 5) tappaHome(); }
+function ridisegnaDopoScad(){ if(passo === 2){ tappaDispensa(); tornaDovEro(); } else if(passo === 5) tappaHome(); }
 /* "cosa cucino con questi?": ricette che usano gli ingredienti in scadenza */
 function cucinaConInScadenza(){
   const tutti = inScadenza(3), validi = tutti.filter(x=>x.n >= 0);
@@ -2828,10 +2830,30 @@ function collegaRispostaDisp(){
       if(k && !S.dispensa.includes(k)) S.dispensa.push(k);
       S.dispensaData = new Date().toLocaleDateString("it-IT");
       salva();
-      cercaDisp = "";
-      tappaDispensa();
+      mostraInDispensa(k);
     };
   }
+}
+/* dopo un'aggiunta o una ricerca: torno alla dispensa intera, con il reparto della voce aperto,
+   la porto sotto gli occhi e la illumino un attimo */
+function mostraInDispensa(k){
+  cercaDisp = "";
+  const cat = categoriaDi(k); if(cat) repAperti.add(cat);
+  tappaDispensa();
+  const b = Array.from(app.querySelectorAll("#repartiDisp [data-i]")).find(x=>x.dataset.i === k);
+  if(!b) return;
+  const h = document.querySelector("header.top");
+  const y = b.getBoundingClientRect().top + scrollY - (h ? h.offsetHeight : 0) - 90;
+  try{ scrollTo({top: Math.max(0, y), behavior:"smooth"}); }catch(err){}
+  b.classList.add("appena");
+  setTimeout(()=>b.classList.remove("appena"), 2200);
+}
+/* il pannello del tocco lungo porta la pagina in cima: quando si chiude torno dov'ero, con lo stesso reparto aperto */
+let ioRitorno = null;
+function tornaDovEro(){
+  const r = ioRitorno; ioRitorno = null;
+  if(!r || passo !== 2) return;
+  try{ scrollTo({top: r.y}); }catch(err){}
 }
 /* "Chiudi tutto": compare solo quando c'e' almeno un reparto aperto, e resta a portata di dito scorrendo */
 /* ===== Allergeni: partono chiusi, si vedono solo quelli attivati; un tocco apre l'elenco dei 14 ===== */
@@ -2889,6 +2911,7 @@ function collegaRepartiDisp(){
       else{ S.dispensa.splice(i,1); if(BASE.has(v)) metti(v, v, ""); if(S.scad) delete S.scad[v]; const bs = b.querySelector(".scad-b"); if(bs) bs.remove(); }
       b.classList.toggle("on");
       S.dispensaData = new Date().toLocaleDateString("it-IT"); salva();
+      if(i < 0 && cercaDisp.trim() && b.closest("#repartiDisp")) setTimeout(()=>mostraInDispensa(v), 350);
     };
   });
 
@@ -4161,8 +4184,8 @@ function chiudiVelo(){
 }
 window.chiudiVelo = chiudiVelo;
 /* vie di uscita extra, valide per qualunque pannello: tocco sullo sfondo fuori dal contenuto, tasto Esc */
-velo.addEventListener("click", e=>{ if(e.target === e.currentTarget || e.target.classList.contains("velo")){ if(veloAperto === "cucina") spegniVoce(); chiudiVelo(); } });
-document.addEventListener("keydown", e=>{ if(e.key === "Escape" && veloAperto){ if(veloAperto === "cucina") spegniVoce(); chiudiVelo(); } });
+velo.addEventListener("click", e=>{ if(e.target === e.currentTarget || e.target.classList.contains("velo")){ if(veloAperto === "cucina") spegniVoce(); chiudiVelo(); if(typeof tornaDovEro === "function") tornaDovEro(); } });
+document.addEventListener("keydown", e=>{ if(e.key === "Escape" && veloAperto){ if(veloAperto === "cucina") spegniVoce(); chiudiVelo(); if(typeof tornaDovEro === "function") tornaDovEro(); } });
 
 /* ===========================================================
    Modalita cucina: un passo per volta, timer, schermo acceso
@@ -4980,6 +5003,18 @@ function aggiungiIngrediente(nome, cat){
   const k = nome.trim().toLowerCase();
   if(!k) return "";
   if(chiaviDispensa().some(([x])=>x === k)) return k;
+  /* una voce che avevi tolto torna nel reparto dove stava, non dove la indovino io */
+  if((S.ingTolti || []).includes(k)){
+    S.ingTolti = S.ingTolti.filter(x=>x !== k);
+    const prima = (S.ingToltiCat || {})[k];
+    if(prima){ cat = prima; delete S.ingToltiCat[k]; }
+    if(Object.values(D.dispensa).some(l=>(l||[]).includes(k))){
+      CAT_DISP[cat] = CAT_DISP[cat] || [];
+      if(!CAT_DISP[cat].includes(k)) CAT_DISP[cat].push(k);
+      if(!(D.dispensa[cat] || []).includes(k)) S.ingSpostati[k] = cat;
+      ordinaCat(cat); salva(); return k;
+    }
+  }
   /* "carote" quando c'e' gia' "carota": uso quello che c'e' */
   const gia = chiaviDispensa().find(([x])=>radiceIng(x) === radiceIng(k));
   if(gia) return gia[0];
@@ -5007,6 +5042,8 @@ function spostaIngrediente(k, cat){
   salva();
 }
 function togliIngrediente(k){
+  const era = categoriaDi(k);
+  if(era){ S.ingToltiCat = S.ingToltiCat || {}; S.ingToltiCat[k] = era; }
   for(const c in CAT_DISP) CAT_DISP[c] = CAT_DISP[c].filter(x=>x !== k);
   for(const c in S.ingMiei) S.ingMiei[c] = (S.ingMiei[c]||[]).filter(x=>x !== k);
   delete S.ingSpostati[k];
@@ -5014,9 +5051,48 @@ function togliIngrediente(k){
   S.dispensa = S.dispensa.filter(x=>x !== k);
   salva();
 }
+/* corregge il nome di una voce (es. "uova 4" -> "uova", "tuorlo freschissimo" -> "tuorlo"):
+   resta nello stesso reparto, segnata se lo era, con le sue scadenze e le sue bottiglie;
+   le tue ricette che la usavano passano al nome nuovo. Se il nome nuovo esiste gia', le due voci si uniscono. */
+function rinominaIngrediente(vecchio, nuovoNome){
+  const nuovo = (nuovoNome || "").trim().toLowerCase().replace(/\s+/g, " ");
+  if(!nuovo || nuovo === vecchio) return vecchio;
+  const cat = categoriaDi(vecchio) || indovinaCat(nuovo) || "Dispensa";
+  let dest = chiaviDispensa().find(([x])=>x === nuovo);
+  if(!dest) dest = chiaviDispensa().find(([x])=>x !== vecchio && radiceIng(x) === radiceIng(nuovo));
+  const k = dest ? dest[0] : nuovo;
+  const ufficiale = Object.values(D.dispensa).some(l=>(l||[]).includes(vecchio)) || BASE.has(vecchio);
+  /* tolgo il vecchio nome dagli elenchi */
+  for(const c in CAT_DISP) CAT_DISP[c] = CAT_DISP[c].filter(x=>x !== vecchio);
+  for(const c in S.ingMiei) S.ingMiei[c] = (S.ingMiei[c]||[]).filter(x=>x !== vecchio);
+  if(S.ingSpostati[vecchio]) delete S.ingSpostati[vecchio];
+  if(ufficiale && !S.ingTolti.includes(vecchio)) S.ingTolti.push(vecchio);
+  /* metto il nuovo nello stesso reparto, se non c'e' gia' */
+  if(!dest){
+    S.ingTolti = (S.ingTolti || []).filter(x=>x !== k);
+    CAT_DISP[cat] = CAT_DISP[cat] || [];
+    if(!CAT_DISP[cat].includes(k)) CAT_DISP[cat].push(k);
+    ordinaCat(cat);
+    if(Object.values(D.dispensa).some(l=>(l||[]).includes(k))){ if(!(D.dispensa[cat]||[]).includes(k)) S.ingSpostati[k] = cat; }
+    else { S.ingMiei[cat] = S.ingMiei[cat] || []; if(!S.ingMiei[cat].includes(k)) S.ingMiei[cat].push(k); }
+  }
+  /* dispensa segnata, lista della spesa, ricette mie */
+  S.dispensa = S.dispensa.map(x=>x === vecchio ? k : x).filter((x, i, a)=>a.indexOf(x) === i);
+  (S.spesa || []).forEach(x=>{ if(x.k === vecchio) x.k = k; });
+  (S.mie || []).forEach(r=>(r.ing || []).forEach(i=>{ if(i.k === vecchio) i.k = k; }));
+  /* scadenze e cantina: se ci sono gia' sul nome nuovo, le unisco */
+  if(S.scad && S.scad[vecchio] != null){
+    const tutte = listaScad(k).concat(listaScad(vecchio));
+    delete S.scad[vecchio];
+    if(tutte.length) scriviScad(k, tutte.sort());
+  }
+  if(S.cantina && S.cantina[vecchio]){ S.cantina[k] = (S.cantina[k] || []).concat(S.cantina[vecchio]); delete S.cantina[vecchio]; }
+  salva();
+  return k;
+}
 function rimettiTolti(){
   (S.ingTolti || []).forEach(k=>{
-    const cat = S.ingSpostati[k] || indovinaCat(k);
+    const cat = S.ingSpostati[k] || (S.ingToltiCat || {})[k] || indovinaCat(k);
     CAT_DISP[cat] = CAT_DISP[cat] || [];
     if(!CAT_DISP[cat].includes(k)) CAT_DISP[cat].push(k);
     ordinaCat(cat);
@@ -5030,10 +5106,18 @@ function rimettiTolti(){
 }
 function apriIngOpz(k){
   const attuale = categoriaDi(k);
+  if(passo === 2){ ioRitorno = {y: scrollY}; if(attuale) repAperti.add(attuale); }
   apriVelo("ingopz", `
     <div class="velo-top"><h2>${esc(k)}</h2>
       <button class="chiudi" data-io="chiudi">Chiudi</button></div>
     <p class="mini">Adesso sta in «${esc(attuale || "nessun reparto")}».</p>
+    <div class="card io-correggi" style="margin:12px 0">
+      <b>✏️ ${L("Correggi il nome","Fix the name")}</b>
+      <p class="mini" style="margin:4px 0 6px">${L("Per esempio «uova 4» diventa «uova». Resta nello stesso reparto e le tue ricette che lo usano si aggiornano da sole.","For example “uova 4” becomes “uova”. It stays in the same aisle and your recipes that use it update by themselves.")}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="text" id="ioNome" value="${esc(k)}" autocomplete="off" enterkeyhint="done" style="flex:1;min-width:160px">
+        <button class="btn small" data-io="rinomina" data-k="${esc(k)}">${L("Correggi","Fix")}</button>
+      </div></div>
     <label class="campo"><span>Spostalo in</span>
       <select id="ioCat">${Object.keys(CAT_DISP).map(c=>
         `<option ${c===attuale?"selected":""}>${c}</option>`).join("")}</select></label>
@@ -5066,7 +5150,7 @@ document.addEventListener("click", e=>{
   const b = e.target.closest("[data-io]");
   if(!b) return;
   const a = b.dataset.io;
-  if(a === "chiudi"){ chiudiVelo(); return; }
+  if(a === "chiudi"){ chiudiVelo(); tornaDovEro(); return; }
   const k = b.dataset.k;
   if(a === "scfoto"){ scattaFoto(f=>dataDaFoto(f, iso=>{ document.getElementById("ioScad").value = iso; statoScad("✅ " + L("Data letta: ","Date read: ") + dataLeggibile(iso) + L(". Controllala e tocca «Salva la scadenza».",". Check it and tap “Save the date”.")); })); return; }
   if(a === "scadd"){ aggiungiConfezione(k, document.getElementById("ioScad").value || ""); chiudiVelo(); ridisegnaDopoScad(); return; }
@@ -5075,13 +5159,23 @@ document.addEventListener("click", e=>{
     segnaScadenza(k, a === "sc" ? fraGiorni(+b.dataset.g) : a === "scvia" ? "" : (document.getElementById("ioScad").value || ""));
     chiudiVelo(); ridisegnaDopoScad(); return;
   }
+  if(a === "rinomina"){
+    const campo = document.getElementById("ioNome");
+    const nuovo = (campo.value || "").trim().toLowerCase();
+    if(!nuovo){ campo.focus(); return; }
+    if(nuovo !== k){
+      const gia = chiaviDispensa().find(([x])=>x === nuovo && x !== k);
+      if(gia && !confirm(L(`«${nuovo}» c’è già in elenco: unisco «${k}» a «${nuovo}»?`, `“${nuovo}” is already on the list: merge “${k}” into it?`))) return;
+      rinominaIngrediente(k, nuovo);
+    }
+  }
   if(a === "sposta") spostaIngrediente(k, document.getElementById("ioCat").value);
   if(a === "del"){
     if(!confirm("Tolgo «" + k + "» dall'elenco della dispensa?")) return;
     togliIngrediente(k);
   }
   chiudiVelo();
-  if(passo === 2) tappaDispensa();
+  if(passo === 2){ tappaDispensa(); tornaDovEro(); }
 });
 
 
