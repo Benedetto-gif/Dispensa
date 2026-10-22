@@ -1993,10 +1993,31 @@ let S = carica();
    nell'app le foto non ci sono, quindi li tolgo. Tocco solo parentesi con soli numeri piccoli. */
 const RE_RIMANDI_FOTO = /\s*[\(\[]\s*\d{1,2}(?:\s*(?:[-–,;\/]|e|ed|and)\s*\d{1,2})*\s*[\)\]]/g;
 function senzaRimandiFoto(t){ return String(t || "").replace(RE_RIMANDI_FOTO, "").replace(/\s+([.,;:!?])/g, "$1").replace(/\s{2,}/g, " ").trim(); }
+/* numeri delle foto senza parentesi (stile GialloZafferano): "…acqua fredda 1. Portate…", "…cucchiaio 2, poi…".
+   Li riconosco perche' formano una sequenza 1, 2, 3… attraverso tutto il procedimento, sempre subito dopo una parola. */
+const RE_NUM_FOTO = /([A-Za-zÀ-ÖØ-öø-ÿ'’»")\]])(\s+)(\d{1,2})(?:(\s*[-–]\s*|\s+e\s+)(\d{1,2}))?(?=\s*[.,;:!?)]|\s*$|\s+[a-zà-ÿ])/g;
+function senzaNumeriFoto(proc){
+  if(!Array.isArray(proc) || !proc.length) return proc;
+  /* 1) trovo i candidati che seguono la sequenza */
+  let atteso = 1; const tieni = [];
+  proc.forEach((t, i)=>{
+    String(t).replace(RE_NUM_FOTO, (m, prima, sp, a, sep, b, pos)=>{
+      const n1 = +a, n2 = b ? +b : n1;
+      if((n1 === atteso || n1 === atteso + 1) && n2 >= n1 && n2 - n1 <= 3){ tieni.push({i, pos, len: m.length, prima}); atteso = n2 + 1; }
+      return m;
+    });
+  });
+  if(tieni.length < 2) return proc;       /* un numero solo non basta a dire che e' una sequenza di foto */
+  /* 2) li tolgo, dall'ultimo al primo per non spostare le posizioni */
+  const out = proc.map(String);
+  tieni.slice().reverse().forEach(({i, pos, len, prima})=>{ out[i] = out[i].slice(0, pos) + prima + out[i].slice(pos + len); });
+  return out.map(t=>t.replace(/\s+([.,;:!?])/g, "$1").replace(/\s{2,}/g, " ").trim()).filter(Boolean);
+}
+function pulisciProc(proc){ return Array.isArray(proc) ? senzaNumeriFoto(proc.map(senzaRimandiFoto).filter(Boolean)) : proc; }
 (function(){
   let cambiate = false;
   (S.mie || []).forEach(r=>{ if(!Array.isArray(r.proc)) return;
-    const n = r.proc.map(senzaRimandiFoto).filter(Boolean);
+    const n = pulisciProc(r.proc);
     if(JSON.stringify(n) !== JSON.stringify(r.proc)){ r.proc = n; cambiate = true; } });
   if(cambiate) try{ localStorage.setItem("checucino.v3", JSON.stringify(S)); }catch(e){}
 })();
@@ -5875,7 +5896,7 @@ function htmlGiaPresenti(lista){
   return `<div class="ric-grid gia-grid">${lista.map(valutaCompleta).map(scheda).join("")}</div>`;
 }
 function consegnaImport(ric){
-  if(Array.isArray(ric.proc)) ric.proc = ric.proc.map(senzaRimandiFoto).filter(Boolean);
+  if(Array.isArray(ric.proc)) ric.proc = pulisciProc(ric.proc);
   if(!ric._dupOk){
     const gia = giaInArchivio(ric.n, true);
     const box = document.getElementById("impEsame");
