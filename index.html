@@ -897,6 +897,9 @@ input:focus,select:focus,button:focus-visible{outline:2px solid var(--verde);out
 .ing-stag{font-size:.82em;opacity:.9}
 .ing-info{display:inline-flex;align-items:center;justify-content:center;width:1.25em;height:1.25em;margin-left:2px;border-radius:50%;background:#2F6FB3;color:#fff;font:italic 700 .78em/1 Georgia,serif;vertical-align:.1em;cursor:help;flex:none}
 .chip.on .ing-info{background:#fff;color:#2F6FB3}
+.cos-e-avviso{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);background:#1F2A44;color:#fff;padding:10px 12px 10px 16px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.3);font:600 .92rem/1.3 Inter,system-ui,sans-serif}
+.cos-e-avviso .btn{flex:none}
+.cos-e-avviso .chiudi-x{background:none;border:0;color:#fff;font-size:1rem;cursor:pointer;padding:4px}
 .info-ing-testo{font-size:1.05rem;line-height:1.55;margin:10px 0 14px}
 .info-ing-testo .ing-info{margin-right:6px;font-size:.9em}
 .ing-stag-no{opacity:.28;filter:grayscale(1)}
@@ -2822,6 +2825,54 @@ function htmlRispostaDisp(){
 }
 /* la "i" accanto agli ingredienti poco conosciuti: un tocco spiega cos'e', senza segnarlo in dispensa */
 function infoIng(k){ const t = ((window.DATI || {})["info-ing"] || {})[k]; return t ? (IN_INGLESE ? t[1] : t[0]) : ""; }
+function ingMio(k){ return Object.values(S.ingMiei || {}).some(l=>(l||[]).includes(k)); }
+/* ingrediente senza scheda nell'app (es. uno aggiunto da te): cerco la voce su Wikipedia e la tengo da parte */
+function urlCercaIng(k){ return "https://www.google.com/search?q=" + encodeURIComponent(L("cos'\u00e8 ","what is ") + nomeIng(k) + L(" ingrediente cucina"," cooking ingredient")); }
+async function cercaInfoWeb(k){
+  const w = "https://" + (IN_INGLESE ? "en" : "it") + ".wikipedia.org";
+  const q = nomeIng(k);
+  const r = await fetch(w + "/w/api.php?action=query&list=search&srlimit=1&srinfo=suggestion&format=json&origin=*&srsearch=" + encodeURIComponent(q));
+  const j = await r.json();
+  let tit = (((j.query || {}).search || [])[0] || {}).title;
+  const sug = ((j.query || {}).searchinfo || {}).suggestion;
+  if(!tit && sug){
+    const r2 = await fetch(w + "/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch=" + encodeURIComponent(sug));
+    tit = ((((await r2.json()).query || {}).search || [])[0] || {}).title;
+  }
+  if(!tit) return null;
+  const s = await (await fetch(w + "/api/rest_v1/page/summary/" + encodeURIComponent(tit.replace(/ /g, "_")))).json();
+  if(!s || !s.extract) return null;
+  return {titolo: s.title || tit, testo: s.extract, url: ((s.content_urls || {}).mobile || {}).page || (w + "/wiki/" + encodeURIComponent(tit)),
+          foto: (s.thumbnail || {}).source || ""};
+}
+/* riquadro "Cos'e'?" in cima alla scheda del tocco lungo */
+function htmlCosE(k, x){
+  const t = infoIng(k);
+  return `<b>\u2753 ${L("Cos\u2019\u00e8?","What is it?")}</b>
+    ${t ? `<p class="info-ing-testo" data-no-tr style="margin:6px 0">${esc(t)}</p>` : ""}
+    ${x === "attesa" ? `<p class="mini">${L("Cerco cos\u2019\u00e8\u2026","Looking it up\u2026")}</p>` : x === "nulla"
+      ? `<p class="mini">${L("Non ho trovato una voce di Wikipedia. Prova con la ricerca sul web.","No Wikipedia entry found. Try a web search.")}</p>`
+      : x ? `${x.foto ? `<img src="${esc(x.foto)}" alt="" style="float:right;max-width:34%;max-height:120px;object-fit:contain;margin:4px 0 6px 10px;border-radius:8px">` : ""}
+        <p class="mini" data-no-tr style="margin:6px 0 2px">${L("Da Wikipedia","From Wikipedia")}: <strong>${esc(x.titolo)}</strong></p>
+        <p class="info-ing-testo" data-no-tr style="margin:0 0 6px">${esc(x.testo)}</p>
+        <p class="mini" style="clear:both">${L("Se non \u00e8 quello che intendevi, cercalo sul web.","If it isn\u2019t what you meant, search the web.")}</p>` : ""}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      ${!x ? `<button class="btn small" data-io="cose" data-k="${esc(k)}">\u{1F50E} ${L("Cerca cos\u2019\u00e8 (Wikipedia)","Look it up (Wikipedia)")}</button>` : ""}
+      ${x && x !== "attesa" && x !== "nulla" ? `<a class="btn ghost small" href="${esc(x.url)}" target="_blank" rel="noopener">${L("Leggi su Wikipedia","Read on Wikipedia")}</a>` : ""}
+      <a class="btn ghost small" href="${esc(urlCercaIng(k))}" target="_blank" rel="noopener">\u{1F310} ${L("Cerca sul web","Search the web")}</a>
+    </div>`;
+}
+async function cercaCosE(k){
+  const box = document.getElementById("ioCosE"); if(!box) return;
+  S.infoWeb = S.infoWeb || {};
+  if(S.infoWeb[k]){ box.innerHTML = htmlCosE(k, S.infoWeb[k]); return; }
+  box.innerHTML = htmlCosE(k, "attesa");
+  let x = null;
+  try{ x = await cercaInfoWeb(k); }catch(err){ x = null; }
+  if(x){ S.infoWeb[k] = x; salva(); }
+  const b = document.getElementById("ioCosE");
+  if(b) b.innerHTML = htmlCosE(k, x || "nulla");
+}
 function apriInfoIng(k){
   const t = infoIng(k); if(!t) return;
   if(passo === 2 && !ioRitorno) ioRitorno = {y: scrollY};
@@ -2858,7 +2909,7 @@ function htmlRepartiDisp(){
     const chip = i=>{ const mesi = D.stagioni[i];
           const stag = mesi ? (mesi.includes(meseStagione())?` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
           const nb = tit === "Cantina" ? nBottiglie(i) : 0;
-          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${esc(etichettaDisp(i))}${infoIng(i) ? ` <span class="ing-info" data-info-ing="${esc(i)}" role="button" aria-label="${L("Cos’è?","What is it?")}" title="${L("Cos’è?","What is it?")}">i</span>` : ""}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}${badgeScad(i)}</button>`; };
+          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${esc(etichettaDisp(i))}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}${badgeScad(i)}</button>`; };
     const sotto = sottoReparti(tit, vis);
     return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||repAperti.has(tit)?"open":""} data-rep="${esc(tit)}">
       <summary>${nomeRep(tit)} <em>${presi?presi+" segnati":lista.length+" voci"}</em></summary>
@@ -2891,8 +2942,21 @@ function collegaRispostaDisp(){
       S.dispensaData = new Date().toLocaleDateString("it-IT");
       salva();
       mostraInDispensa(k);
+      if(k && !infoIng(k)) avvisoCosE(k);
     };
   }
+}
+/* appena aggiunto un ingrediente che l'app non conosce: un tasto per sapere cos'e' */
+function avvisoCosE(k){
+  document.querySelectorAll(".cos-e-avviso").forEach(x=>x.remove());
+  const d = document.createElement("div");
+  d.className = "cos-e-avviso";
+  d.innerHTML = `<span data-no-tr>\u2713 ${L("Aggiunto","Added")} \u00ab${esc(etichettaDisp(nomeIng(k)))}\u00bb.</span>
+    <button class="btn small" type="button">${L("Cos\u2019\u00e8?","What is it?")}</button><button class="chiudi-x" type="button" aria-label="${L("Chiudi","Close")}">\u2715</button>`;
+  d.querySelector(".btn").onclick = ()=>{ d.remove(); apriIngOpz(k); cercaCosE(k); };
+  d.querySelector(".chiudi-x").onclick = ()=>d.remove();
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(), 12000);
 }
 /* dopo un'aggiunta o una ricerca: torno alla dispensa intera, con il reparto della voce aperto,
    la porto sotto gli occhi e la illumino un attimo */
@@ -5179,7 +5243,7 @@ function apriIngOpz(k){
     <div class="velo-top"><h2>${esc(k)}</h2>
       <button class="chiudi" data-io="chiudi">Chiudi</button></div>
     <p class="mini">Adesso sta in «${esc(attuale || "nessun reparto")}».</p>
-    ${infoIng(k) ? `<p class="info-ing-testo" data-no-tr><span class="ing-info" aria-hidden="true">i</span> ${esc(infoIng(k))}</p>` : ""}
+    <div class="card" id="ioCosE" style="margin:12px 0">${htmlCosE(k, (S.infoWeb || {})[k] || null)}</div>
     <div class="card io-correggi" style="margin:12px 0">
       <b>✏️ ${L("Correggi il nome","Fix the name")}</b>
       <p class="mini" style="margin:4px 0 6px">${L("Per esempio «uova 4» diventa «uova». Resta nello stesso reparto e le tue ricette che lo usano si aggiornano da sole.","For example “uova 4” becomes “uova”. It stays in the same aisle and your recipes that use it update by themselves.")}</p>
@@ -5221,6 +5285,7 @@ document.addEventListener("click", e=>{
   const a = b.dataset.io;
   if(a === "chiudi"){ chiudiVelo(); tornaDovEro(); return; }
   const k = b.dataset.k;
+  if(a === "cose"){ cercaCosE(k); return; }
   if(a === "scfoto"){ scattaFoto(f=>dataDaFoto(f, iso=>{ document.getElementById("ioScad").value = iso; statoScad("✅ " + L("Data letta: ","Date read: ") + dataLeggibile(iso) + L(". Controllala e tocca «Salva la scadenza».",". Check it and tap “Save the date”.")); })); return; }
   if(a === "scadd"){ aggiungiConfezione(k, document.getElementById("ioScad").value || ""); chiudiVelo(); ridisegnaDopoScad(); return; }
   if(a === "scfin"){ finitaConfezione(k); chiudiVelo(); ridisegnaDopoScad(); return; }
