@@ -970,6 +970,9 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 .gia-box > b{display:block;font-size:1.02rem;margin-bottom:4px}
 .gia-grid{margin:8px 0 10px}
 .gia-tit{font-size:1rem;margin:12px 0 6px}
+.prom-elenco{margin:8px 0 4px}.prom-elenco summary{cursor:pointer;font-weight:700}
+.prom-elenco ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.prom-elenco li{display:flex;gap:8px;align-items:center}.prom-elenco li > span:nth-child(2){flex:1;min-width:0}.prom-elenco small{opacity:.75}
 .gia-nuova{margin:6px 0 4px}
 .link-box{background:#0F6E78;box-shadow:0 0 0 3px #FFD45C,0 6px 22px rgba(15,110,120,.45)}
 .link-box .idea-riga button{color:#0B3F45;white-space:nowrap}
@@ -4731,7 +4734,22 @@ function togglePref(id){
 }
 /* promemoria per salvare i dati: dopo una ricetta o una scheda nuova, o se e' passato un mese */
 const GIORNO_MS = 86400000;
-function salvataggioFatto(){ S.ultimoSalvataggio = Date.now(); S.daSalvare = 0; S.promemoriaDopo = 0; salva(); if(passo === 5) tappaHome(); }
+/* cosa c'e' di nuovo da salvare: tengo l'elenco, cosi' si puo' vedere */
+function segnaDaSalvare(tipo, id, nome){
+  S.daSalvare = (S.daSalvare || 0) + 1;
+  S.daSalvareElenco = (S.daSalvareElenco || []).filter(x=>!(x.tipo === tipo && x.id === id));
+  S.daSalvareElenco.push({tipo, id, nome: String(nome || "").slice(0, 80), quando: Date.now()});
+}
+function elencoDaSalvare(){
+  const l = (S.daSalvareElenco || []).filter(x=> x.tipo === "scheda" ? (S.schedeMie || []).some(m=>m.id === x.id) : !!trovaMia(x.id));
+  /* salvataggi vecchi senza elenco: ricostruisco dalle ricette aggiunte dopo l'ultimo salvataggio */
+  if(!l.length && (S.daSalvare || 0) > 0){
+    const da = S.ultimoSalvataggio || 0;
+    (S.mie || []).forEach(r=>{ const t = Math.abs(+r.id); if(t > 1e12 && t > da) l.push({tipo:"ricetta", id:r.id, nome:nomeR(r), quando:t}); });
+  }
+  return l.sort((a,b)=>b.quando - a.quando);
+}
+function salvataggioFatto(){ S.daSalvareElenco = []; S.ultimoSalvataggio = Date.now(); S.daSalvare = 0; S.promemoriaDopo = 0; salva(); if(passo === 5) tappaHome(); }
 function htmlPromemoriaSalva(){
   if(!S.profilo.fatto) return "";
   const ora = Date.now();
@@ -4745,6 +4763,12 @@ function htmlPromemoriaSalva(){
   return `<div class="promemoria-salva" data-no-tr>
     <b>\u{1F4BE} ${testo}</b>
     <span class="mini">${L("Salva i tuoi dati su Drive, nella cartella Dispensa: se cambi telefono o azzeri, non perdi niente.","Save your data to Drive, in the Dispensa folder: if you change phone or reset, you lose nothing.")}</span>
+    ${(()=>{ const l = elencoDaSalvare(); if(!l.length) return "";
+      const ic = {ricetta:"\u{1F37D}️", mano:"\u{1F4DC}", foto:"\u{1F5BC}️", scheda:"\u{1F4D8}"};
+      const tipoTxt = {ricetta:L("ricetta","recipe"), mano:L("ricetta scritta a mano","handwritten recipe"), foto:L("foto aggiunte","photos added"), scheda:L("lezione o attrezzo","lesson or tool")};
+      return `<details class="prom-elenco"><summary>${L("Vedi quali","See which")} (${l.length})</summary><ul>${l.map(x=>`<li><span aria-hidden="true">${ic[x.tipo]||"\u{1F4C4}"}</span>
+        <span><b>${esc(x.nome || L("senza nome","untitled"))}</b> <small>${tipoTxt[x.tipo]||""} · ${new Date(x.quando).toLocaleDateString(IN_INGLESE?"en-GB":"it-IT",{day:"numeric",month:"short"})}</small></span>
+        ${x.tipo !== "scheda" ? `<button type="button" class="link-mini" data-prom-apri="${x.id}">${L("apri","open")}</button>` : ""}</li>`).join("")}</ul></details>`; })()}
     <div class="azioni"><button class="btn" id="promSalva">${L("Salva ora","Save now")}</button><button class="btn ghost" id="promDopo">${L("Pi\u00f9 tardi","Later")}</button></div></div>`;
 }
 async function esportaDati(){
@@ -6115,10 +6139,11 @@ function apriMano(){
       if(!nome){ alert(L("Manca il nome del piatto.","The name of the dish is missing.")); return; }
       if(!fotoNuove.length){ alert(L("Aggiungi almeno una foto della ricetta.","Add at least one photo of the recipe.")); return; }
       S.mie = S.mie || [];
-      S.mie.push({ id: -Date.now(), n: nome, cat: document.getElementById("manoCat").value, tempo: 0, diff: "", tags: [],
+      const idMano = -Date.now();
+      S.mie.push({ id: idMano, n: nome, cat: document.getElementById("manoCat").value, tempo: 0, diff: "", tags: [],
         ing: [], proc: [], nota: document.getElementById("manoNota").value.trim(), luogo: "", estero: false, all: [], unico: false,
         porz: PORZIONI, nvoci: 0, minimo: false, leggero: false, att: [], att_opz: [], foto: fotoNuove.slice(), soloFoto: true });
-      S.daSalvare = (S.daSalvare || 0) + 1;
+      segnaDaSalvare("mano", idMano, nome);
       salva(); velo.onclick = null; apriMie();
       const el = document.querySelector(".mie-elenco"); if(el) el.open = true;
     }
@@ -6131,7 +6156,7 @@ async function aggiungiFotoA(r){
     const m = trovaMia(r.id); if(!m) return;
     m.foto = m.foto || [];
     for(const f of inp.files){ try{ m.foto.push(await salvaFotoFile(f)); }catch(e){} }
-    S.daSalvare = (S.daSalvare || 0) + 1;
+    segnaDaSalvare("foto", m.id, nomeR(m));
     salva(); apriMie();
     const el = document.querySelector(".mie-elenco"); if(el) el.open = true;
     const riga = document.querySelector(`.mia-riga[data-id="${r.id}"]`); if(riga) riga.click();
@@ -6644,8 +6669,8 @@ document.addEventListener("click", e=>{
 });
 
 function salvaMia(r){
-  S.daSalvare = (S.daSalvare || 0) + 1;
   preparaRicetta(r);
+  segnaDaSalvare("ricetta", r.id, nomeR(r));
   S.mie = (S.mie || []).filter(x=>x.id !== r.id);
   S.mie.push(r);
   salva();
@@ -6979,8 +7004,8 @@ function apriSchedaMia(g, id){
     const dati = {g:val("smG"), e:val("smE"), t:val("smT"), s:val("smS"), testo:val("smTesto"), consigli:val("smCons")};
     S.schedeMie = S.schedeMie || [];
     let nid = id;
-    S.daSalvare = (S.daSalvare || 0) + 1;
     if(m) Object.assign(m, dati); else { nid = "m" + Date.now(); S.schedeMie.push(Object.assign({id:nid}, dati)); }
+    segnaDaSalvare("scheda", nid, dati.t);
     salva(); apriScuola(nid);
   };
   velo.querySelectorAll("[data-icona]").forEach(b=>b.onclick=()=>{ document.getElementById("smE").value = b.dataset.icona; });
@@ -7475,6 +7500,8 @@ function tappaHome(){
   document.getElementById("hMenu").onclick = ()=>apriMenuSett();
   document.getElementById("hMie").onclick = ()=>apriMie();
   const ps = document.getElementById("promSalva"); if(ps) ps.onclick = ()=>esportaDati();
+  app.querySelectorAll("[data-prom-apri]").forEach(b=>b.onclick=()=>{ apriMie(); const id = b.dataset.promApri;
+    setTimeout(()=>{ const r = velo.querySelector(`[data-mia="vedi"][data-id="${id}"]`); if(r){ r.click(); r.scrollIntoView({block:"center"}); } }, 80); });
   const pd = document.getElementById("promDopo"); if(pd) pd.onclick = ()=>{ S.promemoriaDopo = Date.now() + 7 * GIORNO_MS; salva(); tappaHome(); };
   document.getElementById("hStag").onclick = ()=>{ stagMese = new Date().getMonth()+1; stagVista = "mese"; apriStagioni(); centraMese(); };
   { const m = new Date().getMonth()+1, st = stagioni();
