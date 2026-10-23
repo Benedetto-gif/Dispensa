@@ -1539,7 +1539,18 @@ function voceStag(k){
   VOCE_STAG.set(k, v); return v;
 }
 /* di stagione adesso? true, false, o null se l'ingrediente non ha stagione. Da noi conta anche il fermo pesca */
+/* I prodotti del mio territorio (aggiunti in «Di stagione» → «Il mio territorio») valgono più del calendario:
+   i loro mesi sono quelli veri di dove vivi, quindi si confrontano col mese di oggi, senza spostamenti.
+   Valgono per lo stesso nome e per tutto ciò che il calendario lega alla stessa voce
+   (un «Pomodoro di Pachino» locale vale anche per i «pomodorini» delle ricette). */
+function localiDi(k){
+  const l = S.locali || []; if(!l.length) return null;
+  k = String(k || "").toLowerCase().trim(); const v = voceStag(k);
+  const qui = l.filter(x=>x.n.toLowerCase() === k || (v && x.voce === v.it));
+  return qui.length ? [...new Set([].concat(...qui.map(x=>x.m)))] : null;
+}
 function diStagioneOra(k){
+  const loc = localiDi(k); if(loc) return loc.includes(MESE);
   let m = D.stagioni[k];
   if(!m){ const v = voceStag(k); if(!v || v.sc || !v.m.length && !(v.f||[]).length) return null;
           m = D.stagioni[k] = v.m; if(v.f && v.f.length) D.fermi[k] = v.f; }
@@ -2070,7 +2081,7 @@ const VUOTO = {
   profilo:{nome:"",regione:"",stile:"onnivoro",allergeni:[],evita:"",tempo:"999",fatto:false},
   ospitiSalvati:[], dispensa:[], baseMigrato:false, dispensaData:null,
   preferite:[], cucinate:{}, spesa:[],
-  nascoste:[], mie:[], ingMiei:{}, ingTolti:[], ingSpostati:{}, schedeMie:[]
+  nascoste:[], mie:[], ingMiei:{}, ingTolti:[], ingSpostati:{}, schedeMie:[], locali:[]
 };
 let S = carica();
 /* GialloZafferano (e altri) scrivono nei passaggi i numeri delle foto, es. "(1)", "(2-3)", "(4, 5)", "[6]":
@@ -4958,7 +4969,8 @@ function segnaDaSalvare(tipo, id, nome){
   S.daSalvareElenco.push({tipo, id, nome: String(nome || "").slice(0, 80), quando: Date.now()});
 }
 function elencoDaSalvare(){
-  const l = (S.daSalvareElenco || []).filter(x=> x.tipo === "scheda" ? (S.schedeMie || []).some(m=>m.id === x.id) : !!trovaMia(x.id));
+  const l = (S.daSalvareElenco || []).filter(x=> x.tipo === "scheda" ? (S.schedeMie || []).some(m=>m.id === x.id)
+    : x.tipo === "locale" ? (S.locali || []).some(m=>m.id === x.id) : !!trovaMia(x.id));
   /* salvataggi vecchi senza elenco: ricostruisco dalle ricette aggiunte dopo l'ultimo salvataggio */
   if(!l.length && (S.daSalvare || 0) > 0){
     const da = S.ultimoSalvataggio || 0;
@@ -7251,6 +7263,9 @@ function apriScuola(id){
         ${x.mia?`<span class="badge">${L("tua","yours")}</span>`:""}
         <span class="sc-e">${x.e}</span><b>${x.t}</b><small>${x.s}</small></div>`).join("")}</div>
       <button class="btn ghost sc-agg" data-scuola-nuova="${g}">\uFF0B ${g === "att" ? L("Aggiungi un attrezzo","Add a piece of equipment") : L("Aggiungi una tecnica","Add a technique")}</button>`).join("")}
+      <h3 class="sc-gruppo">${L("Fare la spesa","Shopping")}</h3>
+      <div class="sc-grid" data-no-tr>${lez.filter(x=>x.g === "spe").map(x=>`<div class="bcella ${x.c}" data-scuola="${x.id}" role="button" tabindex="0">
+        <span class="sc-e">${x.e}</span><b>${x.t}</b><small>${x.s}</small></div>`).join("")}</div>
       <h3 class="sc-gruppo">${L("La scienza in cucina","Kitchen science")}</h3>
       <div class="sc-grid" data-no-tr>${lez.filter(x=>x.g === "sci").map(x=>`<div class="bcella ${x.c}" data-scuola="${x.id}" role="button" tabindex="0">
         <span class="sc-e">${x.e}</span><b>${x.t}</b><small>${x.s}</small></div>`).join("")}<div class="bcella c-senape" data-scienza-apri role="button" tabindex="0">
@@ -7362,7 +7377,12 @@ function stagioni(){
   }
   return STAG;
 }
-const STAG_TAB = [["ort","\u{1F955}","Ortaggi","Vegetables","#32723F"],["fru","\u{1F34E}","Frutta","Fruit","#A74915"],["pes","\u{1F41F}","Pesce","Fish","#176A9B"],["cro","\u{1F990}","Crostacei e molluschi","Shellfish","#6D3FA0"]];
+const STAG_TAB = [["ort","\u{1F955}","Ortaggi","Vegetables","#32723F"],["fru","\u{1F34E}","Frutta","Fruit","#A74915"],["pes","\u{1F41F}","Pesce","Fish","#176A9B"],["cro","\u{1F990}","Crostacei e molluschi","Shellfish","#6D3FA0"],["loc","\u{1F3E1}","Il mio territorio","My area","#8A5A1E"]];
+/* i prodotti del mio territorio, nella stessa forma delle voci del calendario */
+function vociLocali(){
+  return (S.locali || []).map(l=>{ const v = vociStag().find(y=>y.it === l.voce);
+    return {it:l.n, en:l.n, m:l.m.slice().sort((a,b)=>a-b), i: v ? v.i : "", e:"\u{1F9FA}", n:l.nota || "", ne:l.nota || "", loc:true, voce:l.voce || "", id:l.id}; });
+}
 const iconaStag = x => x.i || x.e;
 const fermoIn = (x, m) => (x.f || []).includes(m);
 function notaStag(x, m){
@@ -7376,11 +7396,12 @@ function notaStag(x, m){
 }
 /* ricette con quel prodotto fresco: le stesse regole del calendarietto (voceStag) */
 function ricettePerStag(x){
-  const ok = k => { const v = voceStag(k); return !!v && v.it === x.it; };
+  const nomeLoc = x.loc ? x.it.toLowerCase() : "", voce = x.loc ? x.voce : x.it;
+  const ok = k => (nomeLoc && k === nomeLoc) || (()=>{ const v = voceStag(k); return !!v && !!voce && v.it === voce; })();
   return archivio().filter(r=>!(S.nascoste||[]).includes(r.id) && r.ing.some(i=>ok(i.k))).map(valutaCompleta).sort((a,b)=>b.pct-a.pct);
 }
 function apriStagioni(dettaglio){
-  const st = stagioni(), tab = STAG_TAB.find(t=>t[0] === stagTab), col = tab[4];
+  const st = Object.assign({}, stagioni(), {loc: vociLocali()}), tab = STAG_TAB.find(t=>t[0] === stagTab), col = tab[4];
   const nome = x => IN_INGLESE ? x.en : x.it;
   const top = `<div class="velo-top"><h2>\u{1F4C5} ${L("Di stagione","In season")}</h2>
     ${dettaglio!=null?`<button class="chiudi" data-stag-torna>← ${L("Calendario","Calendar")}</button>`:""}
@@ -7393,7 +7414,9 @@ function apriStagioni(dettaglio){
         <p class="mini">${!x.m.length ? "" : x.m.length===12 ? L("Si trova tutto l\u2019anno.","Available all year.") : L("Di stagione: ","In season: ") + x.m.map(nomeMese).join(", ") + "."}</p>
         <div class="st-barra">${[1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<span class="${fermoIn(x,m)?"no":x.m.includes(m)?"si":""} ${m===new Date().getMonth()+1?"ora":""}">${iniMese(m)[0]}</span>`).join("")}</div>
         ${(x.f||[]).length ? `<p class="mini st-leg"><span class="st-q si"></span>${L("di stagione","in season")} <span class="st-q no"></span>${L("fermo biologico, non si pesca","closed season, no fishing")}</p>` : ""}
-        ${x.n ? `<div class="sc-box st-nota ${(x.f||[]).length?"fermo":""}">${(x.f||[]).length?"\u{1F6AB}":"\u{1F4A1}"} ${esc(L(x.n, x.ne))}</div>` : ""}
+        ${x.n ? `<div class="sc-box st-nota ${(x.f||[]).length?"fermo":""}">${x.loc?"\u{1F4CD}":(x.f||[]).length?"\u{1F6AB}":"\u{1F4A1}"} ${esc(L(x.n, x.ne))}</div>` : ""}
+        ${x.loc ? `<p class="mini">${L("Prodotto del tuo territorio: questi mesi valgono anche per i calendarietti in dispensa e nelle ricette.","A product from your area: these months also apply to the little calendars in the pantry and in recipes.")}</p>
+          <div class="chips" style="justify-content:center;margin-top:8px"><button class="chip" data-loc-mod="${x.id}">\u270F\uFE0F ${L("Modifica","Edit")}</button><button class="chip" data-loc-del="${x.id}">\u{1F5D1}\uFE0F ${L("Elimina","Delete")}</button></div>` : ""}
       </div>
       <h3 class="sc-gruppo">${L("Ricette con ","Recipes with ")}<span data-no-tr>${nome(x).toLowerCase()}</span></h3>
       ${ric.length ? `<div class="ric-grid" style="margin-top:10px">${ric.slice(0,8).map(scheda).join("")}</div>`
@@ -7406,7 +7429,10 @@ function apriStagioni(dettaglio){
     <div class="chips" style="margin-top:6px"><button class="chip ${stagVista==="mese"?"on":""}" data-stag-vista="mese">${L("Per mese","By month")}</button>
       <button class="chip ${stagVista==="anno"?"on":""}" data-stag-vista="anno">${L("Tutto l’anno","Whole year")}</button></div>`;
   let corpo;
-  if(stagVista === "mese"){
+  const aggLoc = stagTab === "loc" ? `<button class="btn" data-loc-nuovo style="margin-top:12px">\uFF0B ${L("Aggiungi un prodotto del mio territorio","Add a product from my area")}</button>` : "";
+  if(stagTab === "loc" && !lista.length){
+    corpo = `<div class="sc-box" style="margin-top:12px">\u{1F3E1} ${L("Qui metti i prodotti della tua zona che conosci bene: il pesce azzurro dei pescatori del porto, gli ortaggi del contadino al mercato, i prodotti DOP e IGP del tuo territorio. Per ognuno scegli i mesi in cui lo trovi davvero fresco. Quei mesi valgono più del calendario generale, anche per i calendarietti in dispensa e nelle ricette.","Add the products from your area that you know well: fish from the local boats, vegetables from the farmer at the market, your area\u2019s PDO and PGI products. For each one choose the months when you really find it fresh. Those months override the general calendar, including the little calendars in the pantry and in recipes.")}</div>`;
+  } else if(stagVista === "mese"){
     const qui = lista.map((x,i)=>[x,i]).filter(([x])=>x.m.includes(stagMese) || fermoIn(x, stagMese))
       .sort((a,b)=>fermoIn(a[0],stagMese) - fermoIn(b[0],stagMese));
     const nSi = qui.filter(([x])=>!fermoIn(x, stagMese)).length;
@@ -7422,13 +7448,58 @@ function apriStagioni(dettaglio){
   }
   apriVelo("stagioni", `${top}
     <p class="mini">${(suEmisferoSud() ? L("Le stagioni dell\u2019emisfero sud, dove vivi, mese per mese. Comprare di stagione vuol dire pi\u00f9 sapore, meno spesa e meno strada percorsa dal cibo.","The seasons of the southern hemisphere, where you live, month by month. Buying in season means more flavour, lower cost and fewer miles travelled by your food.") : L("Le stagioni del nostro emisfero, mese per mese. Comprare di stagione vuol dire più sapore, meno spesa e meno strada percorsa dal cibo.","The seasons of our hemisphere, month by month. Buying in season means more flavour, lower cost and fewer miles travelled by your food."))}</p>
-    ${tabs}${corpo}
+    ${tabs}${corpo}${aggLoc}
     ${(stagTab==="pes"||stagTab==="cro") && !suEmisferoSud() ? `<p class="mini st-leg" style="margin-top:12px;--st:${col}"><span class="st-q si"></span>${L("di stagione","in season")} <span class="st-q no"></span>${L("fermo biologico","closed season")}</p>
       <div class="sc-box st-nota">\u2693 ${L("<b>Fermo della pesca a strascico 2026</b>: in Adriatico da Trieste ad Ancona da fine luglio; da San Benedetto del Tronto a Bari dal 16 agosto al 29 settembre; da Brindisi a Otranto, nello Ionio, nel Tirreno e nelle isole dal 1\u00b0 al 30 ottobre. In quei periodi c\u2019\u00e8 meno pesce fresco italiano (gamberi, scampi, naselli, triglie\u2026): le date cambiano ogni anno.","<b>2026 trawling ban</b>: in the Adriatic from Trieste to Ancona from late July; from San Benedetto del Tronto to Bari 16 August\u201329 September; from Brindisi to Otranto, in the Ionian, the Tyrrhenian and the islands 1\u201330 October. During those weeks there\u2019s less fresh Italian fish (prawns, langoustines, hake, red mullet\u2026): the dates change every year.")}</div>` : ""}
-    <p class="mini" style="margin-top:14px">${suEmisferoSud() ? L("Hai indicato in \u00abConosciamoci\u00bb che vivi nell\u2019emisfero sud: ho spostato il calendario di sei mesi rispetto a quello italiano. \u00c8 un\u2019approssimazione: i mesi precisi dipendono dal paese e dal clima. Icone: Microsoft Fluent Emoji (licenza MIT) e disegni originali.","You said in \u00abLet\u2019s get acquainted\u00bb that you live in the southern hemisphere: I\u2019ve shifted the calendar six months from the Italian one. It\u2019s an approximation: exact months depend on the country and climate. Icons: Microsoft Fluent Emoji (MIT licence) and original drawings.") : L("Le stagioni sono quelle del nostro emisfero, il nord: i mesi sono indicativi per l’Italia e possono variare di qualche settimana secondo la regione e l’annata. Fuori stagione molti prodotti si trovano lo stesso perché arrivano dall’emisfero sud, dove le stagioni sono invertite: costano di più e fanno molta più strada. Per il pesce indicano il periodo in cui è più abbondante e buono. Icone: Microsoft Fluent Emoji (licenza MIT) e disegni originali.","The seasons are those of our hemisphere, the northern one: the months are approximate for Italy and can shift by a few weeks depending on the region and the year. Out of season many products are still on sale because they come from the southern hemisphere, where the seasons are reversed: they cost more and travel much further. For fish they show when it’s most plentiful and at its best. Icons: Microsoft Fluent Emoji (MIT licence) and original drawings.")}</p>`);
+    <p class="mini" style="margin-top:14px">${stagTab === "loc" ? L("I prodotti del tuo territorio li scegli tu, con i mesi in cui li trovi davvero freschi dove vivi. Per capire da dove arriva quello che compri, leggi la lezione \u00abLeggere il cartellino\u00bb.","You choose the products from your area, with the months when you really find them fresh where you live. To understand where what you buy comes from, see the lesson \u00abReading the label\u00bb.") : suEmisferoSud() ? L("Hai indicato in \u00abConosciamoci\u00bb che vivi nell\u2019emisfero sud: ho spostato il calendario di sei mesi rispetto a quello italiano. \u00c8 un\u2019approssimazione: i mesi precisi dipendono dal paese e dal clima. Icone: Microsoft Fluent Emoji (licenza MIT) e disegni originali.","You said in \u00abLet\u2019s get acquainted\u00bb that you live in the southern hemisphere: I\u2019ve shifted the calendar six months from the Italian one. It\u2019s an approximation: exact months depend on the country and climate. Icons: Microsoft Fluent Emoji (MIT licence) and original drawings.") : L("Le stagioni sono quelle del nostro emisfero, il nord: i mesi sono indicativi per l’Italia e possono variare di qualche settimana secondo la regione e l’annata. Fuori stagione molti prodotti si trovano lo stesso perché arrivano dall’emisfero sud, dove le stagioni sono invertite: costano di più e fanno molta più strada. Per il pesce indicano il periodo in cui è più abbondante e buono. Icone: Microsoft Fluent Emoji (licenza MIT) e disegni originali.","The seasons are those of our hemisphere, the northern one: the months are approximate for Italy and can shift by a few weeks depending on the region and the year. Out of season many products are still on sale because they come from the southern hemisphere, where the seasons are reversed: they cost more and travel much further. For fish they show when it’s most plentiful and at its best. Icons: Microsoft Fluent Emoji (MIT licence) and original drawings.")}</p>`);
+}
+/* niente finestre di conferma del browser: il primo tocco su Elimina avvisa, il secondo elimina */
+let locDelArmato = 0;
+function confirmaLoc(){ if(Date.now() - locDelArmato < 4000) return true; locDelArmato = Date.now();
+  const b = velo.querySelector("[data-loc-del]"); if(b) b.textContent = L("Tocca ancora per eliminare","Tap again to delete"); return false; }
+function apriLocale(id){
+  const l = id ? (S.locali||[]).find(x=>x.id === id) : null;
+  let mesi = l ? l.m.slice() : [], toccati = !!l;
+  apriVelo("stagioni", `<div class="velo-top"><h2>\u{1F3E1} ${l ? L("Modifica prodotto","Edit product") : L("Prodotto del mio territorio","Product from my area")}</h2>
+      <button class="chiudi" data-loc-torna>\u2190 ${L("Calendario","Calendar")}</button></div>
+    <label class="campo"><span>${L("Nome","Name")}</span>
+      <input type="text" id="locNome" list="locNomi" value="${esc(l ? l.n : "")}" placeholder="${L("es. Sarde del porto, Pomodoro di Pachino, Arancia rossa","e.g. Local sardines, Pachino tomatoes")}"></label>
+    <datalist id="locNomi">${vociStag().filter(x=>x.m.length).map(x=>`<option value="${esc(x.it)}">`).join("")}</datalist>
+    <p class="mini" id="locVoce" style="margin-top:6px"></p>
+    <div class="sez" style="margin-top:12px">${L("Quando lo trovi fresco, qui da te","When you find it fresh, here where you live")}</div>
+    <div class="chips" id="locMesi" style="margin-top:8px"></div>
+    <label class="campo" style="margin-top:12px"><span>${L("Nota (facoltativa)","Note (optional)")}</span>
+      <textarea id="locNota" rows="2" placeholder="${L("es. dai pescatori di Aci Trezza; al mercato del sabato; IGP","e.g. from the boats at the harbour; Saturday market; PGI")}">${esc(l ? l.nota || "" : "")}</textarea></label>
+    <button class="btn" id="locSalva" style="margin-top:14px">${L("Salva","Save")}</button>
+    <p class="mini" id="locErr" style="color:var(--rosso,#B3261E)"></p>`);
+  const disegna = ()=>{ document.getElementById("locMesi").innerHTML = [1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<button class="chip ${mesi.includes(m)?"on":""}" data-m="${m}">${iniMese(m)}</button>`).join(""); };
+  const voceDa = n => { const v = voceStag(n); return v && v.m.length ? v : null; };
+  const aggVoce = ()=>{ const n = document.getElementById("locNome").value.trim().toLowerCase(), v = n && voceDa(n);
+    const vs = v && stagioni()[Object.keys(stagioni()).find(k=>stagioni()[k].some(y=>y.it === v.it))].find(y=>y.it === v.it);
+    document.getElementById("locVoce").innerHTML = v ? `${L("Nel calendario generale: ","In the general calendar: ")}<b>${esc(IN_INGLESE ? v.en : v.it)}</b>${toccati ? "" : L(" \u2014 ho segnato i suoi mesi, correggili come li conosci tu."," \u2014 I\u2019ve marked its months; correct them as you know them.")}` : (n ? L("Non è nel calendario generale: segna tu i mesi.","Not in the general calendar: mark the months yourself.") : "");
+    if(vs && !toccati){ mesi = vs.m.slice(); disegna(); } };
+  disegna(); aggVoce();
+  document.getElementById("locNome").addEventListener("input", aggVoce);
+  document.getElementById("locMesi").addEventListener("click", e=>{ const b = e.target.closest("[data-m]"); if(!b) return;
+    const m = +b.dataset.m; toccati = true; mesi = mesi.includes(m) ? mesi.filter(x=>x !== m) : mesi.concat(m); disegna(); });
+  velo.querySelector("[data-loc-torna]").onclick = ()=>{ stagTab = "loc"; apriStagioni(); };
+  document.getElementById("locSalva").onclick = ()=>{
+    const n = document.getElementById("locNome").value.trim(), err = document.getElementById("locErr");
+    if(!n){ err.textContent = L("Scrivi il nome del prodotto.","Write the product name."); return; }
+    if(!mesi.length){ err.textContent = L("Scegli almeno un mese.","Choose at least one month."); return; }
+    const v = voceDa(n.toLowerCase()), nuovo = {id: l ? l.id : "loc" + Date.now(), n, m: mesi.slice().sort((a,b)=>a-b), nota: document.getElementById("locNota").value.trim(), voce: v ? v.it : ""};
+    S.locali = (S.locali || []).filter(x=>x.id !== nuovo.id).concat(nuovo).sort((a,b)=>a.n.localeCompare(b.n, "it"));
+    segnaDaSalvare("locale", nuovo.id, n); salva();
+    stagTab = "loc"; stagVista = "anno"; apriStagioni();
+  };
 }
 function centraMese(){ const c = velo.querySelector(".st-mesi .chip.on"); if(c) c.parentElement.scrollLeft = c.offsetLeft - c.parentElement.clientWidth/2 + c.offsetWidth/2; }
 document.addEventListener("click", e=>{
+  const lt = e.target.closest("[data-loc-nuovo],[data-loc-mod],[data-loc-del]");
+  if(lt){ const d = lt.dataset;
+    if(d.locDel){ if(confirmaLoc()){ S.locali = (S.locali||[]).filter(x=>x.id !== d.locDel); salva(); stagTab = "loc"; apriStagioni(); } }
+    else apriLocale(d.locMod || null);
+    return; }
   const t = e.target.closest("[data-stag-tab],[data-stag-vista],[data-stag-mese],[data-stag-item],[data-stag-torna]");
   if(!t) return;
   const d = t.dataset;
