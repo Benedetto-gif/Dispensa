@@ -448,6 +448,10 @@ html.box-su, html.box-su body{overflow:hidden}
 .st-mesi .chip{flex:none;text-transform:capitalize}
 .st-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
 @media(max-width:360px){.st-grid{grid-template-columns:1fr 1fr}}
+.cart-esito{display:grid;gap:8px;margin-top:12px}
+.cart-riga{display:flex;gap:12px;align-items:flex-start;background:var(--superficie);border:1px solid var(--linea);border-left:5px solid #5B6670;border-radius:14px;padding:10px 12px}
+.cart-riga.buono{border-left-color:#2E7D5B}.cart-riga.dubbio{border-left-color:#C98A1B}
+.cart-riga .cart-e{font-size:1.6rem;line-height:1}.cart-riga b{display:block}.cart-riga small{display:block;opacity:.85;margin-top:2px;line-height:1.35}
 .tt-sez{font-size:1.1rem;margin:20px 0 8px;display:flex;align-items:center;gap:8px}
 .tt-sez::before{content:"";width:6px;height:22px;border-radius:3px;background:var(--tt)}
 .tt-voce{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;
@@ -5653,6 +5657,104 @@ async function leggiFotoRicetta(file){
   }catch(e){ dire("⚠️ " + L("Non sono riuscito a leggere la foto: serve la connessione la prima volta.","I couldn’t read the photo: a connection is needed the first time.")); }
   finally{ ocrLog = ()=>{}; }
 }
+/* ===== Lettore del cartellino: una foto del cartellino del pesce o della frutta e verdura,
+   il testo letto sul telefono (lo stesso lettore delle scadenze), poi spiegato in parole semplici ===== */
+const ZONE_FAO = {"18":"Mar Glaciale Artico","21":"Atlantico nord-occidentale (Canada, Groenlandia)","27":"Atlantico nord-orientale (Mare del Nord, Norvegia, Irlanda, Biscaglia)",
+  "31":"Atlantico centro-occidentale (Caraibi, Golfo del Messico)","34":"Atlantico centro-orientale (Marocco, Mauritania, Senegal)","37":"Mediterraneo e Mar Nero",
+  "41":"Atlantico sud-occidentale (Argentina, Brasile)","47":"Atlantico sud-orientale (Namibia, Sudafrica)","48":"Atlantico antartico","51":"Oceano Indiano occidentale",
+  "57":"Oceano Indiano orientale","58":"Oceano Indiano antartico","61":"Pacifico nord-occidentale (Cina, Giappone)","67":"Pacifico nord-orientale (Alaska)",
+  "71":"Pacifico centro-occidentale (Indonesia, Filippine, Vietnam)","77":"Pacifico centro-orientale","81":"Pacifico sud-occidentale (Nuova Zelanda)",
+  "87":"Pacifico sud-orientale (Cile, Perù)","88":"Pacifico antartico",
+  "37.1":"Mediterraneo occidentale","37.1.1":"Baleari e coste spagnole","37.1.2":"Golfo del Leone","37.1.3":"Sardegna, Mar Ligure e Mar Tirreno",
+  "37.2":"Mediterraneo centrale","37.2.1":"Mar Adriatico","37.2.2":"Mar Ionio e Canale di Sicilia","37.3":"Mediterraneo orientale","37.3.1":"Mar Egeo","37.3.2":"Levante (Cipro, Libano, Israele, Egitto)",
+  "37.4":"Mar Nero","37.4.1":"Mar di Marmara","37.4.2":"Mar Nero","37.4.3":"Mar d’Azov"};
+/* i mari di casa, per regione (le regioni senza mare ricevono pesce da più mari) */
+const MARI_REGIONE = [[/sicil/,["37.2.2","37.1.3"]],[/calabr/,["37.1.3","37.2.2"]],[/pugli/,["37.2.1","37.2.2"]],[/basilicat/,["37.1.3","37.2.2"]],
+  [/campan|lazio|toscan|ligur|sardegn/,["37.1.3"]],[/friuli|venet|emilia|romagn|marche|abruzz|molis/,["37.2.1"]]];
+function nomeZonaFao(c){ let k = c; while(k && !ZONE_FAO[k]) k = k.replace(/\.?\d$/, ""); return k ? ZONE_FAO[k] + (k !== c ? "" : "") : ""; }
+function analizzaCartellino(testo){
+  const t = " " + String(testo || "").replace(/\s+/g, " ") + " ", n = normTesto(t), o = {};
+  const pesce = /\b(pescat|allevat|fao|zona di (cattura|pesca)|attrezz|reti? da|palangar|decongelat|acquacoltur|nome scientifico)/.test(n);
+  const orto = /\b(categoria|cat\.\s*(extra|i{1,2}|1|2)\b|variet|calibro|origine|provenienza)/.test(n);
+  o.tipo = pesce ? "pesce" : orto ? "orto" : "";
+  if(/allevat|acquacoltur|da allevamento/.test(n)) o.metodo = "allevato";
+  else if(/acque dolci/.test(n)) o.metodo = "acque dolci";
+  else if(/pescat|catturat/.test(n)) o.metodo = "pescato";
+  let m = t.match(/(?:fao|zona)[^0-9]{0,18}(\d{2}(?:\s?[.,]\s?\d){0,3})/i) || t.match(/\b(37\s?[.,]\s?[1-4](?:\s?[.,]\s?[1-3])?)\b/);
+  if(m){ const c = m[1].replace(/\s/g, "").replace(/,/g, "."); if(nomeZonaFao(c)) o.zona = c; }
+  o.decongelato = /decongelat/.test(n);
+  o.congelato = !o.decongelato && /\b(congelat|surgelat)/.test(n);
+  const ATTR = [[/strascico|reti? da traino|rete a strascico|sfogliar/,"reti da traino (strascico)"],[/reti? da posta|imbrocco|tramagl/,"reti da posta"],
+    [/circuizione|cianciol|lampar/,"reti da circuizione"],[/palangar|\bami\b|lenze/,"ami e palangari"],[/draghe|turbosoffiant/,"draghe"],[/nasse|trappole/,"nasse e trappole"],[/sciabic/,"sciabiche"]];
+  const a = ATTR.find(([re])=>re.test(n)); if(a) o.attrezzo = a[1];
+  m = t.match(/(?:allevat[oa]\s+in|origine|provenienza|paese d.?origine|prodotto in|coltivat[oa]\s+in)\s*[:\-]?\s*([A-Za-zÀ-ú' ]{3,24})/i);
+  if(m) o.paese = m[1].trim().replace(/\s+(cat|categoria|calibro|variet\S*|lotto|prezzo|euro|kg|decongelat\S*|congelat\S*|surgelat\S*|pescat\S*|allevat\S*|zona|fao|attrezz\S*|reti|origine|ingredienti|conservare)\b.*$/i, "").trim().split(" ").slice(0, 3).join(" ");
+  m = t.match(/\bcat(?:egoria)?\.?\s*[:\-]?\s*(extra|i{1,2}\b|1\b|2\b)/i); if(m) o.categoria = m[1].toUpperCase().replace("1","I").replace("2","II");
+  m = t.match(/variet[aà]\s*[:\-]?\s*([A-Za-zÀ-ú' ]{3,24})/i); if(m) o.varieta = m[1].trim();
+  const reg = normTesto((S.profilo && S.profilo.regione) || "");
+  const mari = (MARI_REGIONE.find(([re])=>re.test(reg)) || [0, []])[1];
+  o.casa = !!(o.zona && mari.some(z=>o.zona === z || o.zona.startsWith(z + ".") || z.startsWith(o.zona + ".")));
+  o.regioneCitata = !!(reg && n.includes(reg.split(" ")[0]));
+  return o;
+}
+function esitoCartellino(o, testo){
+  const r = (e, tit, txt, cls)=>`<div class="cart-riga ${cls||""}"><span class="cart-e">${e}</span><div><b>${tit}</b>${txt ? `<small>${txt}</small>` : ""}</div></div>`;
+  let h = "";
+  if(o.tipo === "pesce" || o.metodo || o.zona){
+    if(o.metodo) h += r(o.metodo === "allevato" ? "\u{1F3ED}" : "\u{1F3A3}", o.metodo === "allevato" ? L("Allevato","Farmed") : o.metodo === "acque dolci" ? L("Pescato in acque dolci","Caught in freshwater") : L("Pescato in mare","Caught at sea"),
+      o.metodo === "allevato" ? L("Viene da un allevamento (acquacoltura).","It comes from a fish farm (aquaculture).") : "");
+    if(o.zona) h += r("\u{1F5FA}️", `${L("Zona FAO","FAO area")} ${o.zona}`, esc(nomeZonaFao(o.zona)) + (o.zona.startsWith("37") ? "" : L(" — fuori dal Mediterraneo: ha viaggiato, quasi sempre congelato."," — outside the Mediterranean: it has travelled, almost always frozen.")));
+    else if(o.metodo !== "allevato") h += r("❓", L("Zona di pesca non trovata","Catch area not found"), L("Per legge deve esserci: cerca «FAO» seguito da un numero.","By law it must be there: look for «FAO» followed by a number."), "dubbio");
+    if(o.casa) h += r("\u{1F3E1}", L("Il mare di casa tua","Your home sea"), L("La zona corrisponde ai mari della tua regione.","The area matches the seas of your region."), "buono");
+    h += o.decongelato ? r("❄️", L("Decongelato","Defrosted"), L("È stato congelato e poi scongelato: non ricongelarlo e cucinalo presto.","It was frozen and then thawed: don’t refreeze it and cook it soon."), "dubbio")
+       : o.congelato ? r("\u{1F9CA}", L("Congelato","Frozen"), "")
+       : r("✨", L("Non risulta decongelato","Not marked as defrosted"), L("Sul cartellino non c’è la scritta «decongelato».","The label doesn’t say «defrosted».") , "buono");
+    if(o.attrezzo) h += r("⚓", L("Attrezzo","Fishing gear"), esc(o.attrezzo));
+    if(o.paese) h += r("\u{1F30D}", L("Paese","Country"), esc(o.paese));
+  } else if(o.tipo === "orto" || o.paese || o.categoria){
+    if(o.paese){ const it = /^ital/i.test(o.paese);
+      h += r(it ? "\u{1F1EE}\u{1F1F9}" : "\u{1F30D}", L("Origine","Origin") + ": " + esc(o.paese), it ? (o.regioneCitata ? L("E cita la tua regione: prodotto del tuo territorio.","And it names your region: a product of your area.") : L("Italiano; la regione non è obbligatoria in etichetta.","Italian; the region isn’t required on the label.")) : L("Viene dall’estero: ha viaggiato.","It comes from abroad: it has travelled."), it ? "buono" : ""); }
+    else h += r("❓", L("Origine non trovata","Origin not found"), L("Per frutta e verdura fresca è sempre obbligatoria.","It’s always required for fresh fruit and vegetables."), "dubbio");
+    if(o.categoria) h += r("\u{1F3F7}️", L("Categoria","Class") + " " + esc(o.categoria), o.categoria === "EXTRA" ? L("La qualità più alta.","The top quality.") : o.categoria === "I" ? L("Buona qualità, piccoli difetti di forma o colore ammessi.","Good quality, small shape or colour defects allowed.") : L("Difetti ammessi, purché il prodotto sia sano.","Defects allowed, as long as the produce is sound."));
+    if(o.varieta) h += r("\u{1F331}", L("Varietà","Variety") + ": " + esc(o.varieta), "");
+  }
+  if(!h) h = r("\u{1F914}", L("Non ho capito il cartellino","I couldn’t understand the label"), L("Riprova più da vicino, dritto e ben illuminato, oppure correggi il testo qui sotto e tocca «Rileggi».","Try again closer, straight and well lit, or correct the text below and tap «Read again».") , "dubbio");
+  return `<div class="cart-esito">${h}</div>
+    <p class="mini" style="margin-top:10px">${L("Il lettore può sbagliare qualche lettera: se qualcosa non torna, correggi il testo e tocca «Rileggi».","The reader may get some letters wrong: if something looks off, correct the text and tap «Read again».")}</p>
+    <label class="campo"><span>${L("Testo letto","Text read")}</span><textarea id="cartTesto" rows="5">${esc(testo)}</textarea></label>
+    <button class="btn ghost" id="cartRileggi" style="margin-top:8px">\u{1F504} ${L("Rileggi","Read again")}</button>`;
+}
+function apriLettoreCartellino(){
+  apriVelo("cartellino", `<div class="velo-top"><h2>\u{1F4F7} ${L("Leggi il cartellino","Read the label")}</h2>
+      <button class="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
+    <p class="mini">${L("Fotografa il cartellino del pesce o della frutta e verdura, da vicino e dritto: ti dico se è pescato o allevato, in che mare, se è decongelato e da dove arriva.","Photograph the label of the fish or produce, close up and straight: I’ll tell you whether it’s caught or farmed, in which sea, whether it’s defrosted and where it comes from.")}</p>
+    <div class="azioni" style="margin-top:12px"><button class="btn" id="cartScatta">\u{1F4F7} ${L("Fotografa il cartellino","Photograph the label")}</button>
+      <button class="btn ghost" id="cartGalleria">\u{1F5BC}️ ${L("Dalla galleria","From the gallery")}</button>
+      <button class="btn ghost" id="cartScrivi">✏️ ${L("Lo scrivo io","I’ll type it")}</button></div>
+    <input type="file" id="cartFotoIn" accept="image/*" capture="environment" hidden><input type="file" id="cartGalIn" accept="image/*" hidden>
+    <p class="mini" id="cartStato" style="margin-top:10px"></p><div id="cartOut"></div>
+    <p class="mini" style="margin-top:14px"><a href="#" id="cartLez">\u{1F3F7}️ ${L("Come si legge un cartellino: la lezione","How to read a label: the lesson")}</a></p>`);
+  const stato = t=>{ const el = document.getElementById("cartStato"); if(el) el.textContent = t; };
+  const mostra = testo=>{ const out = document.getElementById("cartOut"); if(!out) return;
+    out.innerHTML = esitoCartellino(analizzaCartellino(testo), testo);
+    document.getElementById("cartRileggi").onclick = ()=>mostra(document.getElementById("cartTesto").value); };
+  const leggi = async file=>{ if(!file) return; document.getElementById("cartOut").innerHTML = "";
+    try{
+      stato("⏳ " + L("Preparo la lettura del testo (la prima volta scarica circa 4 MB)…","Getting the text reader ready (about 4 MB the first time)…"));
+      ocrLog = m=>{ if(m.status === "recognizing text") stato("\u{1F50D} " + L("Leggo il cartellino… ","Reading the label… ") + Math.round((m.progress || 0) * 100) + "%"); };
+      const w = await lettoreTesto(); await w.setParameters({tessedit_pageseg_mode: "11"});
+      let testo = (await w.recognize(await immagineRidotta(file, 1800))).data.text || "";
+      testo = testo.split(/\n/).map(x=>x.replace(/\s+/g, " ").trim()).filter(x=>/[a-z0-9]{2}/i.test(x)).join("\n");
+      stato(""); mostra(testo);
+    }catch(e){ stato("⚠️ " + L("Non sono riuscito a leggere la foto: serve la connessione la prima volta.","I couldn’t read the photo: a connection is needed the first time.")); }
+    finally{ ocrLog = ()=>{}; } };
+  const fi = document.getElementById("cartFotoIn"), gi = document.getElementById("cartGalIn");
+  document.getElementById("cartScatta").onclick = ()=>fi.click();
+  document.getElementById("cartGalleria").onclick = ()=>gi.click();
+  fi.onchange = ()=>leggi(fi.files[0]); gi.onchange = ()=>leggi(gi.files[0]);
+  document.getElementById("cartScrivi").onclick = ()=>mostra("");
+  document.getElementById("cartLez").onclick = e=>{ e.preventDefault(); apriScuola("cartellino"); };
+}
 /* Google Lens (Android): apro Lens; quando torni nell'app ti propongo di incollare il testo copiato */
 const ANDROID = /android/i.test(navigator.userAgent);
 let lensInAttesa = false;
@@ -7288,6 +7390,7 @@ function apriScuola(id){
     <div class="sc-lez" data-no-tr>
       <p class="mini">${l.s}</p>
       <p class="sc-intro">${l.intro}</p>
+      ${l.id === "cartellino" ? `<button class="btn" style="margin:4px 0 8px" onclick="apriLettoreCartellino()">\u{1F4F7} ${L("Leggi un cartellino con la fotocamera","Read a label with the camera")}</button>` : ""}
       ${l.sez.map((z,i)=>sezScuola(z, i, l.id)).join("")}
     </div>
     ${l.mia?`<div class="sc-nav">
@@ -7536,6 +7639,7 @@ function apriTutto(){
     [L("Imparare e conoscere","Learn and discover"), "#2F6FA3", [
       ["\u{1F393}", L("Impariamo a cucinare","Let\u2019s learn to cook"), L("Tecniche, attrezzatura, fare la spesa e la scienza in cucina, con le ricette per esercitarti.","Techniques, equipment, shopping and kitchen science, with recipes to practise."), chiudiE(()=>apriScuola())],
       ["\u{1F3F7}\uFE0F", L("Leggere il cartellino","Reading the label"), L("Da dove arriva quello che compri: zone FAO, pescato o allevato, decongelato.","Where what you buy comes from: FAO areas, caught or farmed, defrosted."), chiudiE(()=>apriScuola("cartellino"))],
+      ["\u{1F4F7}", L("Leggi un cartellino","Read a label"), L("Fotografa il cartellino al banco: pescato o allevato, in che mare, decongelato, da dove arriva.","Photograph the label at the counter: caught or farmed, which sea, defrosted, where it comes from."), chiudiE(()=>apriLettoreCartellino())],
       ["\u{1F52C}", L("Perch\u00e9 succede?","Why does it happen?"), L("Fai una domanda e cerco la spiegazione scientifica.","Ask a question and I look up the scientific explanation."), chiudiE(()=>apriScienza())],
       ["\u{1F4C5}", L("Di stagione","In season"), L("Ortaggi, frutta, pesce e molluschi mese per mese, con i fermi pesca.","Vegetables, fruit, fish and shellfish month by month, with fishing bans."), chiudiE(()=>{ stagTab = "ort"; stagVista = "mese"; stagMese = new Date().getMonth()+1; apriStagioni(); centraMese(); })],
       ["\u{1F3E1}", L("Il mio territorio","My area"), L("I prodotti della tua zona con i mesi in cui li trovi davvero freschi.","Your area\u2019s products with the months you really find them fresh."), chiudiE(()=>{ stagTab = "loc"; apriStagioni(); })]]],
