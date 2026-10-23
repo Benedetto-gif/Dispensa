@@ -448,6 +448,16 @@ html.box-su, html.box-su body{overflow:hidden}
 .st-mesi .chip{flex:none;text-transform:capitalize}
 .st-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
 @media(max-width:360px){.st-grid{grid-template-columns:1fr 1fr}}
+.tt-sez{font-size:1.1rem;margin:20px 0 8px;display:flex;align-items:center;gap:8px}
+.tt-sez::before{content:"";width:6px;height:22px;border-radius:3px;background:var(--tt)}
+.tt-voce{display:flex;align-items:flex-start;gap:12px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;
+  background:var(--superficie);border:1px solid var(--linea);border-left:5px solid var(--tt);border-radius:14px;padding:11px 12px;margin:0 0 8px}
+.tt-voce:active{transform:scale(.985)}
+.tt-voce .tt-e{font-size:1.6rem;line-height:1;flex:0 0 40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb, var(--tt) 18%, transparent)}
+.tt-voce b{display:block;font-size:1rem}
+.tt-voce small{display:block;opacity:.85;margin-top:2px;line-height:1.35}
+.tt-voce .tt-va{margin-left:auto;align-self:center;opacity:.5;font-size:1.2rem}
 .st-card{background:var(--st);color:#fff;border:0;border-radius:16px;padding:12px 6px 10px;text-align:center;cursor:pointer;font:inherit;
   display:flex;flex-direction:column;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent}
 .st-card:active{transform:scale(.97)}
@@ -7084,7 +7094,7 @@ const PERCHE_EN = `<div class="perche">
 function apriPerche(){
   apriPercheTesto();
   const top = velo.querySelector(".velo-top");
-  if(top) top.insertAdjacentHTML("afterend", `<div class="perche-agg"><span>${L("Versione","Version")} <b>${versioneMia()}</b></span>
+  if(top) top.insertAdjacentHTML("afterend", `<button type="button" class="btn" style="margin:4px 0 10px" onclick="apriTutto()">\u{1F9ED} ${L("Tutto quello che puoi fare","Everything you can do")}</button><div class="perche-agg"><span>${L("Versione","Version")} <b>${versioneMia()}</b></span>
     <button type="button" class="btn small" data-aggiorna>\u{1F504} ${L("Aggiorna l\u2019app","Update the app")}</button></div>`);
 }
 function apriPercheTesto(){
@@ -7493,6 +7503,54 @@ function apriLocale(id){
     stagTab = "loc"; stagVista = "anno"; apriStagioni();
   };
 }
+/* ===== Tutto quello che puoi fare: la mappa dell'app, ogni voce porta alla sua pagina ===== */
+function apriTutto(){
+  const chiudiE = f => ()=>{ chiudiVelo(); f(); };
+  const scegli = m => ()=>{ chiudiVelo(); vai(3); if(m === "app"){ sess.modo = "app"; vai(4); } else { sess.modo = m; apriBox(m); } };
+  const ricette = ()=>{ chiudiVelo(); sess.modo = "app"; vai(4); };
+  const T = [
+    [L("Per cominciare","Getting started"), "#2E7D5B", [
+      ["\u{1F44B}", L("Conosciamoci","Let\u2019s get acquainted"), L("Il tuo nome, cosa non mangi, allergie e intolleranze, dove vivi (per stagioni e ricette della tua regione).","Your name, what you don\u2019t eat, allergies and intolerances, where you live (for seasons and regional recipes)."), chiudiE(()=>vai(0))],
+      ["\u{1F465}", L("Per chi cucini?","Who are you cooking for?"), L("Da solo o con altri: per ogni commensale stile, i 14 allergeni di legge, halal o kosher. L\u2019app scarta le ricette che non vanno bene per tutti.","Alone or with others: for each guest their style, the 14 legal allergens, halal or kosher. The app drops recipes that don\u2019t suit everyone."), chiudiE(()=>vai(1))],
+      ["\u{1F96B}", L("La dispensa","The pantry"), L("Spunta quello che hai, reparto per reparto, anche a voce. Tieni premuto un ingrediente per la sua scheda: cos\u2019\u00e8, scadenza, reparto.","Tick what you have, aisle by aisle, by voice too. Long-press an ingredient for its card: what it is, use-by date, aisle."), chiudiE(()=>vai(2))],
+      ["\u{1F377}", L("La cantina","The cellar"), L("I tuoi vini, con la scheda della bottiglia se vuoi: l\u2019abbinamento guarda prima qui.","Your wines, with a bottle card if you like: drink pairing looks here first."), chiudiE(()=>{ try{ repAperti.add("Cantina"); }catch(e){} vai(2);
+        setTimeout(()=>{ const c = document.querySelector('[data-rep="Cantina"]'); if(c) c.scrollIntoView({block:"start"}); }, 50); })],
+      ["\u23F3", L("Scadenze","Use-by dates"), L("Data a mano, col codice a barre o con una foto: quello che scade presto va in prima pagina e diventa una ricetta.","Date by hand, by barcode or photo: what\u2019s expiring goes on the home page and becomes a recipe."), chiudiE(()=>apriScadenze())]]],
+    [L("Cosa mangiare oggi","What to eat today"), "#C98A1B", [
+      ["\u{1F4A1}", L("Ho in mente un piatto","I have a dish in mind"), L("Scrivi il nome: l\u2019app ti dice se puoi farlo e cosa ti manca.","Type its name: the app tells you if you can make it and what\u2019s missing."), scegli("idea")],
+      ["\u{1F3B2}", L("Lascio scegliere all\u2019app","Let the app choose"), L("Le ricette in ordine di fattibilit\u00e0, con stagione, ora del giorno e tempo che hai.","Recipes by feasibility, taking season, time of day and time available into account."), scegli("app")],
+      ["\u267B\uFE0F", L("Devo consumare","I need to use up"), L("Scegli gli ingredienti da non sprecare: avanzi, cose in scadenza.","Choose the ingredients not to waste: leftovers, things about to expire."), scegli("recupero")],
+      ["\u{1F30D}", L("Menu a tema","Themed menu"), L("Un menu completo, dall\u2019antipasto al dolce: per paese, di mare, di terra, leggero, delle feste.","A full menu, from starter to dessert: by country, seafood, meat, light, festive."), scegli("tema")],
+      ["\u{1F4C6}", L("Menu della settimana","This week\u2019s menu"), L("Scegli le ricette dei prossimi giorni e fai una spesa sola.","Pick the recipes for the coming days and shop once."), chiudiE(()=>apriMenuSett())],
+      ["\u{1F6D2}", L("Lista della spesa","Shopping list"), L("Si riempie da sola con quello che manca; si accende in prima pagina quando c\u2019\u00e8 qualcosa.","Fills itself with what\u2019s missing; lights up on the home page when it has items."), chiudiE(()=>apriSpesa())]]],
+    [L("In ogni ricetta","In every recipe"), "#B5463A", [
+      ["\u2705", L("Fattibilit\u00e0 e sostituzioni","Feasibility and swaps"), L("Quanto ce l\u2019hai in casa, e cosa puoi usare al posto di quello che manca.","How much of it you have at home, and what to use instead of what\u2019s missing."), ricette],
+      ["\u{1F4CA}", L("Calorie e valori nutrizionali","Calories and nutrition"), L("Calorie per porzione e tabella per 100 g di piatto finito, ricalcolate sulle porzioni.","Calories per portion and a table per 100 g of finished dish, scaled to portions."), ricette],
+      ["\u{1F377}", L("Da bere","To drink"), L("Il vino, la birra o l\u2019analcolico adatti, cercando prima nella tua cantina.","The right wine, beer or soft drink, checking your cellar first."), ricette],
+      ["\u{1F6E0}\uFE0F", L("Attrezzatura particolare","Special equipment"), L("Cosa serve, a cosa serve e come fare se non ce l\u2019hai.","What you need, what it\u2019s for and what to do without it."), ricette],
+      ["\u{1F468}\u200D\u{1F373}", L("Modalit\u00e0 cucina","Cooking mode"), L("Passo dopo passo, schermo sempre acceso, comandi a voce e la radio mentre cucini.","Step by step, screen always on, voice commands and the radio while you cook."), ricette],
+      ["\u{1F4F8}", L("Foto di impiattamento","Plating photos"), L("Idee da chef per presentare il piatto.","Chef ideas for presenting the dish."), ricette],
+      ["\u{1F4DD}", L("Voto, nota e Manda a un amico","Rating, note and Send to a friend"), L("Ricordati com\u2019\u00e8 venuta e condividi la ricetta.","Remember how it turned out and share the recipe."), ricette]]],
+    [L("Le tue ricette","Your recipes"), "#7A2E4A", [
+      ["\u2795", L("Aggiungi ricette","Add recipes"), L("Cercale sul web dentro l\u2019app, fotografa un libro, conserva come foto quelle scritte a mano, o scrivile tu. Poi le convalidi.","Search the web inside the app, photograph a book, keep handwritten ones as photos, or write them yourself. Then validate them."), chiudiE(()=>apriMie())]]],
+    [L("Imparare e conoscere","Learn and discover"), "#2F6FA3", [
+      ["\u{1F393}", L("Impariamo a cucinare","Let\u2019s learn to cook"), L("Tecniche, attrezzatura, fare la spesa e la scienza in cucina, con le ricette per esercitarti.","Techniques, equipment, shopping and kitchen science, with recipes to practise."), chiudiE(()=>apriScuola())],
+      ["\u{1F3F7}\uFE0F", L("Leggere il cartellino","Reading the label"), L("Da dove arriva quello che compri: zone FAO, pescato o allevato, decongelato.","Where what you buy comes from: FAO areas, caught or farmed, defrosted."), chiudiE(()=>apriScuola("cartellino"))],
+      ["\u{1F52C}", L("Perch\u00e9 succede?","Why does it happen?"), L("Fai una domanda e cerco la spiegazione scientifica.","Ask a question and I look up the scientific explanation."), chiudiE(()=>apriScienza())],
+      ["\u{1F4C5}", L("Di stagione","In season"), L("Ortaggi, frutta, pesce e molluschi mese per mese, con i fermi pesca.","Vegetables, fruit, fish and shellfish month by month, with fishing bans."), chiudiE(()=>{ stagTab = "ort"; stagVista = "mese"; stagMese = new Date().getMonth()+1; apriStagioni(); centraMese(); })],
+      ["\u{1F3E1}", L("Il mio territorio","My area"), L("I prodotti della tua zona con i mesi in cui li trovi davvero freschi.","Your area\u2019s products with the months you really find them fresh."), chiudiE(()=>{ stagTab = "loc"; apriStagioni(); })]]],
+    [L("Strumenti","Tools"), "#5B6670", [
+      ["\u{1F3A8}", L("Aspetto","Appearance"), L("Colori di sfondo, chiaro o scuro, filigrana di ingredienti.","Background colours, light or dark, ingredient watermark."), chiudiE(()=>apriImpostazioni())],
+      ["\u{1F4FB}", L("Cerca altre radio","Find more radio stations"), L("Aggiungi le tue stazioni da ascoltare mentre cucini.","Add your own stations to listen to while cooking."), chiudiE(()=>apriCercaRadio())],
+      ["\u{1F4BE}", L("Salva i tuoi dati","Save your data"), L("Ricette, dispensa e preferenze nel cloud o in un file, da ripristinare su un altro telefono.","Recipes, pantry and settings to the cloud or a file, to restore on another phone."), chiudiE(()=>setTimeout(()=>{ menuAperto = true; disegnaMenu(); window.scrollTo({top:0}); }, 0))],
+      ["\u2139\uFE0F", L("Perch\u00e9 questa app","Why this app"), L("La filosofia di Che cucino?, in poche righe.","The idea behind What\u2019s cooking?, in a few lines."), chiudiE(()=>apriPerche())]]]];
+  apriVelo("tutto", `<div class="velo-top"><h2>\u{1F9ED} ${L("Tutto quello che puoi fare","Everything you can do")}</h2>
+      <button class="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
+    <p class="mini">${L("La mappa di Che cucino?: tocca una voce e ci vai.","A map of What\u2019s cooking?: tap an item to go there.")}</p>
+    ${T.map(([sez, col, voci], si)=>`<h3 class="tt-sez" style="--tt:${col}">${sez}</h3>
+      ${voci.map(([e, t, d], vi)=>`<button class="tt-voce" style="--tt:${col}" data-tt="${si}.${vi}"><span class="tt-e">${e}</span><span><b>${t}</b><small>${d}</small></span><span class="tt-va">\u203A</span></button>`).join("")}`).join("")}`);
+  velo.querySelectorAll("[data-tt]").forEach(b=>b.onclick = ()=>{ const [a, c] = b.dataset.tt.split(".").map(Number); T[a][2][c][3](); });
+}
 function centraMese(){ const c = velo.querySelector(".st-mesi .chip.on"); if(c) c.parentElement.scrollLeft = c.offsetLeft - c.parentElement.clientWidth/2 + c.offsetWidth/2; }
 document.addEventListener("click", e=>{
   const lt = e.target.closest("[data-loc-nuovo],[data-loc-mod],[data-loc-del]");
@@ -7840,7 +7898,7 @@ function tappaHome(){
   <path d="M12 16c2.5-.3 4.5 0 6 .8M12 21c2.5-.3 4.5 0 6 .8M26 16.8c1.5-.8 3.5-1.1 6-.8M26 21.8c1.5-.8 3.5-1.1 6-.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>
 </svg>
         <b>Impariamo a cucinare</b>
-        <small>Le tecniche fondamentali, l’attrezzatura e la scienza in cucina: 37 lezioni</small>
+        <small>${L(`Le tecniche, l\u2019attrezzatura, la spesa e la scienza in cucina: ${(DATI["scuola-data"]||{it:[]}).it.length} lezioni`,`Techniques, equipment, shopping and kitchen science: ${(DATI["scuola-data"]||{it:[]}).it.length} lessons`)}</small>
       </div>
       <div class="bcella c-mattone" id="hStag">
         <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -7851,6 +7909,15 @@ function tappaHome(){
 </svg>
         <b>Di stagione</b>
         <small id="hStagTxt"></small>
+      </div>
+      <div class="bcella c-verde" id="hTutto">
+        <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="22" cy="22" r="15" stroke="currentColor" stroke-width="2.2"/>
+  <path d="M27.5 16.5l-3.4 7.6-7.6 3.4 3.4-7.6z" fill="currentColor"/>
+  <path d="M22 5v4M22 35v4M5 22h4M35 22h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+</svg>
+        <b>${L("Tutto quello che puoi fare","Everything you can do")}</b>
+        <small>${L("La mappa dell\u2019app: tocca una voce e ci vai","A map of the app: tap an item to go there")}</small>
       </div>
     </div>
     <div class="bcella hspesa ${daComprare.length?"accesa":"spenta"}" id="hSpesa">
@@ -7881,6 +7948,7 @@ function tappaHome(){
   document.getElementById("hOsp").onclick   = ()=>vai(1);
   document.getElementById("hVoglia").onclick = ()=>vai(3);
   document.getElementById("hScuola").onclick = ()=>apriScuola();
+  document.getElementById("hTutto").onclick = ()=>apriTutto();
   document.getElementById("hMenu").onclick = ()=>apriMenuSett();
   document.getElementById("hMie").onclick = ()=>apriMie();
   document.getElementById("hStag").onclick = ()=>{ stagMese = new Date().getMonth()+1; stagVista = "mese"; apriStagioni(); centraMese(); };
