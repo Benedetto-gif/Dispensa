@@ -1517,9 +1517,32 @@ D.stagioni = D.stagioni || {}; D.fermi = {};
     D.stagioni[k] = x.m; if(x.f && x.f.length) D.fermi[k] = x.f; })));
   if(D.stagioni["finocchietto selvatico"] && !D.stagioni["finocchio selvatico"]) D.stagioni["finocchio selvatico"] = D.stagioni["finocchietto selvatico"];
 })();
+/* Un ingrediente nuovo (aggiunto da te o arrivato con una ricetta dal web) trova da solo la sua voce del
+   calendario dal nome: «carciofi violetti» prende i carciofi, «friarielli» le cime di rapa, «fico» i fichi.
+   Vince il nome più lungo («finocchietto» va al finocchietto selvatico, non ai finocchi). Una voce che
+   finisce con $ vale solo come parola intera («pesca» sì, «pescatrice» no). I prodotti secchi, in scatola,
+   surgelati o trasformati non prendono stagione, e nemmeno quelli che si conservano tutto l'anno. */
+const NON_FRESCO = /\b(secc|surgel|scatola|sott|disidrat|essicc|polvere|farina|amido|concentrat|passata|pelat|polpa|gelato|salsa|semi|crusch|limoncello|limonat|scorza|pass[ae]\b|aranciata|succo|spremut|marmellat|confettur|sciropp|candit|liquor|crema|sugo|pesto|pure|crauti|marino)/i;
+const SENZA_STAG = new Set(["peperoncino","aglio","cipolla","patate","patata","finocchio marino"]);
+const VOCE_STAG = new Map();
+function vociStag(){ const c = DATI["stagioni-data"] || {}; return [].concat(...Object.values(c)); }
+function voceStag(k){
+  k = String(k || "").toLowerCase().trim(); if(!k) return null;
+  if(VOCE_STAG.has(k)) return VOCE_STAG.get(k);
+  const voci = vociStag(); let v = voci.find(x=>(x.k || []).includes(k)) || null;
+  if(!v && !SENZA_STAG.has(k) && !NON_FRESCO.test(k)){
+    let lung = 0;
+    voci.forEach(x=>String(x.r || "").split("|").forEach(a=>{
+      const ok = a.endsWith("$") ? (k === a.slice(0,-1) || k.startsWith(a.slice(0,-1) + " ")) : k.startsWith(a);
+      if(ok && a.length > lung){ v = x; lung = a.length; } }));
+  }
+  VOCE_STAG.set(k, v); return v;
+}
 /* di stagione adesso? true, false, o null se l'ingrediente non ha stagione. Da noi conta anche il fermo pesca */
 function diStagioneOra(k){
-  const m = D.stagioni[k]; if(!m) return null;
+  let m = D.stagioni[k];
+  if(!m){ const v = voceStag(k); if(!v || v.sc || !v.m.length && !(v.f||[]).length) return null;
+          m = D.stagioni[k] = v.m; if(v.f && v.f.length) D.fermi[k] = v.f; }
   const mm = meseStagione();
   return m.includes(mm) && !(!suEmisferoSud() && (D.fermi[k] || []).includes(mm));
 }
@@ -7351,15 +7374,9 @@ function notaStag(x, m){
   let f = m; for(let k=0; k<11 && x.m.includes(f === 12 ? 1 : f+1); k++) f = f === 12 ? 1 : f+1;
   return L("fino a ","until ") + nomeMese(f);
 }
-/* ricette con quel prodotto fresco: le chiavi elencate nel calendario; per le ricette aggiunte da te anche
-   un nome che comincia allo stesso modo ("nasello", "acciughe fresche"), ma mai un prodotto conservato
-   ("polpa di pomodoro", "fichi secchi", "salsiccia sarda") o una chiave che appartiene a un'altra voce */
-const NON_FRESCO = /\b(secc|surgel|scatola|sott|disidrat|essicc|polvere|farina|amido|concentrat|passata|pelat|polpa|gelato|salsa|semi|crusch|limoncello|scorza)/i;
-let CHIAVI_STAG = null;
+/* ricette con quel prodotto fresco: le stesse regole del calendarietto (voceStag) */
 function ricettePerStag(x){
-  if(!CHIAVI_STAG){ CHIAVI_STAG = new Set(); Object.values(DATI["stagioni-data"]).forEach(v=>v.forEach(y=>(y.k||[]).forEach(k=>CHIAVI_STAG.add(k)))); CHIAVI_STAG.add("peperoncino"); }
-  const proprie = new Set(x.k || []), re = new RegExp("^(" + x.r + ")\\S*( fresc\\S*)?$", "i");
-  const ok = k => proprie.has(k) || (!CHIAVI_STAG.has(k) && !NON_FRESCO.test(k) && re.test(k));
+  const ok = k => { const v = voceStag(k); return !!v && v.it === x.it; };
   return archivio().filter(r=>!(S.nascoste||[]).includes(r.id) && r.ing.some(i=>ok(i.k))).map(valutaCompleta).sort((a,b)=>b.pct-a.pct);
 }
 function apriStagioni(dettaglio){
