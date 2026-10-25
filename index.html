@@ -1795,15 +1795,17 @@ function iconaAntipasto(r){
 }
 /* lenticchie: non c'e' un'emoji adatta (i fagioli sono rossi), uso un disegno di lenticchie marroni */
 const SVG_LENTICCHIE = '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.12em"><g stroke="#4a2c12" stroke-width=".8"><ellipse cx="7" cy="9" rx="4" ry="3.2" fill="#a8743a"/><ellipse cx="15.5" cy="7.5" rx="4" ry="3.2" fill="#8c5a2b"/><ellipse cx="11" cy="15" rx="4" ry="3.2" fill="#b98546"/><ellipse cx="18" cy="15.5" rx="3.6" ry="2.9" fill="#9a6431"/><ellipse cx="5.5" cy="17" rx="3.2" ry="2.6" fill="#8c5a2b"/></g></svg>';
+/* zuppe: ciotola di terracotta con la zuppa e il vapore */
+const SVG_CIOTOLA = '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.12em"><g fill="none" stroke="#9a9a9a" stroke-width="1.2" stroke-linecap="round"><path d="M8.5 3.5c-1 1.2 1 2-.2 3.4"/><path d="M12 2.5c-1 1.2 1 2-.2 3.4"/><path d="M15.5 3.5c-1 1.2 1 2-.2 3.4"/></g><ellipse cx="12" cy="10.5" rx="10" ry="2.6" fill="#c8682f" stroke="#7a3a17" stroke-width=".8"/><ellipse cx="12" cy="10.7" rx="8.3" ry="1.8" fill="#e0a93b"/><circle cx="9" cy="10.6" r=".7" fill="#7a9a3a"/><circle cx="14.5" cy="10.4" r=".6" fill="#b3402a"/><path d="M2 10.6c.4 5.2 4.6 8.4 10 8.4s9.6-3.2 10-8.4c-1.6 1.5-5.4 2.5-10 2.5S3.6 12.1 2 10.6z" fill="#b5541f" stroke="#7a3a17" stroke-width=".8"/><path d="M4.5 14c1.8 1.6 4.4 2.4 7.5 2.4s5.7-.8 7.5-2.4" fill="none" stroke="#d98a4e" stroke-width=".9"/><path d="M8.5 19h7l-.6 1.8H9.1z" fill="#8f3f16" stroke="#7a3a17" stroke-width=".6"/></svg>';
 /* l'icona sta su un dischetto chiaro, cosi' si vede anche sulle schede dello stesso colore (zucchine su verde...) */
 function iconaRicetta(r){
   const ic = iconaBase(r);
-  return `<span class="ic-piatto">${ic === "LENTICCHIE" ? SVG_LENTICCHIE : ic}</span>`;
+  return `<span class="ic-piatto">${ic === "LENTICCHIE" ? SVG_LENTICCHIE : ic === "CIOTOLA" ? SVG_CIOTOLA : ic}</span>`;
 }
 function iconaBase(r){
   const nomeZ = String(r.n||"").toLowerCase();
   /* zuppe, minestre e brodi si servono in ciotola */
-  if(r.cat !== "Dolci" && /zupp|minestr|vellutat|in brodo|ribollit|acquacotta|pappa al pomodoro|stracciatella|seupa|suppa|soupe|potage|gazpacho|harira|\bjota\b|caldo verde|\bdal\b|imbrecciata|brodetto|cacciucco|bouillabaisse|pasta e (fagioli|fasioi|ceci|lenticchie)/.test(nomeZ)) return "\u{1F963}";
+  if(r.cat !== "Dolci" && /zupp|minestr|vellutat|in brodo|ribollit|acquacotta|pappa al pomodoro|stracciatella|seupa|suppa|soupe|potage|gazpacho|harira|\bjota\b|caldo verde|\bdal\b|imbrecciata|brodetto|cacciucco|bouillabaisse|pasta e (fagioli|fasioi|ceci|lenticchie)/.test(nomeZ)) return "CIOTOLA";
   if(/risott|orzott|risi e bisi|paniscia|panissa/.test(nomeZ)) return "\u{1F35A}";
   if(/paella/.test(nomeZ)) return "\u{1F958}";
   /* i contorni prendono l'icona della verdura principale (la prima dell'elenco ingredienti) */
