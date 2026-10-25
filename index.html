@@ -5871,8 +5871,9 @@ document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState === "visible" && lensInAttesa && veloAperto === "import"){ lensInAttesa = false; bottoneIncollaLens(); }
 });
 document.addEventListener("click", e=>{
-  if(!e.target.closest("[data-imp-foto]")) return;
-  const inp = document.getElementById("impFotoIn"); if(!inp) return;
+  const gal = e.target.closest("[data-imp-gal]");
+  if(!gal && !e.target.closest("[data-imp-foto]")) return;
+  const inp = document.getElementById(gal ? "impGalIn" : "impFotoIn"); if(!inp) return;
   inp.value = ""; inp.onchange = ()=>{ const f = inp.files && inp.files[0]; if(f) leggiFotoRicetta(f); };
   inp.click();
 });
@@ -6435,7 +6436,7 @@ function apriMie(){
       <button type="button" class="mie-modo mm-foto" data-mia="foto"><span class="mm-ic" aria-hidden="true">\u{1F4D6}</span>
         <b>${L("Da un libro","From a book")}</b><small>${L("Fotografa la pagina stampata: la leggo io","Photograph the printed page: I read it")}</small></button>
       <button type="button" class="mie-modo mm-mano" data-mia="mano"><span class="mm-ic" aria-hidden="true">\u{1F4DC}</span>
-        <b>${L("Scritta a mano","Handwritten")}</b><small>${L("La conservo come foto, la trascrivi quando vuoi","Kept as a photo, transcribe it when you like")}</small></button>
+        <b>${L("Scritta a mano","Handwritten")}</b><small>${L("Foto o galleria: la conservo e la fai leggere a Claude o Gemini","Camera or gallery: I keep it and Claude or Gemini read it")}</small></button>
       <button type="button" class="mie-modo mm-scrivi" data-mia="nuova"><span class="mm-ic" aria-hidden="true">\u270F\uFE0F</span>
         <b>${L("La scrivo io","I\u2019ll write it")}</b><small>${L("Nome, ingredienti e passaggi","Name, ingredients and steps")}</small></button>
     </div>
@@ -6617,7 +6618,11 @@ function apriMano(){
     <p class="mini">${L("Per una foto leggibile: luce del giorno senza ombre, pagina ben distesa, telefono parallelo al foglio.","For a readable photo: daylight without shadows, page laid flat, phone parallel to the sheet.")}</p>
     <div id="manoFoto" class="foto-gal"></div>
     <p class="mini" id="manoEsito" aria-live="polite"></p>
-    <div class="azioni"><button class="btn" data-mano="salva">${L("Conserva la ricetta","Keep the recipe")}</button></div>`);
+    <div class="mano-box">
+      <b>\u{1F916} ${L("Chi legge la scrittura a mano?","Who reads the handwriting?")}</b>
+      <p class="mini">${L("Il lettore dell’app legge solo la stampa. La grafia la leggono bene Claude o Gemini: con «Conserva e fai leggere» la ricetta resta salvata come foto e si apre il menu Condividi con le foto e la richiesta già pronta. Poi copi la risposta e la incolli in «Incolla la trascrizione».","The app’s reader only reads print. Handwriting is read well by Claude or Gemini: with “Keep and have it read” the recipe stays saved as a photo and the Share menu opens with the photos and a ready-made request. Then copy the answer and paste it in “Paste the transcription”.")}</p></div>
+    <div class="azioni"><button class="btn" data-mano="salvaleggi">\u{1F916} ${L("Conserva e fai leggere","Keep and have it read")}</button>
+      <button class="btn ghost" data-mano="salva">${L("Conserva soltanto","Just keep it")}</button></div>`);
   const disegna = ()=>{
     const box = document.getElementById("manoFoto");
     box.innerHTML = fotoNuove.map((id, n)=>`<div class="foto-min"><img data-foto-id="${id}" alt="${L("Pagina","Page")} ${n + 1}"><button type="button" class="foto-via" data-mano-via="${n}" aria-label="${L("Togli","Remove")}">✕</button></div>`).join("");
@@ -6638,7 +6643,7 @@ function apriMano(){
     if(a === "chiudi"){ fotoNuove.forEach(id=>FotoDB.del(id).catch(()=>{})); velo.onclick = null; apriMie(); return; }
     if(a === "scatta") document.getElementById("manoScatta").click();
     if(a === "galleria") document.getElementById("manoGalleria").click();
-    if(a === "salva"){
+    if(a === "salva" || a === "salvaleggi"){
       const nome = document.getElementById("manoNome").value.trim();
       if(!nome){ alert(L("Manca il nome del piatto.","The name of the dish is missing.")); return; }
       if(!fotoNuove.length){ alert(L("Aggiungi almeno una foto della ricetta.","Add at least one photo of the recipe.")); return; }
@@ -6650,6 +6655,7 @@ function apriMano(){
       segnaDaSalvare("mano", idMano, nome);
       salva(); velo.onclick = null; apriMie();
       const el = document.querySelector(".mie-elenco"); if(el) el.open = true;
+      if(a === "salvaleggi"){ const r = trovaMia(idMano); if(r) faiTrascrivere(r, b); }
     }
   };
 }
@@ -6763,12 +6769,14 @@ function apriImport(modo, cerca){
     <div class="velo-top"><h2>\u{1F4D6} ${L("Ricetta da un libro","Recipe from a book")}</h2>
       <button class="chiudi" data-imp="chiudi">Chiudi</button></div>
     <ol class="imp-passi">
-      <li><span class="ip-ic" aria-hidden="true">\u{1F4F7}</span><span class="ip-tx">${L("Fotografa la pagina dritta e ben illuminata.","Photograph the page straight and well lit.")}</span></li>
+      <li><span class="ip-ic" aria-hidden="true">\u{1F4F7}</span><span class="ip-tx">${L("Fotografa la pagina dritta e ben illuminata, oppure scegli una foto già fatta dalla galleria.","Photograph the page straight and well lit, or choose a photo you already have from the gallery.")}</span></li>
       <li><span class="ip-ic" aria-hidden="true">\u{1F50D}</span><span class="ip-tx">${L("Controlla il testo che ho letto e correggi gli errori.","Check the text I read and fix any mistakes.")}</span></li>
       <li><span class="ip-ic" aria-hidden="true">\u2705</span><span class="ip-tx">${L("Tocca \u00abPrepara la ricetta\u00bb.","Tap \u201cPrepare the recipe\u201d.")}</span></li>
     </ol>
     <button type="button" class="imp-grande" data-imp-foto>\u{1F4F7} ${L("Fotografa la pagina","Photograph the page")}</button>
+    <button type="button" class="btn ghost" data-imp-gal style="width:100%;margin-top:8px">\u{1F5BC}\uFE0F ${L("Scegli la foto dalla galleria","Choose the photo from the gallery")}</button>
     <input type="file" id="impFotoIn" accept="image/*" capture="environment" hidden>
+    <input type="file" id="impGalIn" accept="image/*" hidden>
     <p class="mini">${L("Se la ricetta continua su un\u2019altra pagina, fotografa anche quella: il testo si aggiunge sotto.","If the recipe continues on another page, photograph that too: the text is added below.")}</p>
     <input type="hidden" id="impUrl" value="">
     ${comuni}
