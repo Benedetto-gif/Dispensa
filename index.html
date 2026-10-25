@@ -1760,6 +1760,45 @@ function classePortata(r){
   return base;
 }
 const CARNE = new Set(CAT_DISP["Carne e salumi"] || []);
+
+/* icona della ricetta: per i secondi segue l'ingrediente principale (carne, pesce, uova, formaggio, verdura...) */
+const ICONE_PESCE = [[/gamber|scamp|astice|aragost|granchi|moech|mazzancoll|canocchi/,"\u{1F990}"],[/calamar|seppi|polp|moscardin|totan/,"\u{1F991}"],[/cozz|vongol|ostric|cannolicch|fasolar|telline/,"\u{1F9AA}"],[/lumach/,"\u{1F40C}"]];
+const ICONE_CARNE = [[/\bpoll[oia]|gallin|tacchin|cappone|galletto/,"\u{1F357}"],[/faraona|palomb|anatra|quagli|piccion|fagian/,"\u{1F426}"],[/conigli|lepre/,"\u{1F407}"],
+  [/maial|salsicc|lonza|costin|cotechin|zampone|luganeg|capocoll|porchett|stinco/,"\u{1F416}"],[/agnell|caprett|pecora|montone/,"\u{1F411}"],
+  [/manzo|vitell|bue|chianina|cavall|camoscio|cervo|cinghial|macinat|bistecc|ossobuc|carne/,"\u{1F969}"]];
+const ICONE_VERDE = [[/melanzan/,"\u{1F346}"],[/zucchin|cetriol/,"\u{1F952}"],[/patat/,"\u{1F954}"],[/peperon/,"\u{1FAD1}"],[/pomodor/,"\u{1F345}"],
+  [/fungh|porcin|champignon/,"\u{1F344}"],[/broccol|cavol|friariell|cime di rapa/,"\u{1F966}"],[/spinac|verz|bietol|scarol|lattug|cicori/,"\u{1F96C}"],
+  [/carciof|asparag|finocch|sedano/,"\u{1F33F}"],[/ceci|fagiol|lenticch|fave|piselli|soia|tofu/,"\u{1FAD8}"],[/cipoll|porr/,"\u{1F9C5}"],[/zucca/,"\u{1F383}"],[/carot/,"\u{1F955}"],
+  [/mozzarell|fontina|montasio|tomin|ricott|formagg|parmigian|pecorin|caciocavall|provol|scamorz|gorgonzol|taleggio|asiago|feta|halloumi|burrata|stracchin/,"\u{1F9C0}"]];
+function cercaIcona(r, tabella){
+  for(const i of r.ing){ const k = String(i.k||i.n||"").toLowerCase(); const t = tabella.find(([re])=>re.test(k)); if(t) return t[1]; }
+  return "";
+}
+function iconaRicetta(r){
+  if(r.cat !== "Secondi") return eDiPesce(r) ? "\u{1F41F}" : (ICONA_PORTATA[r.cat] || "\u{1F37D}️");
+  const tipo = classePortata(r), nome = String(r.n||"").toLowerCase();
+  const pesceMisto = /paranza|fritto misto|brodetto|cacciucco|zuppa di pesce|guazzetto|pesce misto/.test(nome);
+  if(r.ing.some(i=>/lumach/.test(String(i.k).toLowerCase()))) return "\u{1F40C}";
+  if(pesceMisto) return "\u{1F41F}";
+  if(/\bpizza\b|pinsa|calzon/.test(nome)) return "\u{1F355}";
+  if(tipo === "pesce" || /frutti di mare/.test(nome)){
+    /* il pesce c'e' ma il piatto e' di verdura o formaggio (es. peperoni con acciughe): conta il primo ingrediente */
+    const primo = String(r.ing[0] && r.ing[0].k || "").toLowerCase();
+    const pesceNelNome = PESCE_CHIAVI.some(x=>nome.includes(x)) || /pesce|frutti di mare|filett/.test(nome);
+    if(!pesceNelNome && !PESCE_CHIAVI.some(x=>primo.includes(x))){ const v = cercaIcona(r, ICONE_VERDE); if(v) return v; }
+    return cercaIcona(r, ICONE_PESCE) || "\u{1F41F}";
+  }
+  if(tipo === "uova") return "\u{1F95A}";
+  const principali = r.ing.filter(i=>CARNE.has(i.k) && !CARNE_CONDIMENTO.has(i.k));
+  if(eDiCarne(r) && principali.length){
+    return cercaIcona({ing: principali}, ICONE_CARNE) || cercaIcona(r, ICONE_CARNE) || "\u{1F356}";
+  }
+  /* senza carne vera (al massimo salumi da condimento): conta la forma del piatto o l'ingrediente principale */
+  if(/cr[eê]pe/.test(nome)) return "\u{1F95E}";
+  if(/torta salata|quiche|sfogli|tortino|erbazzone|pasqualina|spanakopita/.test(nome)) return "\u{1F967}";
+  if(/frittat|uov[oa]|\bova\b|omelet/.test(nome)) return "\u{1F95A}";
+  return cercaIcona(r, ICONE_VERDE) || (eDiCarne(r) ? "\u{1F953}" : "\u{1F957}");
+}
 const PESCE = new Set(CAT_DISP["Pesce"] || []);
 const LATT  = new Set(CAT_DISP["Latticini e uova"] || []);
 const DEPERIBILI = ["Verdure e ortaggi","Frutta","Carne e salumi","Pesce","Latticini e uova","Surgelati e congelati"];
@@ -4081,7 +4120,7 @@ function scheda(o){
   return `<details class="ric ${liv} por-${classePortata(r)}">
     <summary>
       <div class="ric-top">
-        <div><div class="ric-nome"><span aria-hidden="true">${eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"")} ${bandieraRicetta(r)}</span> <span data-no-tr>${esc(nomeR(r))}</span></div>
+        <div><div class="ric-nome"><span aria-hidden="true">${iconaRicetta(r)} ${bandieraRicetta(r)}</span> <span data-no-tr>${esc(nomeR(r))}</span></div>
           <div class="meta">${SING[r.cat]} · ${r.tempo} min · ${r.diff}${r._kcal?` · ~${r._kcal} kcal/porzione`:""}${r.luogo?" · "+esc(r.luogo):""}${r.stile!=="onnivoro"?" · "+r.stile:""}${r._kcal?` · <button class="btn-nutri" data-azione="nutrizione" data-id="${r.id}" onclick="event.preventDefault()" title="Valori nutrizionali per 100 g">\u{1F4CA}</button>`:""}</div></div>
         <div class="pct">${o.pct}%</div>
       </div>
@@ -4882,7 +4921,7 @@ function apriMenuSett(){
       <button class="chiudi" data-ms="chiudi">${L("Chiudi","Close")}</button></div>
     ${m.length ? `<p class="mini">${L("Le ricette che vuoi cucinare nei prossimi giorni. Quando ne cucini una e tocchi «Ho finito», esce dal menu da sola.","The recipes you want to cook in the next few days. When you cook one and tap “I’m done”, it leaves the menu by itself.")}</p>
       ${m.map((x, i)=>{ const r = trovaRicetta(x.id);
-        return `<div class="ms-riga"><span class="ms-nome" data-no-tr>${eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"")} ${esc(nomeR(r))}</span>
+        return `<div class="ms-riga"><span class="ms-nome" data-no-tr>${iconaRicetta(r)} ${esc(nomeR(r))}</span>
           <span class="ms-dosi"><button data-ms="meno" data-i="${i}" aria-label="${L("Meno persone","Fewer people")}">−</button><b>${x.dosi}</b><button data-ms="piu" data-i="${i}" aria-label="${L("Più persone","More people")}">+</button> <span class="mini">${L("a tavola","at the table")}</span></span>
           <button class="btn small" data-ms="cucina" data-i="${i}">${L("Cuciniamo","Let’s cook")}</button>
           <button class="btn small ghost" data-ms="via" data-i="${i}" aria-label="${L("Togli dal menu","Remove from menu")}">✕</button></div>`; }).join("")}
@@ -6370,7 +6409,7 @@ function apriMie(){
       <p class="mini" style="margin:6px 0 2px">${L("Tocca una ricetta per vederla com\u2019\u00e8 nell\u2019app: se \u00e8 giusta la convalidi ed entra nell\u2019archivio con tutte le altre, altrimenti la correggi o la elimini.","Tap a recipe to see it as it is in the app: if it\u2019s right, validate it and it joins the archive with all the others; otherwise correct it or delete it.")}</p>
       <ul class="mie-l">${att.slice().sort((a,b)=>String(nomeR(a)||"").localeCompare(String(nomeR(b)||""),"it",{sensitivity:"base",numeric:true})).map(r=>
       `<li><button type="button" class="mia-riga${r.validata?" mia-ok":""}" data-mia="vedi" data-id="${r.id}" aria-expanded="false">
-          <span class="mia-ic" aria-hidden="true">${r.soloFoto?"\u{1F4DC}":eDiPesce(r)?"\u{1F41F}":(ICONA_PORTATA[r.cat]||"\u{1F37D}\uFE0F")}</span>
+          <span class="mia-ic" aria-hidden="true">${r.soloFoto?"\u{1F4DC}":iconaRicetta(r)}</span>
           <span class="mia-nome"><span data-no-tr>${esc(nomeR(r))}</span> <span class="mini">${esc(r.cat)} \u00b7 ${r.soloFoto ? L("da trascrivere","to transcribe") : r.tempo + " min"}${(r.foto||[]).length ? " \u00b7 \u{1F5BC}\uFE0F" : ""}</span></span>
           <span class="mia-car" aria-hidden="true">\u25B8</span></button>
         <div class="mia-anteprima" id="miaPrev${r.id}" hidden></div></li>`).join("")}</ul></details>` + notaOk; })()}`);
