@@ -1767,14 +1767,16 @@ const ICONE_CARNE = [[/\bpoll[oia]|gallin|tacchin|cappone|galletto/,"\u{1F357}"]
   [/maial|salsicc|lonza|costin|cotechin|zampone|luganeg|capocoll|porchett|stinco/,"\u{1F416}"],[/agnell|caprett|pecora|montone/,"\u{1F411}"],
   [/manzo|vitell|bue|chianina|cavall|camoscio|cervo|cinghial|macinat|bistecc|ossobuc|carne/,"\u{1F969}"]];
 const ICONE_VERDE = [[/melanzan/,"\u{1F346}"],[/zucchin|cetriol/,"\u{1F952}"],[/patat/,"\u{1F954}"],[/peperon/,"\u{1FAD1}"],[/pomodor/,"\u{1F345}"],
-  [/fungh|porcin|champignon/,"\u{1F344}"],[/broccol|cavol|friariell|cime di rapa/,"\u{1F966}"],[/spinac|verz|bietol|scarol|lattug|cicori/,"\u{1F96C}"],
-  [/carciof|asparag|finocch|sedano/,"\u{1F33F}"],[/ceci|fagiol|lenticch|fave|piselli|soia|tofu/,"\u{1FAD8}"],[/cipoll|porr/,"\u{1F9C5}"],[/zucca/,"\u{1F383}"],[/carot/,"\u{1F955}"],
+  [/fungh|porcin|champignon/,"\u{1F344}"],[/broccol|cavol|friariell|cime di rapa/,"\u{1F966}"],[/spinac|verz|bietol|scarol|lattug|cicori|puntarell|rucol|insalat/,"\u{1F96C}"],
+  [/carciof|asparag|finocch|sedano/,"\u{1F33F}"],[/fagiolin|piselli|taccol/,"\u{1FADB}"],[/ceci|fagiol|lenticch|fave|piselli|soia|tofu/,"\u{1FAD8}"],[/cipoll|porr/,"\u{1F9C5}"],[/zucca/,"\u{1F383}"],[/carot/,"\u{1F955}"],[/aranc/,"\u{1F34A}"],[/\bmel[ae]\b/,"\u{1F34E}"],[/oliv/,"\u{1FAD2}"],[/\bpane\b/,"\u{1F35E}"],
   [/mozzarell|fontina|montasio|tomin|ricott|formagg|parmigian|pecorin|caciocavall|provol|scamorz|gorgonzol|taleggio|asiago|feta|halloumi|burrata|stracchin/,"\u{1F9C0}"]];
 function cercaIcona(r, tabella){
   for(const i of r.ing){ const k = String(i.k||i.n||"").toLowerCase(); const t = tabella.find(([re])=>re.test(k)); if(t) return t[1]; }
   return "";
 }
 function iconaRicetta(r){
+  /* i contorni prendono l'icona della verdura principale (la prima dell'elenco ingredienti) */
+  if(r.cat === "Contorni") return cercaIcona(r, ICONE_VERDE) || "\u{1F957}";
   if(r.cat !== "Secondi") return eDiPesce(r) ? "\u{1F41F}" : (ICONA_PORTATA[r.cat] || "\u{1F37D}️");
   const tipo = classePortata(r), nome = String(r.n||"").toLowerCase();
   const pesceMisto = /paranza|fritto misto|brodetto|cacciucco|zuppa di pesce|guazzetto|pesce misto/.test(nome);
