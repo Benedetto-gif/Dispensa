@@ -568,6 +568,7 @@ html.box-su, html.box-su body{overflow:hidden}
 .mia-riga:focus-visible{outline:2px solid #FFE3A6;outline-offset:2px;border-radius:8px}
 .mia-riga .mini{color:#fff;opacity:.85}
 .mia-ic{font-size:1.25rem;line-height:1}
+.ic-piatto{display:inline-grid;place-items:center;width:1.55em;height:1.55em;border-radius:50%;background:rgba(255,253,245,.92);box-shadow:0 0 0 1px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.18);line-height:1;font-size:.95em;vertical-align:middle;margin-right:.15em}
 .mia-nome{flex:1;font-weight:600}
 .mia-car{transition:transform .2s;font-size:.9rem}
 .mia-riga[aria-expanded="true"] .mia-car{transform:rotate(90deg)}
@@ -1768,7 +1769,7 @@ const ICONE_CARNE = [[/\bpoll[oia]|gallin|tacchin|cappone|galletto/,"\u{1F357}"]
   [/manzo|vitell|bue|chianina|\bcavall|camoscio|cervo|cinghial|macinat|bistecc|ossobuc|carne/,"\u{1F969}"]];
 const ICONE_VERDE = [[/melanzan/,"\u{1F346}"],[/zucchin|cetriol/,"\u{1F952}"],[/patat/,"\u{1F954}"],[/peperon/,"\u{1FAD1}"],[/pomodor/,"\u{1F345}"],
   [/fungh|porcin|champignon/,"\u{1F344}"],[/broccol|cavol|friariell|cime di rapa/,"\u{1F966}"],[/spinac|verz|bietol|scarol|lattug|cicori|puntarell|rucol|insalat/,"\u{1F96C}"],
-  [/carciof|asparag|finocch|sedano/,"\u{1F33F}"],[/fagiolin|piselli|taccol/,"\u{1FADB}"],[/ceci|fagiol|lenticch|fave|piselli|soia|tofu/,"\u{1FAD8}"],[/cipoll|porr/,"\u{1F9C5}"],[/zucca/,"\u{1F383}"],[/carot/,"\u{1F955}"],[/aranc/,"\u{1F34A}"],[/\bmel[ae]\b/,"\u{1F34E}"],[/oliv/,"\u{1FAD2}"],[/\bpane\b/,"\u{1F35E}"],
+  [/carciof|asparag|finocch|sedano/,"\u{1F33F}"],[/fagiolin|piselli|taccol/,"\u{1FADB}"],[/lenticch/,"LENTICCHIE"],[/ceci|fagiol|fave|piselli|soia|tofu/,"\u{1FAD8}"],[/cipoll|porr/,"\u{1F9C5}"],[/zucca/,"\u{1F383}"],[/carot/,"\u{1F955}"],[/aranc/,"\u{1F34A}"],[/\bmel[ae]\b/,"\u{1F34E}"],[/oliv/,"\u{1FAD2}"],[/\bpane\b/,"\u{1F35E}"],
   [/mozzarell|fontina|montasio|tomin|ricott|formagg|parmigian|pecorin|caciocavall|provol|scamorz|gorgonzol|taleggio|asiago|feta|halloumi|burrata|stracchin|casizol|caser|squacquer/,"\u{1F9C0}"]];
 function cercaIcona(r, tabella){
   for(const i of r.ing){ const k = String(i.k||i.n||"").toLowerCase(); const t = tabella.find(([re])=>re.test(k)); if(t) return t[1]; }
@@ -1792,7 +1793,19 @@ function iconaAntipasto(r){
     [/\buov[oa]/,"\u{1F95A}"], ...ICONE_VERDE, ...ICONE_EXTRA];
   return cercaIcona(r, tab) || "\u{1F957}";
 }
+/* lenticchie: non c'e' un'emoji adatta (i fagioli sono rossi), uso un disegno di lenticchie marroni */
+const SVG_LENTICCHIE = '<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.12em"><g stroke="#4a2c12" stroke-width=".8"><ellipse cx="7" cy="9" rx="4" ry="3.2" fill="#a8743a"/><ellipse cx="15.5" cy="7.5" rx="4" ry="3.2" fill="#8c5a2b"/><ellipse cx="11" cy="15" rx="4" ry="3.2" fill="#b98546"/><ellipse cx="18" cy="15.5" rx="3.6" ry="2.9" fill="#9a6431"/><ellipse cx="5.5" cy="17" rx="3.2" ry="2.6" fill="#8c5a2b"/></g></svg>';
+/* l'icona sta su un dischetto chiaro, cosi' si vede anche sulle schede dello stesso colore (zucchine su verde...) */
 function iconaRicetta(r){
+  const ic = iconaBase(r);
+  return `<span class="ic-piatto">${ic === "LENTICCHIE" ? SVG_LENTICCHIE : ic}</span>`;
+}
+function iconaBase(r){
+  const nomeZ = String(r.n||"").toLowerCase();
+  /* zuppe, minestre e brodi si servono in ciotola */
+  if(r.cat !== "Dolci" && /zupp|minestr|vellutat|in brodo|ribollit|acquacotta|pappa al pomodoro|stracciatella|seupa|suppa|soupe|potage|gazpacho|harira|\bjota\b|caldo verde|\bdal\b|imbrecciata|brodetto|cacciucco|bouillabaisse|pasta e (fagioli|fasioi|ceci|lenticchie)/.test(nomeZ)) return "\u{1F963}";
+  if(/risott|orzott|risi e bisi|paniscia|panissa/.test(nomeZ)) return "\u{1F35A}";
+  if(/paella/.test(nomeZ)) return "\u{1F958}";
   /* i contorni prendono l'icona della verdura principale (la prima dell'elenco ingredienti) */
   if(r.cat === "Antipasti") return iconaAntipasto(r);
   if(r.cat === "Contorni") return cercaIcona(r, ICONE_VERDE) || "\u{1F957}";
