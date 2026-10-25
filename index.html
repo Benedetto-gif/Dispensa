@@ -1765,17 +1765,36 @@ const CARNE = new Set(CAT_DISP["Carne e salumi"] || []);
 const ICONE_PESCE = [[/gamber|scamp|astice|aragost|granchi|moech|mazzancoll|canocchi/,"\u{1F990}"],[/calamar|seppi|polp|moscardin|totan/,"\u{1F991}"],[/cozz|vongol|ostric|cannolicch|fasolar|telline/,"\u{1F9AA}"],[/lumach/,"\u{1F40C}"]];
 const ICONE_CARNE = [[/\bpoll[oia]|gallin|tacchin|cappone|galletto/,"\u{1F357}"],[/faraona|palomb|anatra|quagli|piccion|fagian/,"\u{1F426}"],[/conigli|lepre/,"\u{1F407}"],
   [/maial|salsicc|lonza|costin|cotechin|zampone|luganeg|capocoll|porchett|stinco/,"\u{1F416}"],[/agnell|caprett|pecora|montone/,"\u{1F411}"],
-  [/manzo|vitell|bue|chianina|cavall|camoscio|cervo|cinghial|macinat|bistecc|ossobuc|carne/,"\u{1F969}"]];
+  [/manzo|vitell|bue|chianina|\bcavall|camoscio|cervo|cinghial|macinat|bistecc|ossobuc|carne/,"\u{1F969}"]];
 const ICONE_VERDE = [[/melanzan/,"\u{1F346}"],[/zucchin|cetriol/,"\u{1F952}"],[/patat/,"\u{1F954}"],[/peperon/,"\u{1FAD1}"],[/pomodor/,"\u{1F345}"],
   [/fungh|porcin|champignon/,"\u{1F344}"],[/broccol|cavol|friariell|cime di rapa/,"\u{1F966}"],[/spinac|verz|bietol|scarol|lattug|cicori|puntarell|rucol|insalat/,"\u{1F96C}"],
   [/carciof|asparag|finocch|sedano/,"\u{1F33F}"],[/fagiolin|piselli|taccol/,"\u{1FADB}"],[/ceci|fagiol|lenticch|fave|piselli|soia|tofu/,"\u{1FAD8}"],[/cipoll|porr/,"\u{1F9C5}"],[/zucca/,"\u{1F383}"],[/carot/,"\u{1F955}"],[/aranc/,"\u{1F34A}"],[/\bmel[ae]\b/,"\u{1F34E}"],[/oliv/,"\u{1FAD2}"],[/\bpane\b/,"\u{1F35E}"],
-  [/mozzarell|fontina|montasio|tomin|ricott|formagg|parmigian|pecorin|caciocavall|provol|scamorz|gorgonzol|taleggio|asiago|feta|halloumi|burrata|stracchin/,"\u{1F9C0}"]];
+  [/mozzarell|fontina|montasio|tomin|ricott|formagg|parmigian|pecorin|caciocavall|provol|scamorz|gorgonzol|taleggio|asiago|feta|halloumi|burrata|stracchin|casizol|caser|squacquer/,"\u{1F9C0}"]];
 function cercaIcona(r, tabella){
   for(const i of r.ing){ const k = String(i.k||i.n||"").toLowerCase(); const t = tabella.find(([re])=>re.test(k)); if(t) return t[1]; }
   return "";
 }
+/* antipasti: prima la forma del piatto (pizza, focaccia, pane, fritto di riso...), poi il primo ingrediente che ha un'icona */
+const ICONE_ANTIPASTO_NOME = [
+  [/\bpizz[ae]|pinsa|sfinciun|sardenaira|\bpitta\b/,"\u{1F355}"],
+  [/arancin|suppl|onigiri/,"\u{1F359}"],[/kimbap|sushi/,"\u{1F363}"],[/involtini primavera|samosa|panzerott|empanad/,"\u{1F95F}"],
+  [/focacc|puccia|tiella|casatiello|tortano|torta al testo|crescia|piadina|tigell|crescentin|gnocco fritto|carasau|farinata|scacce|taralli|torta pasqualina|chisci|sciatt|tirtlen|panelle/,"\u{1FAD3}"],
+  [/brusch|crostin|friselle|panzanella|pane cunzato|pane e pomodoro|pane, olio|mollica|\bpani\b/,"\u{1F35E}"],
+  [/carne cruda|battuta/,"\u{1F969}"],[/olive/,"\u{1FAD2}"],[/cozz|arselle|cocciula/,"\u{1F9AA}"],[/cuoppo|fritto misto|insalata di mare|cappon magro/,"\u{1F41F}"]
+];
+const ICONE_EXTRA = [[/fiori di zucca/,"\u{1F33C}"],[/avocado/,"\u{1F951}"],[/yogurt/,"\u{1F95B}"],[/\briso\b|bulgur|cous/,"\u{1F35A}"],[/melone/,"\u{1F348}"],
+  [/castagn/,"\u{1F330}"],[/aglio/,"\u{1F9C4}"],[/prezzemol|basilic/,"\u{1F33F}"],[/radicchio|crauti/,"\u{1F96C}"],[/farina di mais|polenta/,"\u{1F33D}"],[/\bpane\b|friselle/,"\u{1F35E}"]];
+const ICONE_SALUMI = [[/prosciutt|speck|lard|salam|mortadell|sopress|soppressat|ciauscol|capocoll|nduja|pitina|bresaola|coppa|culatell|guancial|pancett|mocetta|motsetta/,"\u{1F953}"]];
+function iconaAntipasto(r){
+  const nome = String(r.n||"").toLowerCase();
+  const n = ICONE_ANTIPASTO_NOME.find(([re])=>re.test(nome)); if(n) return n[1];
+  const tab = [[/fiori di zucca/,"\u{1F33C}"], ...ICONE_SALUMI, ...ICONE_PESCE, [new RegExp(PESCE_CHIAVI.join("|")),"\u{1F41F}"], [/fegat|milza|nervett|trippa/,"\u{1F356}"], ...ICONE_CARNE,
+    [/\buov[oa]/,"\u{1F95A}"], ...ICONE_VERDE, ...ICONE_EXTRA];
+  return cercaIcona(r, tab) || "\u{1F957}";
+}
 function iconaRicetta(r){
   /* i contorni prendono l'icona della verdura principale (la prima dell'elenco ingredienti) */
+  if(r.cat === "Antipasti") return iconaAntipasto(r);
   if(r.cat === "Contorni") return cercaIcona(r, ICONE_VERDE) || "\u{1F957}";
   if(r.cat !== "Secondi") return eDiPesce(r) ? "\u{1F41F}" : (ICONA_PORTATA[r.cat] || "\u{1F37D}️");
   const tipo = classePortata(r), nome = String(r.n||"").toLowerCase();
