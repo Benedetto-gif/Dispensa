@@ -5062,12 +5062,16 @@ function segnaDaSalvare(tipo, id, nome){
   S.daSalvareElenco.push({tipo, id, nome: String(nome || "").slice(0, 80), quando: Date.now()});
 }
 function elencoDaSalvare(){
+  /* prima si convalida, poi si salva: una ricetta (o le foto aggiunte a una ricetta) non ancora convalidata
+     non fa scattare il promemoria; lo fara' al momento della convalida. Le ricette scritte a mano conservate
+     come sole foto restano subito da salvare: non si possono convalidare finche' non sono trascritte. */
+  const pronta = id=>{ const m = trovaMia(id); return !!m && (!!m.validata || !!m.soloFoto); };
   const l = (S.daSalvareElenco || []).filter(x=> x.tipo === "scheda" ? (S.schedeMie || []).some(m=>m.id === x.id)
-    : x.tipo === "locale" ? (S.locali || []).some(m=>m.id === x.id) : !!trovaMia(x.id));
+    : x.tipo === "locale" ? (S.locali || []).some(m=>m.id === x.id) : pronta(x.id));
   /* salvataggi vecchi senza elenco: ricostruisco dalle ricette aggiunte dopo l'ultimo salvataggio */
   if(!l.length && (S.daSalvare || 0) > 0){
     const da = S.ultimoSalvataggio || 0;
-    (S.mie || []).forEach(r=>{ const t = Math.abs(+r.id); if(t > 1e12 && t > da) l.push({tipo:"ricetta", id:r.id, nome:nomeR(r), quando:t}); });
+    (S.mie || []).forEach(r=>{ const t = Math.abs(+r.id); if(t > 1e12 && t > da && (r.validata || r.soloFoto)) l.push({tipo:"ricetta", id:r.id, nome:nomeR(r), quando:t}); });
   }
   return l.sort((a,b)=>b.quando - a.quando);
 }
@@ -5084,7 +5088,7 @@ function htmlPromemoriaSalva(){
   if(!S.profilo.fatto) return "";
   const ora = Date.now();
   if(S.promemoriaDopo && S.promemoriaDopo > ora) return "";
-  const n = S.daSalvare || 0, da = S.ultimoSalvataggio || S.primoUso || ora;
+  const n = elencoDaSalvare().length, da = S.ultimoSalvataggio || S.primoUso || ora;
   const mese = ora - da > 30 * GIORNO_MS;
   if(!n && !mese) return "";
   const testo = n
