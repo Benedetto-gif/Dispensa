@@ -4416,7 +4416,7 @@ document.addEventListener("click", e=>{
 /* link per cercare la ricetta sui siti di cucina + tasto per importare il link copiato */
 /* siti consigliati: pubblicano le ricette nel formato standard (scheda ordinata con ingredienti
    e passaggi), quindi Condividi -> Che cucino? le importa complete */
-const SITI_OK_IT = [["giallozafferano.it","GialloZafferano"],["fattoincasadabenedetta.it","Fatto in casa da Benedetta"],["misya.info","Misya"],["ricettedellanonna.net","Ricette della Nonna"],["cookaround.com","Cookaround"]];
+const SITI_OK_IT = [["giallozafferano.it","GialloZafferano"],["fattoincasadabenedetta.it","Fatto in casa da Benedetta"],["misya.info","Misya"],["ricettedellanonna.net","Ricette della Nonna"],["cookaround.com","Cookaround"],["cookist.it","Cookist"]];
 const SITI_OK_EN = [["bbcgoodfood.com","BBC Good Food"],["allrecipes.com","Allrecipes"],["seriouseats.com","Serious Eats"],["simplyrecipes.com","Simply Recipes"]];
 function sitoConsigliato(url){
   let h = ""; try{ h = new URL(/^https?:/i.test(url) ? url : "https://" + url).hostname.replace(/^www\./, ""); }catch(e){ return true; }
@@ -6846,7 +6846,7 @@ function sembraRicetta(url){
   return true;
 }
 function titoloPulito(t, url){
-  t = (t || "").replace(/\s+/g, " ").trim().replace(/\s*[-|–—]\s*(GialloZafferano|Giallo Zafferano|Fatto in casa da Benedetta|Misya\.info|Misya|Ricette della Nonna|Cookaround|BBC Good Food|Allrecipes|Serious Eats|Simply Recipes).*$/i, "");
+  t = (t || "").replace(/\s+/g, " ").trim().replace(/\s*[-|–—]\s*(GialloZafferano|Giallo Zafferano|Fatto in casa da Benedetta|Misya\.info|Misya|Ricette della Nonna|Cookaround|Cookist|BBC Good Food|Allrecipes|Serious Eats|Simply Recipes).*$/i, "");
   if(!t || t.length < 3 || /^https?:/.test(t)){
     try{ t = decodeURIComponent(new URL(url).pathname).split("/").filter(Boolean).pop().replace(/\.\w+$/, "").replace(/[-_]+/g, " "); }catch(e){}
   }
@@ -7309,7 +7309,7 @@ function apriPercheTesto(){
 
     <div class="sez"><strong>Forse hai già un'idea?</strong></div>
     <p>Scrivi quello che vuoi preparare, l'app controlla se hai tutti gli ingredienti. Se ti manca qualcosa non preoccuparti, <strong>"Che cucino?"</strong> ti propone una sostituzione con quello che hai già, oppure aggiunge quel che manca alla lista della spesa.</p>
-    <p>Se la ricetta non è nell'archivio, tocca <strong>«Cerca su Google nei siti consigliati»</strong>: la ricerca si limita a GialloZafferano, Fatto in casa da Benedetta, Misya, Ricette della Nonna e Cookaround, che pubblicano le ricette in un formato standard che l'app legge per intero.</p>
+    <p>Se la ricetta non è nell'archivio, tocca <strong>«Cerca su Google nei siti consigliati»</strong>: la ricerca si limita a GialloZafferano, Fatto in casa da Benedetta, Misya, Ricette della Nonna, Cookaround e Cookist, che pubblicano le ricette in un formato standard che l'app legge per intero.</p>
     <p>Apri la ricetta che ti piace, tocca i <strong>tre puntini ⋮</strong> in alto a destra, poi <strong>Condividi</strong> → <strong>Che cucino?</strong>: la ricetta arriva da sola. Controlla ingredienti e procedimento e salva.</p>
     <p>Se scegli un sito diverso l'app ci prova lo stesso, ma ti avvisa che la ricetta potrebbe arrivare incompleta e ti invita a cercarla nei siti consigliati. Se non ti convince, puoi comunque eliminarla. (Su iPhone Condividi non arriva all'app: copia il link e incollalo in <strong>Aggiungi ricette, nella pagina iniziale</strong>.)</p>
     <p>Ora hai una nuova ricetta in archivio.</p>
