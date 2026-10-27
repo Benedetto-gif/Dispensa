@@ -7287,7 +7287,7 @@ const PERCHE_EN = `<div class="perche">
 function apriPerche(){
   apriPercheTesto();
   const top = velo.querySelector(".velo-top");
-  if(top) top.insertAdjacentHTML("afterend", `<button type="button" class="btn" style="margin:4px 0 10px" onclick="apriTutto()">\u{1F9ED} ${L("Tutto quello che puoi fare","Everything you can do")}</button><div class="perche-agg"><span>${L("Versione","Version")} <b>${versioneMia()}</b></span>
+  if(top) top.insertAdjacentHTML("afterend", `<button type="button" class="btn" style="margin:4px 0 10px" onclick="apriTutto()">\u{1F9ED} ${L("La mappa dell\u2019app","Map of the app")}</button><div class="perche-agg"><span>${L("Versione","Version")} <b>${versioneMia()}</b></span>
     <button type="button" class="btn small" data-aggiorna>\u{1F504} ${L("Aggiorna l\u2019app","Update the app")}</button></div>`);
 }
 function apriPercheTesto(){
@@ -7739,7 +7739,7 @@ function apriTutto(){
       ["\u{1F4FB}", L("Cerca altre radio","Find more radio stations"), L("Aggiungi le tue stazioni da ascoltare mentre cucini.","Add your own stations to listen to while cooking."), chiudiE(()=>apriCercaRadio())],
       ["\u{1F4BE}", L("Salva i tuoi dati","Save your data"), L("Ricette, dispensa e preferenze nel cloud o in un file, da ripristinare su un altro telefono.","Recipes, pantry and settings to the cloud or a file, to restore on another phone."), chiudiE(()=>setTimeout(()=>{ menuAperto = true; disegnaMenu(); window.scrollTo({top:0}); }, 0))],
       ["\u2139\uFE0F", L("Perch\u00e9 questa app","Why this app"), L("La filosofia di Che cucino?, in poche righe.","The idea behind What\u2019s cooking?, in a few lines."), chiudiE(()=>apriPerche())]]]];
-  apriVelo("tutto", `<div class="velo-top"><h2>\u{1F9ED} ${L("Tutto quello che puoi fare","Everything you can do")}</h2>
+  apriVelo("tutto", `<div class="velo-top"><h2>\u{1F9ED} ${L("La mappa dell\u2019app","Map of the app")}</h2>
       <button class="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
     <p class="mini">${L("La mappa di Che cucino?: tocca una voce e ci vai.","A map of What\u2019s cooking?: tap an item to go there.")}</p>
     ${T.map(([sez, col, voci], si)=>`<h3 class="tt-sez" style="--tt:${col}">${sez}</h3>
@@ -8111,8 +8111,8 @@ function tappaHome(){
   <path d="M27.5 16.5l-3.4 7.6-7.6 3.4 3.4-7.6z" fill="currentColor"/>
   <path d="M22 5v4M22 35v4M5 22h4M35 22h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
 </svg>
-        <b>${L("Tutto quello che puoi fare","Everything you can do")}</b>
-        <small>${L("La mappa dell\u2019app: tocca una voce e ci vai","A map of the app: tap an item to go there")}</small>
+        <b>${L("La mappa dell\u2019app","Map of the app")}</b>
+        <small>${L("Tutto ci\u00f2 che puoi fare: tocca una voce e ci vai","Everything you can do: tap an item to go there")}</small>
       </div>
     </div>
     <div class="bcella hspesa ${daComprare.length?"accesa":"spenta"}" id="hSpesa">
