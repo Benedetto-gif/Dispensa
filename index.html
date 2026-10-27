@@ -1695,7 +1695,7 @@ const TUTTI_ING  = Object.values(CAT_DISP).flat();
 try{ if(localStorage.getItem("checucino.filigrana")==="1") document.body.setAttribute("data-filigrana","1"); }catch(e){}
 
 /* icona del tipo di piatto e bandiera del luogo, per le schede ricetta */
-const ICONA_PORTATA = {Antipasti:"\u{1F957}",Primi:"\u{1F35D}",Secondi:"\u{1F356}",Contorni:"\u{1F955}",Dolci:"\u{1F370}"};
+const ICONA_PORTATA = {Antipasti:"\u{1F957}",Primi:"\u{1F35D}",Secondi:"\u{1F969}",Contorni:"\u{1F955}",Dolci:"\u{1F370}"};
 const BANDIERA_PAESE = {
   "Francia":"\u{1F1EB}\u{1F1F7}","Spagna":"\u{1F1EA}\u{1F1F8}","Grecia":"\u{1F1EC}\u{1F1F7}","Turchia":"\u{1F1F9}\u{1F1F7}",
   "Portogallo":"\u{1F1F5}\u{1F1F9}","Regno Unito":"\u{1F1EC}\u{1F1E7}","Cina":"\u{1F1E8}\u{1F1F3}","Giappone":"\u{1F1EF}\u{1F1F5}",
@@ -1789,7 +1789,7 @@ const ICONE_SALUMI = [[/prosciutt|speck|lard|salam|mortadell|sopress|soppressat|
 function iconaAntipasto(r){
   const nome = String(r.n||"").toLowerCase();
   const n = ICONE_ANTIPASTO_NOME.find(([re])=>re.test(nome)); if(n) return n[1];
-  const tab = [[/fiori di zucca/,"\u{1F33C}"], ...ICONE_SALUMI, ...ICONE_PESCE, [new RegExp(PESCE_CHIAVI.join("|")),"\u{1F41F}"], [/fegat|milza|nervett|trippa/,"\u{1F356}"], ...ICONE_CARNE,
+  const tab = [[/fiori di zucca/,"\u{1F33C}"], ...ICONE_SALUMI, ...ICONE_PESCE, [new RegExp(PESCE_CHIAVI.join("|")),"\u{1F41F}"], [/fegat|milza|nervett|trippa/,"\u{1F969}"], ...ICONE_CARNE,
     [/\buov[oa]/,"\u{1F95A}"], ...ICONE_VERDE, ...ICONE_EXTRA];
   return cercaIcona(r, tab) || "\u{1F957}";
 }
@@ -1831,7 +1831,7 @@ function iconaBase(r){
   if(tipo === "uova") return "\u{1F95A}";
   const principali = r.ing.filter(i=>CARNE.has(i.k) && !CARNE_CONDIMENTO.has(i.k));
   if(eDiCarne(r) && principali.length){
-    return cercaIcona({ing: principali}, ICONE_CARNE) || cercaIcona(r, ICONE_CARNE) || "\u{1F356}";
+    return cercaIcona({ing: principali}, ICONE_CARNE) || cercaIcona(r, ICONE_CARNE) || "\u{1F969}";
   }
   /* senza carne vera (al massimo salumi da condimento): conta la forma del piatto o l'ingrediente principale */
   if(/cr[eê]pe/.test(nome)) return "\u{1F95E}";
@@ -2789,7 +2789,7 @@ function tappaProfilo(){
       <svg viewBox="0 0 28 28" fill="none"><path d="M6 20 Q14 8 22 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="20" r="2" fill="currentColor"/></svg>
       <b>Come mangi</b>
       <div class="chips" id="pStile" style="margin-top:8px">
-        ${["onnivoro","vegetariano","vegano"].map(v=>`<button class="chip ${p.stile===v?"on":""}" data-v="${v}" style="font-size:.78rem">${v}</button>`).join("")}
+        ${["onnivoro","vegetariano","vegano"].map(v=>`<button class="chip ${p.stile===v?"on":""}" data-v="${v}" style="font-size:.78rem">${ICONA_STILE[v]} ${v}</button>`).join("")}
       </div>
       <div class="mini" style="margin-top:10px;opacity:.9">${L("Regola religiosa","Religious rule")}</div>
       ${chipsRelig("pRelig", p.relig||"")}
@@ -2906,7 +2906,7 @@ function tappaOspiti(){
     <div class="corpo">
       <label class="campo"><span>Nome</span><input type="text" id="oNome" placeholder="Chi viene a cena"></label>
       <label class="campo"><span>Come mangia</span></label>
-      <div class="chips" id="oStile">${["onnivoro","vegetariano","vegano"].map((v,i)=>`<button class="chip ${i===0?"on":""}" data-v="${v}">${v}</button>`).join("")}</div>
+      <div class="chips" id="oStile">${["onnivoro","vegetariano","vegano"].map((v,i)=>`<button class="chip ${i===0?"on":""}" data-v="${v}">${ICONA_STILE[v]} ${v}</button>`).join("")}</div>
       <label class="campo"><span>${L("Regola religiosa","Religious rule")}</span></label>
       ${chipsRelig("oRelig", "")}
       <label class="campo"><span>Cosa non può mangiare</span></label>
@@ -3634,7 +3634,7 @@ function collegaOrologio(){
 }
 
 /* --- 5. ricette --- */
-const ICONA_STILE = {onnivoro:"\u{1F356}", vegetariano:"\u{1F95A}", vegano:"\u{1F331}"};
+const ICONA_STILE = {onnivoro:"\u{1F969}", vegetariano:"\u{1F95A}", vegano:"\u{1F331}"};
 let cambiaVoloAperto = false;   /* il riquadro portata/pasto parte chiuso; resta aperto mentre lo usi */
 function tappaRicette(){
   const lista = filtra();
