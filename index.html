@@ -225,6 +225,8 @@ body.barra-mappa #tornaMappa{display:none}
   background:var(--carta);box-shadow:0 0 0 2px var(--pc),0 3px 10px rgba(0,0,0,.2);max-width:100%}
 .pc-st b{font-size:1rem;line-height:1.15}
 .pc-st small{font-size:.78rem;opacity:.85;line-height:1.25}
+.pc-cart-t{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1;font-size:.8rem}
+.pc-cart-t small{font-weight:600;font-size:.7rem;opacity:.92;margin-top:2px}
 .pc-cart{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;padding:6px 10px 6px 8px;border-radius:10px;
   background:var(--pc);color:#fff;border:0;font:700 .8rem/1.1 Inter,system-ui,sans-serif;box-shadow:0 3px 10px rgba(0,0,0,.25);cursor:pointer;white-space:nowrap}
 .pc-cart span{font-size:1.15rem}
@@ -1315,7 +1317,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.12.2</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.12.3</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -9044,6 +9046,7 @@ function apriPercorso(){
   /* spunta solo quando la tappa e' fatta davvero: Conosciamoci con il nome, Per chi cucini scelto in questa sessione */
   const ok = [!!(S.profilo.fatto && String(S.profilo.nome || "").trim()), passoFatto1(), !!S.dispensaConfermata, false, false];   /* dispensa: solo dopo «La dispensa è a posto» (gli ingredienti di base ci sono gia' al primo avvio) */
   const nDisp = (S.dispensa || []).length, nMie = (S.mie || []).length;
+  const nMieV = (S.mie || []).filter(r=>!r.soloFoto).length, nTot = D.ricette.length + nMieV;
   /* "Continua": la prima tappa non ancora fatta fra Conosciamoci e Dispensa; se sono fatte, Cosa mangiamo?
      (Per chi cucini si sceglie ogni volta dentro il percorso, quindi non la conto) */
   const prossima = !ok[0] ? 0 : !ok[1] ? 1 : !ok[2] ? 2 : 3;   /* la tappa che "pulsa": la prossima da fare */
@@ -9056,10 +9059,11 @@ function apriPercorso(){
     {x:120, y:525, c:"#C0392B", e:"\u{1F468}‍\u{1F373}", t:L("Ai fornelli","At the stove"), d:L("la ricetta passo passo","the recipe step by step"), go:()=>{ sess.modo = sess.modo || "app"; vai(4); }}
   ];
   const CARTELLI = [
-    {x:262, y:66,  c:"#7A2E4A", e:"\u{1F4D6}", t:L("Le tue ricette","Your recipes") + (nMie ? " (" + nMie + ")" : ""), go:()=>apriMie()},
+    {x:262, y:66,  c:"#5B6670", e:"\u2699\uFE0F", t:"Extra", go:()=>setTimeout(()=>{ menuAperto = true; disegnaMenu(); }, 0)},   /* dopo il clic, se no il clic stesso lo richiude */
     {x:92,  y:182, c:"#2F6FA3", e:"\u{1F393}", t:L("Impariamo","Let’s learn"), go:()=>apriScuola()},
     {x:268, y:297, c:"#157159", e:"\u{1F6D2}", t:L("La spesa","Shopping"), go:()=>apriSpesa()},
-    {x:92,  y:410, c:"#5B6670", e:"\u2699\uFE0F", t:"Extra", go:()=>setTimeout(()=>{ menuAperto = true; disegnaMenu(); }, 0)},   /* dopo il clic, se no il clic stesso lo richiude */
+    /* le ricette stanno accanto a "Cosa mangiamo?": tue + archivio = totale */
+    {x:92,  y:410, c:"#7A2E4A", e:"\u{1F4D6}", t:`<span class="pc-cart-t">${L("Le tue ricette","Your recipes")}<small>${L(`${nMieV} tue \u00b7 ${nTot} in tutto`, `${nMieV} yours \u00b7 ${nTot} in all`)}</small></span>`, go:()=>apriMie()},
     {x:285, y:525, c:"#B07D1A", e:"\u{1F3C1}", t:L("Buon appetito!","Enjoy!"), go:null}
   ];
   /* la strada: curve morbide che passano per le tappe */
@@ -9236,11 +9240,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v284".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v285".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.12.2";
+var NOME_VERSIONE = "2.12.3";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }

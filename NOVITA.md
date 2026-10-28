@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.12.3 | v285 | 28/10/2026 | Mappa: «Le tue ricette» accanto a «Cosa mangiamo?» con il conteggio (tue e totali); Extra spostato in alto |
 | 2.12.2 | v284 | 28/10/2026 | Al primo avvio gli ingredienti di base vanno nella lista della spesa invece di essere dati per presenti |
 | 2.12.1 | v283 | 28/10/2026 | Spunte della mappa solo a tappa fatta davvero; ogni tappa finita torna alla mappa (niente più vecchio percorso) |
 | 2.12.0 | v282 | 28/10/2026 | Numero di versione ufficiale (questo registro); aprendo una ricetta si chiudono le altre |
