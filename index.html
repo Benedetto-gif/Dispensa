@@ -156,6 +156,8 @@ body.barra-mappa #tornaMappa{display:none}
   padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 24px);transition:opacity .35s ease}
 #percorso.via{opacity:0;pointer-events:none}
 .pc-in{max-width:480px;margin:0 auto}
+.pc-ver{display:block;margin:-6px 0 6px auto;padding:5px 10px;border:1px solid currentColor;border-radius:999px;background:none;color:inherit;opacity:.75;font:700 .75rem/1 Inter,system-ui,sans-serif;cursor:pointer}
+.pc-ver.nuova{opacity:1;background:#2E9D5B;border-color:#2E9D5B;color:#fff}
 .pc-tit{font-family:Newsreader,Georgia,serif;font-size:clamp(1.6rem,7vw,2.1rem);font-weight:600;margin:0;text-align:center;letter-spacing:-.01em}
 .pc-sub{text-align:center;margin:2px 0 4px;opacity:.85;font-size:.9rem}
 .pc-mappa{position:relative;width:100%;aspect-ratio:360/625;margin-top:4px}
@@ -1263,7 +1265,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v274</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v275</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -8839,6 +8841,7 @@ function apriPercorso(){
   const pct = (v, tot)=>(v / tot * 100).toFixed(2) + "%";
   el = document.createElement("div"); el.id = "percorso"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", L("Il percorso dell’app","The app’s path"));
   el.innerHTML = `<div class="pc-in" data-no-tr>
+    <button type="button" class="pc-ver" id="pcVer" data-no-tr>${testoVerMappa()}</button>
     <h1 class="pc-tit">${S.profilo.nome ? L("Ciao ", "Hi ") + esc(S.profilo.nome) + "!" : L("Che cucino?","What’s cooking?")}</h1>
     <p class="pc-sub">${L("Tocca una tappa per andarci. Quella che pulsa \u00e8 la prossima da fare.","Tap a stop to go there. The pulsing one is next.")}</p>
     <div class="pc-mappa">
@@ -8861,6 +8864,7 @@ function apriPercorso(){
   /* partendo da una tappa o da un cartello resta un tasto per tornare alla mappa
      (e il tasto Indietro del telefono riporta qui); con "Entra nell'app" no */
   const vaiA = (f, ritorno)=>{ chiudiP(); if(ritorno !== false) attivaRitornoMappa(); f(); };
+  el.querySelector("#pcVer").onclick = e=>tastoVerMappa(e.currentTarget);
   el.querySelectorAll("[data-pc-t]").forEach(b=>b.onclick = ()=>{ passoIngresso = Math.min(+b.dataset.pcT, 4); vaiA(TAPPE[+b.dataset.pcT].go); });
   /* i cartelli aprono pannelli sopra la mappa: chiudendoli si torna alla mappa, non alla pagina sotto */
   el.querySelectorAll("[data-pc-c]").forEach(b=>b.onclick = ()=>{ vaiA(CARTELLI[+b.dataset.pcC].go); aperturaDaMappa = true; });
@@ -8882,6 +8886,23 @@ function animTappa(i, e){
     `<span class="pa pa-fornelli"><span class="pa-cuoco">\u{1F468}‍\u{1F373}</span><span class="pa-fumo"><i></i><i></i><i></i></span></span>`
   ];
   return scene[i] || e;
+}
+/* ----- la versione sulla mappa: toccandola si aggiorna, se online ce n'e' una piu' nuova ----- */
+function testoVerMappa(){
+  const mia = versioneMia();
+  if(verOnlineNota && numVer(verOnlineNota) > numVer(mia)) return `\u{1F504} ${mia} \u2192 ${verOnlineNota}: ${L("tocca per aggiornare","tap to update")}`;
+  if(verOnlineNota) return `\u2705 ${mia}`;
+  return mia;
+}
+async function tastoVerMappa(b){
+  b.disabled = true; b.textContent = "\u23F3 " + L("Controllo\u2026","Checking\u2026");
+  let online = "";
+  try{ online = await versioneOnline(); }catch(e){}
+  const mia = versioneMia();
+  if(!online){ b.textContent = L("Serve internet per controllare","Internet needed to check"); }
+  else if(numVer(online) > numVer(mia)){ b.disabled = false; aggiornaApp(b); return; }
+  else b.textContent = `\u2705 ${L("Hai l\u2019ultima versione","You have the latest version")} ${mia}`;
+  setTimeout(()=>{ b.disabled = false; b.textContent = testoVerMappa(); }, 3000);
 }
 /* ----- ritorno alla mappa ----- */
 /* pannello o menu aperto da un cartello della mappa: quando si chiude (e non se ne apre un altro al suo posto)
@@ -8983,10 +9004,10 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-const VERSIONE_APP = "checucino-v274".replace("checucino-", "");
-function versioneMia(){ return VERSIONE_APP; }
-let verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
-const numVer = x=>parseInt(String(x).replace(/\D/g, "")) || 0;
+var VERSIONE_APP = "checucino-v275".replace("checucino-", "");
+function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
+var verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
+function numVer(x){ return parseInt(String(x).replace(/\D/g, "")) || 0; }
 function testoAggiorna(){
   const mia = versioneMia();
   if(verOnlineNota && numVer(verOnlineNota) <= numVer(mia)) return `\u2705 ${L("Hai l\u2019ultima versione","You have the latest version")} ${mia}`;
@@ -9032,6 +9053,7 @@ window.addEventListener("load", ()=>{
       const online = await versioneOnline(), mia = await versioneInstallata();
       const n = x=>parseInt(String(x).replace(/\D/g, "")) || 0;
       if(menuAperto) disegnaMenu();
+      { const v = document.getElementById("pcVer"); if(v && !v.disabled) v.textContent = testoVerMappa(); v && v.classList.toggle("nuova", numVer(online) > numVer(mia)); }
       if(!online || n(online) <= n(mia) || document.getElementById("avvisoAgg")) return;
       const d = document.createElement("div");
       d.id = "avvisoAgg";
