@@ -1315,7 +1315,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.12.0</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.12.1</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2904,7 +2904,6 @@ const pulito = s => esc(String(s).replace(/<[^>]*>/g,""));
 
 function vai(n){ lasciaBox();
   /* superata la pagina "Per chi cucini?" (da solo o con ospiti) la tappa 2 della mappa risulta fatta */
-  if(passo === 1 && n > 1 && !S.ospitiScelti){ S.ospitiScelti = true; salva(); }
   passo = n; window.scrollTo({top:0}); disegna(); }
 function disegna(){
   const home = passo === 5;
@@ -2917,10 +2916,6 @@ function disegna(){
 }
 function pulsanti(indietro, avanti, fnAvanti, fnIndietro){
   barra.innerHTML = "";
-  /* arrivati qui da una tappa della mappa: "Indietro" riporta alla mappa, non alla pagina precedente del vecchio percorso */
-  if(typeof ritornoMappa !== "undefined" && ritornoMappa && passo === passoIngresso && (indietro === "Indietro" || !indietro)){
-    indietro = "\u{1F9ED} Mappa"; fnIndietro = ()=>tornaAllaMappa();
-  }
   document.body.classList.toggle("barra-mappa", !!(indietro && /Mappa/.test(indietro)));
   if(indietro){ const b=document.createElement("button"); b.className="btn ghost"; b.textContent=indietro; b.onclick=fnIndietro; barra.append(b); }
   if(avanti){ const a=document.createElement("button"); a.className="btn"; a.textContent=avanti; a.onclick=fnAvanti; barra.append(a); }
@@ -2998,7 +2993,8 @@ function tappaProfilo(){
 
   salutoVocale(p.nome);
 
-  pulsanti(null, "Avanti", ()=>{ S.profilo.fatto=true; sess.stile=S.profilo.stile; salva(); vai(1); });
+  /* finita una tappa si torna alla mappa, dove pulsa la prossima */
+  pulsanti("\u{1F9ED} Mappa", "Avanti", ()=>{ S.profilo.fatto=true; sess.stile=S.profilo.stile; salva(); tornaAllaMappa(); }, ()=>tornaAllaMappa());
 }
 
 /* saluto vocale femminile nella pagina Conosciamoci */
@@ -3042,11 +3038,11 @@ function tappaOspiti(){
     </div>`;
     barra.innerHTML = "";
     const bInd = document.createElement("button");
-    bInd.className = "btn ghost"; bInd.textContent = "Indietro"; bInd.onclick = ()=>vai(0);
+    bInd.className = "btn ghost"; bInd.textContent = "\u{1F9ED} Mappa"; bInd.onclick = ()=>tornaAllaMappa(); document.body.classList.add("barra-mappa");
     barra.append(bInd);
     app.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{
       sess.modalitaTavola = b.dataset.mt;
-      if(sess.modalitaTavola === "solo"){ sess.ospiti = []; vai(2); }
+      if(sess.modalitaTavola === "solo"){ sess.ospiti = []; sess.tavolaFatta = true; tornaAllaMappa(); }
       else{ tappaOspiti(); }
     });
     return;
@@ -3107,7 +3103,7 @@ function tappaOspiti(){
     tappaOspiti();
   };
 
-  pulsanti("Indietro", sess.ospiti.length?"Avanti":"Cucino solo per me", ()=>vai(2), ()=>{ sess.modalitaTavola=null; tappaOspiti(); });
+  pulsanti("Indietro", sess.ospiti.length?"Avanti":"Cucino solo per me", ()=>{ if(!sess.ospiti.length) sess.modalitaTavola = "solo"; sess.tavolaFatta = true; tornaAllaMappa(); }, ()=>{ sess.modalitaTavola=null; tappaOspiti(); });
 }
 
 function statoCercaDisp(){
@@ -3415,7 +3411,7 @@ function tappaDispensa(){
   collegaRepartiDisp();
   const bsc = document.getElementById("apriScad"); if(bsc) bsc.onclick = ()=>apriScadenze();
 
-  pulsanti("Indietro", "La dispensa è a posto", ()=>vai(3), ()=>vai(1));
+  pulsanti("\u{1F9ED} Mappa", "La dispensa è a posto", ()=>{ S.dispensaConfermata = true; salva(); tornaAllaMappa(); }, ()=>tornaAllaMappa());
 }
 
 /* --- 4. cosa ti va --- */
@@ -3654,7 +3650,7 @@ function tappaVoglia(){
     } else if(corpo) corpo.scrollTop = scorrPrima;
   }
 
-  pulsanti("Indietro", "Vedi le ricette", ()=>vai(4), ()=>vai(2));
+  pulsanti("\u{1F9ED} Mappa", "Vedi le ricette", ()=>vai(4), ()=>tornaAllaMappa());
 }
 
 /* ===========================================================
@@ -9044,11 +9040,12 @@ function apriPercorso(){
   spegniRitornoMappa();
   let el = document.getElementById("percorso");
   if(el) el.remove();
-  const ok = [S.profilo.fatto, passoFatto1(), (S.dispensa || []).length > 0, false, false];
+  /* spunta solo quando la tappa e' fatta davvero: Conosciamoci con il nome, Per chi cucini scelto in questa sessione */
+  const ok = [!!(S.profilo.fatto && String(S.profilo.nome || "").trim()), passoFatto1(), !!S.dispensaConfermata, false, false];   /* dispensa: solo dopo «La dispensa è a posto» (gli ingredienti di base ci sono gia' al primo avvio) */
   const nDisp = (S.dispensa || []).length, nMie = (S.mie || []).length;
   /* "Continua": la prima tappa non ancora fatta fra Conosciamoci e Dispensa; se sono fatte, Cosa mangiamo?
      (Per chi cucini si sceglie ogni volta dentro il percorso, quindi non la conto) */
-  const prossima = !ok[0] ? 0 : !ok[2] ? 2 : 3;   /* la tappa che "pulsa": la prossima da fare */
+  const prossima = !ok[0] ? 0 : !ok[1] ? 1 : !ok[2] ? 2 : 3;   /* la tappa che "pulsa": la prossima da fare */
   /* posizioni in un riquadro 360 x 625 */
   const TAPPE = [
     {x:95,  y:57,  c:"#2E8B57", e:"\u{1F44B}", t:L("Conosciamoci","Let’s get acquainted"), d:L("chi sei, cosa non mangi","who you are, what you don’t eat"), go:()=>vai(0)},
@@ -9178,7 +9175,8 @@ window.addEventListener("popstate", ()=>{
   tornaAllaMappa();
 });
 /* la tappa 2 conta come fatta quando l'utente ha gia' scelto almeno una volta per chi cucina */
-function passoFatto1(){ return !!(S.ospitiScelti || (S.ospitiSalvati || []).length); }
+/* per chi cucini si sceglie a ogni pasto: la spunta vale per la sessione in corso */
+function passoFatto1(){ return !!(sess && sess.tavolaFatta); }
 
 /* ===========================================================
    Schermata d'apertura e service worker
@@ -9237,11 +9235,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v282".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v283".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.12.0";
+var NOME_VERSIONE = "2.12.1";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }

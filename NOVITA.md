@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.12.1 | v283 | 28/10/2026 | Spunte della mappa solo a tappa fatta davvero; ogni tappa finita torna alla mappa (niente più vecchio percorso) |
 | 2.12.0 | v282 | 28/10/2026 | Numero di versione ufficiale (questo registro); aprendo una ricetta si chiudono le altre |
 | 2.11.1 | v280 | 28/10/2026 | Foto da Wikipedia: controllo anche di portata e ingredienti (niente gelato per la stracciatella romana) |
 | 2.11.0 | v279 | 28/10/2026 | Foto del piatto nelle ricette: la tua o una libera da Wikipedia, con autore e licenza |
