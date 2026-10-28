@@ -5166,12 +5166,38 @@ function importaDati(){
       try{
         const g = JSON.parse(fr.result), d = g.dati || g;
         if(!d || typeof d !== "object" || !("profilo" in d)) throw new Error("formato");
-        S = Object.assign(JSON.parse(JSON.stringify(VUOTO)), d);
-        (S.mie || []).forEach(preparaRicetta);
-        salva(); sess = nuovaSessione(); vai(0);
         const ff = g.foto && typeof g.foto === "object" ? Object.entries(g.foto) : [];
+        let msg;
+        if(!S.profilo || !S.profilo.fatto){
+          /* telefono nuovo o azzerato: riprendo tutto dal salvataggio */
+          S = Object.assign(JSON.parse(JSON.stringify(VUOTO)), d);
+          (S.mie || []).forEach(preparaRicetta);
+          msg = L(`Dati ripristinati: ${(S.mie || []).length} tue ricette.`, `Data restored: ${(S.mie || []).length} of your recipes.`);
+        } else {
+          /* telefono gia' in uso: UNISCO, non sostituisco. Le ricette e le schede gia' presenti restano
+             come sono (vince la versione del telefono); dal salvataggio aggiungo solo quelle che mancano. */
+          const nomeK = r=>String(nomeR(r) || r.n || "").toLowerCase().replace(/\s+/g, " ").trim();
+          S.mie = S.mie || [];
+          const ids = new Set(S.mie.map(r=>r.id)), nomi = new Set(S.mie.filter(r=>!r.soloFoto).map(nomeK).filter(Boolean));
+          let agg = 0, gia = 0;
+          (d.mie || []).forEach(r=>{
+            if(!r || ids.has(r.id) || (!r.soloFoto && nomeK(r) && nomi.has(nomeK(r)))){ gia++; return; }
+            preparaRicetta(r); S.mie.push(r); ids.add(r.id); if(!r.soloFoto) nomi.add(nomeK(r)); agg++;
+          });
+          S.schedeMie = S.schedeMie || [];
+          const idS = new Set(S.schedeMie.map(x=>x.id)); let aggS = 0;
+          (d.schedeMie || []).forEach(x=>{ if(x && !idS.has(x.id)){ S.schedeMie.push(x); idS.add(x.id); aggS++; } });
+          S.ingMiei = Object.assign({}, d.ingMiei || {}, S.ingMiei || {});
+          S.preferite = Array.from(new Set((S.preferite || []).concat(d.preferite || [])));
+          if(typeof d.ricetteNelSalvataggio === "number" && !S.ultimoSalvataggio){ S.ultimoSalvataggio = d.ultimoSalvataggio; S.ricetteNelSalvataggio = d.ricetteNelSalvataggio; }
+          msg = L(`Unite al telefono: ${agg} ${agg === 1 ? "ricetta aggiunta" : "ricette aggiunte"}`, `Merged into the phone: ${agg} recipe${agg === 1 ? "" : "s"} added`)
+            + (gia ? L(`, ${gia} gi\u00e0 presenti (lasciate com\u2019erano)`, `, ${gia} already there (left as they were)`) : "")
+            + (aggS ? L(`, ${aggS} schede o lezioni aggiunte`, `, ${aggS} cards or lessons added`) : "") + "."
+            + "\n" + L("Dispensa, preferenze e il resto del telefono non sono stati toccati.", "Pantry, settings and everything else on the phone were left untouched.");
+        }
+        salva(); sess = nuovaSessione(); vai(0);
         Promise.all(ff.map(([id, u])=>fetch(u).then(x=>x.blob()).then(bl=>FotoDB.put(id, bl)).catch(()=>{})))
-          .then(()=>alert(ff.length ? L(`Dati reimportati, con ${ff.length} foto di ricette.`, `Data re-imported, with ${ff.length} recipe photos.`) : "Dati reimportati."));
+          .then(()=>alert(msg + (ff.length ? "\n" + L(`Con ${ff.length} foto di ricette.`, `With ${ff.length} recipe photos.`) : "")));
       }catch(err){ alert("Questo file non sembra un salvataggio di Che cucino?"); }
     };
     fr.readAsText(f);
@@ -8212,7 +8238,7 @@ function disegnaMenu(){
       ${htmlContaRicette()}
       <button data-aggiorna>\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L("hai la","you have")} ${versioneMia()})</span></button>
       <button id="mSalva">Salva i miei dati (nel cloud o in un file)</button>
-      <button id="mCarica">${L("Importa i dati da un file","Import data from a file")}</button>
+      <button id="mCarica">${L("Importa ricette da un salvataggio (le unisce)","Import recipes from a save (merges them)")}</button>
       ${haBackupAzzera() ? `<button id="mRecupera">${L("\u21A9\uFE0F Recupera i dati azzerati","\u21A9\uFE0F Restore the erased data")}</button>` : ""}
       <button id="mReset" class="rischio">Azzera tutti i dati</button>
     </div></div>`;
