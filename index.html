@@ -852,7 +852,7 @@ header.top{position:sticky;top:0;z-index:30;background:var(--carta);border-botto
 .menu-btn{background:var(--superficie);border:1px solid var(--linea);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:.88rem;font-weight:500}
 /* il menu Extra e' agganciato allo schermo (fixed), non alla pagina: si apre sempre sotto l'intestazione,
    anche se la pagina e' scorsa in basso, e scorre per conto suo */
-.menu-pan{position:fixed;right:max(12px,calc((100vw - 620px)/2));top:var(--menu-top,60px);z-index:60;width:min(300px,calc(100vw - 24px));
+.menu-pan{position:fixed;right:max(12px,calc((100vw - 620px)/2));top:var(--menu-top,60px);z-index:75;width:min(300px,calc(100vw - 24px));
   background:var(--superficie);border:1px solid var(--linea);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.22);
   overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;max-height:calc(100vh - var(--menu-top,60px) - 12px);max-height:calc(100dvh - var(--menu-top,60px) - 12px);padding:10px}
 .menu-box{border-radius:12px;padding:9px 10px 8px;margin:0 0 8px}
@@ -8292,38 +8292,26 @@ function disegnaMenu(){
   if(!menuAperto){ menuPan.innerHTML=""; return; }
   { const h = document.querySelector("header.top"), r = h ? h.getBoundingClientRect() : null;
     document.documentElement.style.setProperty("--menu-top", Math.max(8, Math.round(r ? r.bottom + 6 : 60)) + "px"); }
-  const pronta = S.dispensa.length > 0;
   /* ricette mie gia' scritte (non le sole foto a mano, che vanno prima trascritte) e non ancora convalidate */
   const daConv = (S.mie || []).filter(x=>!x.validata && !x.soloFoto).length;
   menuPan.innerHTML = `<div class="menu-pan">
-    <div class="menu-box mb-teal">
-      <div class="sez">Scorciatoia</div>
-      <button id="mSalta" ${pronta?"":"disabled"}>${pronta?"Vai diretto alle ricette fattibili":"Prima carica la dispensa"}</button>
-      <button id="mConvalida" ${daConv?"":"disabled"}>${daConv ? L(`\u2705 Convalida tutte le ricette da controllare (${daConv})`,`\u2705 Validate all recipes to check (${daConv})`) : L("\u2705 Nessuna ricetta da convalidare","\u2705 No recipes to validate")}</button>
-    </div>
     <div class="menu-box mb-blu">
       <div class="sez">Strumenti</div>
-      <button data-go="0">Le mie preferenze</button>
-      <button data-go="1">Chi c'è a tavola</button>
-      <button data-go="2">La dispensa</button>
-      <button data-go="3">Cosa cucinare</button>
-      <button id="mImpostazioni">Aspetto</button>
-      <button id="mRadio">${L("Cerca altre radio","Find more radio stations")}${(S.radioMie||[]).length?` (${L("ne hai","you have")} ${S.radioMie.length})`:""}</button>
-      <button id="mNuova">Ricomincia il percorso</button>
+      <button id="mConvalida" ${daConv?"":"disabled"}>${daConv ? L(`\u2705 Convalida le ricette da controllare (${daConv})`,`\u2705 Validate the recipes to check (${daConv})`) : L("\u2705 Nessuna ricetta da convalidare","\u2705 No recipes to validate")}</button>
+      <button id="mImpostazioni">\u{1F3A8} ${L("Aspetto","Appearance")}</button>
+      <button id="mRadio">\u{1F4FB} ${L("Cerca altre radio","Find more radio stations")}${(S.radioMie||[]).length?` (${L("ne hai","you have")} ${S.radioMie.length})`:""}</button>
+      <button id="mNuova">\u{1F9ED} ${L("Ricomincia il percorso","Start the path again")}</button>
     </div>
     <div class="menu-box mb-bordeaux">
       <div class="sez">${L("Salva / azzera","Save / reset")}</div>
       ${htmlContaRicette()}
       <button data-aggiorna>\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L("hai la","you have")} ${versioneMia()})</span></button>
-      <button id="mSalva">Salva i miei dati (nel cloud o in un file)</button>
+      <button id="mSalva">\u{1F4BE} ${L("Salva i miei dati (nel cloud o in un file)","Save my data (to the cloud or a file)")}</button>
       <button id="mCondRic">\u{1F4E4} ${L("Condividi le mie ricette","Share my recipes")} <span class="mini">(${L("solo le ricette, niente dati personali","recipes only, no personal data")})</span></button>
-      <button id="mCarica">${L("Importa ricette (da un salvataggio o da un amico: le unisce)","Import recipes (from a save or a friend: merges them)")}</button>
+      <button id="mCarica">\u{1F4E5} ${L("Importa ricette (da un salvataggio o da un amico: le unisce)","Import recipes (from a save or a friend: merges them)")}</button>
       ${haBackupAzzera() ? `<button id="mRecupera">${L("\u21A9\uFE0F Recupera i dati azzerati","\u21A9\uFE0F Restore the erased data")}</button>` : ""}
-      <button id="mReset" class="rischio">Azzera tutti i dati</button>
+      <button id="mReset" class="rischio">\u{1F5D1}\uFE0F ${L("Azzera tutti i dati","Erase all data")}</button>
     </div></div>`;
-  menuPan.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{ menuAperto=false; disegnaMenu(); vai(+b.dataset.go); });
-  if(pronta) document.getElementById("mSalta").onclick=()=>{
-    sess = nuovaSessione(); sess.modo="app"; menuAperto=false; disegnaMenu(); vai(4); };
   document.getElementById("mConvalida").onclick=()=>{
     const da = (S.mie || []).filter(x=>!x.validata && !x.soloFoto);
     if(!da.length) return;
@@ -8340,7 +8328,8 @@ function disegnaMenu(){
   document.getElementById("mSalva").onclick=()=>{ menuAperto=false; disegnaMenu(); esportaDati(); };
   document.getElementById("mCarica").onclick=()=>{ menuAperto=false; disegnaMenu(); importaDati(); };
   document.getElementById("mCondRic").onclick=()=>{ menuAperto=false; disegnaMenu(); condividiRicette(); };
-  document.getElementById("mNuova").onclick=()=>{ sess = nuovaSessione(); menuAperto=false; disegnaMenu(); vai(S.profilo.fatto ? 5 : 0); };
+  /* ricomincia dalla mappa: nuova sessione (ospiti e scelte azzerati), poi la strada dall'inizio */
+  document.getElementById("mNuova").onclick=()=>{ sess = nuovaSessione(); menuAperto=false; disegnaMenu(); vai(S.profilo.fatto ? 5 : 0); apriPercorso(); };
   document.getElementById("mReset").onclick=()=>{ menuAperto=false; disegnaMenu(); apriAzzera(); };
   const rec = document.getElementById("mRecupera");
   if(rec) rec.onclick=()=>{ menuAperto=false; disegnaMenu(); recuperaAzzera(); };
