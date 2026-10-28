@@ -142,6 +142,7 @@ try{ document.documentElement.classList.add("avvio"); var mt = document.getEleme
 .pc-cart span{font-size:1.15rem}
 .pc-entra{position:sticky;bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:2;display:block;width:100%;margin:10px 0 0;padding:16px;border:0;border-radius:16px;background:#2E9D5B;color:#fff;
   font:800 1.1rem/1.2 Inter,system-ui,sans-serif;box-shadow:0 6px 16px rgba(0,0,0,.25);cursor:pointer}
+.pc-home{display:block;margin:8px auto 0;background:none;border:0;color:inherit;text-decoration:underline;font:600 .95rem/1.2 Inter,system-ui,sans-serif;opacity:.9;cursor:pointer;padding:6px}
 .pc-piede{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;font-size:.85rem;opacity:.9}
 .pc-piede button{background:none;border:0;color:inherit;text-decoration:underline;font:inherit;cursor:pointer;padding:4px 0}
 .pc-piede label{display:flex;align-items:center;gap:6px}
@@ -8778,6 +8779,9 @@ function apriPercorso(){
   if(el) el.remove();
   const ok = [S.profilo.fatto, passoFatto1(), (S.dispensa || []).length > 0, false, false];
   const nDisp = (S.dispensa || []).length, nMie = (S.mie || []).length;
+  /* "Continua": la prima tappa non ancora fatta fra Conosciamoci e Dispensa; se sono fatte, Cosa mangiamo?
+     (Per chi cucini si sceglie ogni volta dentro il percorso, quindi non la conto) */
+  const prossima = !ok[0] ? 0 : !ok[2] ? 2 : 3;
   /* posizioni in un riquadro 360 x 625 */
   const TAPPE = [
     {x:95,  y:57,  c:"#2E8B57", e:"\u{1F44B}", t:L("Conosciamoci","Let’s get acquainted"), d:L("chi sei, cosa non mangi","who you are, what you don’t eat"), go:()=>vai(0)},
@@ -8818,7 +8822,9 @@ function apriPercorso(){
         <span class="pc-cerchio">${t.e}<span class="pc-num">${i + 1}</span>${ok[i] ? `<span class="pc-ok">✓</span>` : ""}</span>
         <span class="pc-et"><b>${t.t}</b><small>${t.d}</small></span></button>`).join("")}
     </div>
-    <button type="button" class="pc-entra" id="pcEntra">${S.profilo.fatto ? L("Entra nell’app →","Enter the app →") : L("Cominciamo: 1. Conosciamoci →","Let’s start: 1. Get acquainted →")}</button>
+    <button type="button" class="pc-entra" id="pcEntra">${!S.profilo.fatto ? L("Cominciamo: 1. Conosciamoci \u2192","Let\u2019s start: 1. Get acquainted \u2192")
+        : L(`Continua: ${prossima + 1}. ${TAPPE[prossima].t} \u2192`, `Continue: ${prossima + 1}. ${TAPPE[prossima].t} \u2192`)}</button>
+    ${S.profilo.fatto ? `<button type="button" class="pc-home" id="pcHome">${L("oppure vai alla prima pagina","or go to the home page")}</button>` : ""}
     <div class="pc-piede"><label><input type="checkbox" id="pcAvvio" ${S.percorsoAvvio !== false ? "checked" : ""}> ${L("Mostra all’avvio","Show at start")}</label>
       <button type="button" id="pcLista">${L("Elenco di tutte le funzioni","List of all features")}</button></div>
   </div>`;
@@ -8829,7 +8835,8 @@ function apriPercorso(){
   const vaiA = (f, ritorno)=>{ chiudiP(); f(); if(ritorno !== false) attivaRitornoMappa(); };
   el.querySelectorAll("[data-pc-t]").forEach(b=>b.onclick = ()=>vaiA(TAPPE[+b.dataset.pcT].go));
   el.querySelectorAll("[data-pc-c]").forEach(b=>b.onclick = ()=>vaiA(CARTELLI[+b.dataset.pcC].go));
-  el.querySelector("#pcEntra").onclick = ()=>vaiA(()=>vai(S.profilo.fatto ? 5 : 0), false);
+  el.querySelector("#pcEntra").onclick = ()=>vaiA(TAPPE[S.profilo.fatto ? prossima : 0].go);
+  { const h = el.querySelector("#pcHome"); if(h) h.onclick = ()=>vaiA(()=>vai(5), false); }
   el.querySelector("#pcLista").onclick = ()=>vaiA(()=>apriTutto());
   el.querySelector("#pcAvvio").onchange = e=>{ S.percorsoAvvio = e.target.checked; salva(); };
 }
