@@ -1228,7 +1228,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v179</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v270</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -8305,7 +8305,7 @@ function disegnaMenu(){
     <div class="menu-box mb-bordeaux">
       <div class="sez">${L("Salva / Unisci / Azzera","Save / Merge / Reset")}</div>
       ${htmlContaRicette()}
-      <button data-aggiorna>\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L("hai la","you have")} ${versioneMia()})</span></button>
+      <button data-aggiorna>${testoAggiorna()}</button>
       <button id="mSalva">\u{1F4BE} ${L("Salva i miei dati (nel cloud o in un file)","Save my data (to the cloud or a file)")}</button>
       <button id="mCondRic">\u{1F4E4} ${L("Condividi le mie ricette","Share my recipes")} <span class="mini">(${L("solo le ricette, niente dati personali","recipes only, no personal data")})</span></button>
       <button id="mCarica">\u{1F4E5} ${L("Importa ricette (da un salvataggio o da un amico: le unisce)","Import recipes (from a save or a friend: merges them)")}</button>
@@ -8910,18 +8910,23 @@ function scriviVersione(v){
   if(sp) sp.textContent = v;
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
-function versioneMia(){ return ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
-/* la versione vera e' quella della cache installata dal service worker: l'etichetta si allinea da sola */
-async function versioneInstallata(){
-  try{
-    const n = (await caches.keys()).map(k=>(k.match(/^checucino-v(\d+)$/)||[])[1]).filter(Boolean).map(Number);
-    if(n.length){ const v = "v" + Math.max(...n); scriviVersione(v); return v; }
-  }catch(e){}
-  return versioneMia();
+/* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
+const VERSIONE_APP = "checucino-v270".replace("checucino-", "");
+function versioneMia(){ return VERSIONE_APP; }
+let verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
+const numVer = x=>parseInt(String(x).replace(/\D/g, "")) || 0;
+function testoAggiorna(){
+  const mia = versioneMia();
+  if(verOnlineNota && numVer(verOnlineNota) <= numVer(mia)) return `\u2705 ${L("Hai l\u2019ultima versione","You have the latest version")} ${mia}`;
+  if(verOnlineNota) return `\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L(`c\u2019\u00e8 la ${verOnlineNota}, hai la ${mia}`, `${verOnlineNota} is out, you have ${mia}`)})</span>`;
+  return `\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L("hai la","you have")} ${mia})</span>`;
 }
+/* la versione vera e' quella della cache installata dal service worker: l'etichetta si allinea da sola */
+async function versioneInstallata(){ const v = versioneMia(); scriviVersione(v); return v; }
 async function versioneOnline(){
   const t = await (await fetch("service-worker.js?n=" + Date.now(), {cache:"no-store"})).text();
   const m = t.match(/checucino-v(\d+)/);
+  if(m) verOnlineNota = "v" + m[1];
   return m ? "v" + m[1] : "";
 }
 async function aggiornaApp(btn){
@@ -8954,6 +8959,7 @@ window.addEventListener("load", ()=>{
     try{
       const online = await versioneOnline(), mia = await versioneInstallata();
       const n = x=>parseInt(String(x).replace(/\D/g, "")) || 0;
+      if(menuAperto) disegnaMenu();
       if(!online || n(online) <= n(mia) || document.getElementById("avvisoAgg")) return;
       const d = document.createElement("div");
       d.id = "avvisoAgg";
