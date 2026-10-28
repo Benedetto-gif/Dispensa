@@ -143,18 +143,18 @@ try{ document.documentElement.classList.add("avvio"); var mt = document.getEleme
 .pc-entra{position:sticky;bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:2;display:block;width:100%;margin:10px 0 0;padding:16px;border:0;border-radius:16px;background:#2E9D5B;color:#fff;
   font:800 1.1rem/1.2 Inter,system-ui,sans-serif;box-shadow:0 6px 16px rgba(0,0,0,.25);cursor:pointer}
 .pc-uva{display:flex;flex-direction:column;align-items:center;margin:4px auto 0;padding-bottom:6px}
-.pc-raspo{width:110px;height:42px;margin-bottom:-6px}
-.pc-acini{display:flex;justify-content:center;gap:2px}
-.pc-acino{position:relative;width:clamp(92px,27vw,108px);aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;color:#fff;
+.pc-raspo{width:120px;height:46px;margin-bottom:-8px}
+.pc-acini{display:flex;justify-content:center;gap:4px}
+.pc-acino{position:relative;width:clamp(124px,36vw,146px);aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;color:#fff;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px;text-align:center;
-  font:800 .8rem/1.15 Inter,system-ui,sans-serif;
+  font:800 1rem/1.15 Inter,system-ui,sans-serif;
   background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.45) 0 8%,transparent 26%),radial-gradient(circle at 50% 60%,var(--ac),color-mix(in srgb,var(--ac) 70%,#000));
   box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 -6px 12px rgba(0,0,0,.18)}
-.pc-acino span{font-size:1.5rem;line-height:1}
+.pc-acino span{font-size:2rem;line-height:1}
 .pc-acino i{font-style:normal;font-weight:600;opacity:.9;font-size:.72rem}
 .pc-acino:active{transform:scale(.94)}
-.pc-grande{width:clamp(138px,40vw,160px);margin-top:-14px;font-size:.98rem;z-index:1}
-.pc-grande span{font-size:1.8rem}
+.pc-grande{width:clamp(168px,48vw,196px);margin-top:-18px;font-size:1.12rem;z-index:1}
+.pc-grande span{font-size:2.3rem}
 .pc-home{display:block;margin:8px auto 0;background:none;border:0;color:inherit;text-decoration:underline;font:600 .95rem/1.2 Inter,system-ui,sans-serif;opacity:.9;cursor:pointer;padding:6px}
 .pc-piede{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;font-size:.85rem;opacity:.9}
 .pc-piede button{background:none;border:0;color:inherit;text-decoration:underline;font:inherit;cursor:pointer;padding:4px 0}
@@ -8782,7 +8782,7 @@ function trovaRegione(btn, esito){
 
 /* --- avvio --- */
 vai(S.profilo.fatto ? 5 : 0);
-if(S.percorsoAvvio !== false) apriPercorso();
+apriPercorso();   /* la mappa apre sempre l'app: dai suoi tasti si va dove serve */
 
 /* ===========================================================
    Il percorso: la prima pagina e' la mappa disegnata dell'app.
@@ -8845,7 +8845,6 @@ function apriPercorso(){
       <div class="pc-acini">
         ${S.profilo.fatto ? `<button type="button" class="pc-acino" id="pcHome" style="--ac:#6C3483"><span>\u{1F3E0}</span>${L("Prima pagina","Home page")}</button>` : ""}
         <button type="button" class="pc-acino" id="pcLista" style="--ac:#7D3C98"><span>\u{1F9ED}</span>${L("Tutte le funzioni","All features")}</button>
-        <button type="button" class="pc-acino" id="pcAvvio" style="--ac:#5B2C6F" aria-pressed="${S.percorsoAvvio !== false}"><span>${S.percorsoAvvio !== false ? "\u{1F441}\uFE0F" : "\u{1F648}"}</span><i>${L("All\u2019avvio:","At start:")}</i> ${S.percorsoAvvio !== false ? L("si vede","shown") : L("non si vede","hidden")}</button>
       </div>
       <button type="button" class="pc-acino pc-grande" id="pcEntra" style="--ac:#2E9D5B"><span>\u27A1\uFE0F</span>${!S.profilo.fatto ? L("Cominciamo:<br>1. Conosciamoci","Let\u2019s start:<br>1. Get acquainted")
         : L(`Continua:<br>${prossima + 1}. ${TAPPE[prossima].t}`, `Continue:<br>${prossima + 1}. ${TAPPE[prossima].t}`)}</button>
@@ -8861,9 +8860,6 @@ function apriPercorso(){
   el.querySelector("#pcEntra").onclick = ()=>vaiA(TAPPE[S.profilo.fatto ? prossima : 0].go);
   { const h = el.querySelector("#pcHome"); if(h) h.onclick = ()=>vaiA(()=>vai(5), false); }
   el.querySelector("#pcLista").onclick = ()=>vaiA(()=>apriTutto());
-  el.querySelector("#pcAvvio").onclick = e=>{ S.percorsoAvvio = S.percorsoAvvio === false; salva();
-    const b = e.currentTarget, si = S.percorsoAvvio !== false; b.setAttribute("aria-pressed", si);
-    b.innerHTML = `<span>${si ? "\u{1F441}\uFE0F" : "\u{1F648}"}</span><i>${L("All\u2019avvio:","At start:")}</i> ${si ? L("si vede","shown") : L("non si vede","hidden")}`; };
 }
 /* ----- ritorno alla mappa ----- */
 var ritornoMappa = false, ignoraPopMappa = false;   /* var: apriPercorso parte all'avvio, prima di questa riga */
