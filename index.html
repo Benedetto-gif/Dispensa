@@ -110,7 +110,8 @@ try{ SFONDO.applica(SFONDO.lista()[SFONDO.sel()]); SFONDO.applicaRiq(SFONDO.riq(
 /* durante l'animazione d'apertura barra di stato e fondo hanno il colore dell'icona: nessuno stacco fra avvio del telefono e app */
 try{ document.documentElement.classList.add("avvio"); var mt = document.getElementById("metaTema"); window.TEMA_DOPO = mt.content; mt.content = "#17281A"; }catch(e){}
 </script>
-<style>html.avvio,html.avvio body{background:#17281A !important}</style>
+<style>html.avvio,html.avvio body{background:#17281A !important}.conta-ricette{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;margin:4px 0 8px;line-height:1.45;font-size:.95em}.conta-ricette .mini{display:block;opacity:.9}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
@@ -5083,7 +5084,25 @@ document.addEventListener("click", e=>{
   const id = b.dataset.promApri; apriMie();
   setTimeout(()=>{ const r = velo.querySelector(`[data-mia="vedi"][data-id="${id}"]`); if(r){ r.click(); r.scrollIntoView({block:"center"}); } }, 80);
 });
-function salvataggioFatto(){ S.daSalvareElenco = []; S.ultimoSalvataggio = Date.now(); S.daSalvare = 0; S.promemoriaDopo = 0; salva(); if(veloAperto === "mie") apriMie(); else if(passo === 5) tappaHome(); }
+function salvataggioFatto(){ S.daSalvareElenco = []; S.ultimoSalvataggio = Date.now(); S.ricetteNelSalvataggio = (S.mie || []).length; S.daSalvare = 0; S.promemoriaDopo = 0; salva(); if(veloAperto === "mie") apriMie(); else if(passo === 5) tappaHome(); }
+/* quante ricette ci sono nell'app e quante nell'ultimo salvataggio (cloud o file).
+   Le ricette dell'archivio sono gia' dentro l'app: nel salvataggio viaggiano solo le tue. */
+function htmlContaRicette(){
+  const mie = S.mie || [], mano = mie.filter(r=>r.soloFoto).length, tue = mie.length;
+  const tot = D.ricette.length + mie.filter(r=>!r.soloFoto).length;
+  const nuove = elencoDaSalvare().filter(x=>x.tipo === "ricetta" || x.tipo === "mano").length;
+  const data = S.ultimoSalvataggio ? new Date(S.ultimoSalvataggio).toLocaleDateString(IN_INGLESE?"en-GB":"it-IT",{day:"numeric",month:"short",year:"numeric"}) : "";
+  const nelSalv = typeof S.ricetteNelSalvataggio === "number" ? S.ricetteNelSalvataggio : null;
+  return `<div class="conta-ricette" data-no-tr>
+    <div>\u{1F4DA} <b>${L("Nell\u2019app","In the app")}: ${tot} ${L("ricette","recipes")}</b>
+      <span class="mini">(${D.ricette.length} ${L("dell\u2019archivio","from the archive")} + ${tue - mano} ${L("tue","yours")}${mano ? ` · ${mano} ${L("scritte a mano","handwritten")}` : ""})</span></div>
+    <div>\u2601\uFE0F <b>${L("Nel cloud","In the cloud")}:</b> ${!data ? L("nessun salvataggio ancora","nothing saved yet")
+      : nelSalv === null ? L(`ultimo salvataggio il ${data}`, `last saved on ${data}`)
+      : L(`${nelSalv} ${nelSalv === 1 ? "tua ricetta" : "tue ricette"} (salvataggio del ${data})`, `${nelSalv} of your recipe${nelSalv === 1 ? "" : "s"} (saved on ${data})`)}</div>
+    ${nuove ? `<div class="mini">\u26A0\uFE0F ${L(`${nuove} ${nuove === 1 ? "ricetta nuova o modificata non ancora salvata" : "ricette nuove o modificate non ancora salvate"}`, `${nuove} new or edited recipe${nuove === 1 ? "" : "s"} not saved yet`)}</div>` : ""}
+    <div class="mini">${L("Le ricette dell\u2019archivio sono gi\u00e0 dentro l\u2019app: nel salvataggio viaggiano solo le tue.","Archive recipes are built into the app: only yours travel in the save.")}</div>
+  </div>`;
+}
 function htmlPromemoriaSalva(){
   if(!S.profilo.fatto) return "";
   const ora = Date.now();
@@ -8190,6 +8209,7 @@ function disegnaMenu(){
     </div>
     <div class="menu-box mb-bordeaux">
       <div class="sez">${L("Salva / azzera","Save / reset")}</div>
+      ${htmlContaRicette()}
       <button data-aggiorna>\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L("hai la","you have")} ${versioneMia()})</span></button>
       <button id="mSalva">Salva i miei dati (nel cloud o in un file)</button>
       <button id="mCarica">${L("Importa i dati da un file","Import data from a file")}</button>
