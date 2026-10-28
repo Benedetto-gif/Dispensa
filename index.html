@@ -242,6 +242,7 @@ body.barra-mappa #tornaMappa{display:none}
   background:var(--carta);box-shadow:0 0 0 2px var(--pc),0 3px 10px rgba(0,0,0,.2);max-width:100%}
 .pc-st b{font-size:1rem;line-height:1.15}
 .pc-st small{font-size:.78rem;opacity:.85;line-height:1.25}
+.ing-em{margin-right:4px}
 .pc-cart>.pc-cart-t{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1;font-size:.8rem}
 .pc-cart>.pc-cart-t small{font-weight:600;font-size:.7rem;opacity:.92;margin-top:2px}
 .pc-cart{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;padding:6px 10px 6px 8px;border-radius:10px;
@@ -1334,7 +1335,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.13.0</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.14.0</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -1766,6 +1767,69 @@ const BASE       = new Set([...D.base, ...BASE_ESTESA]);      // acqua, olio, pe
 /* i 4 ingredienti di base (D.base) non appartengono a nessun reparto: li mettiamo in Dispensa */
 CAT_DISP["Dispensa"] = CAT_DISP["Dispensa"] || [];
 D.base.forEach(k=>{ if(!CAT_DISP["Dispensa"].includes(k)) CAT_DISP["Dispensa"].unshift(k); });
+/* ===== un'icona per ogni ingrediente della dispensa (dal piu' specifico al piu' generico) ===== */
+const EMOJI_ING = [
+  /* prima i casi che una parola piu' generica scambierebbe: "cipollotto" non e' pollo, "surgelato" non e' gelato */
+  [/coloranti/,"\u{1F3A8}"],  [/erba cipollina|semi di finocchio|semi di anice/,"\u{1F33F}"],[/aglio/,"\u{1F9C4}"],[/cipoll|scalogno|porri/,"\u{1F9C5}"],[/melagrana/,"\u{1F34E}"],
+  [/lievito/,"\u{1F33E}"],[/^brodo/,"\u{1F372}"],[/pasta per involtini|pasta fillo|pasta brisee|pasta sfoglia/,"\u{1F950}"],
+  /* bevande e cantina */
+  [/^(vino rosso|vino cotto|vincotto)/,"\u{1F377}"],[/vino bianco|vino rosato|vin santo|moscato|marsala/,"\u{1F942}"],[/prosecco|spumante/,"\u{1F37E}"],
+  [/birra/,"\u{1F37A}"],[/grappa|brandy|^rum$|^amaro$|limoncello|alchermes/,"\u{1F943}"],[/caff/,"☕"],[/acqua frizzante/,"\u{1F4A7}"],[/^acqua$/,"\u{1F6B0}"],
+  [/latte di cocco/,"\u{1F965}"],[/latte in polvere|^latte$/,"\u{1F95B}"],
+  /* surgelati e ghiaccio */
+  [/^gelato/,"\u{1F368}"],[/ghiaccio/,"\u{1F9CA}"],
+  /* conserve */
+  [/pelati|polpa di pomodoro|passata di pomodoro|concentrato di pomodoro/,"\u{1F96B}"],[/in scatola|sardine/,"\u{1F96B}"],
+  /* uova e latticini */
+  [/^uova/,"\u{1F95A}"],[/burro di cacao/,"\u{1F36B}"],[/burro/,"\u{1F9C8}"],[/yogurt/,"\u{1F95B}"],[/panna/,"\u{1F95B}"],
+  [/mozzarella|burrata|stracchino|squacquerone|ricotta|mascarpone|caprino|formaggio fresco|tomini/,"\u{1F9C0}"],
+  [/formaggio|parmigiano|pecorino|caciocavallo|provol|scamorza|gorgonzola|casera|casizolu|grana/,"\u{1F9C0}"],
+  /* pesce */
+  [/gamber|scamp|astice|moeche/,"\u{1F990}"],[/calamar|seppi|polpo|moscardin/,"\u{1F991}"],[/cozz|vongol|capesant|ostric/,"\u{1F9AA}"],
+  [/salsa di ostriche|salsa di pesce/,"\u{1F41F}"],[/alga/,"\u{1F33F}"],[/tonno|salmone|pesce spada/,"\u{1F41F}"],
+  [/acciugh|alici|sarde|sgombr|orata|branzin|palombo|anguill|baccal|stocc|missoltin|pesce/,"\u{1F41F}"],
+  [/sott.?aceto|sott.?olio|cetriolini|mostarda/,"\u{1FAD9}"],
+  /* carne e salumi */
+  [/lumach/,"\u{1F40C}"],[/pollo|gallin|creste di gallo|fegatini/,"\u{1F357}"],[/anatra|faraona|palomba/,"\u{1F986}"],[/conigli|lepre/,"\u{1F407}"],
+  [/agnell|pecora|capra|capretto|camoscio/,"\u{1F411}"],[/cinghiale|maiale|maialino|costine|cotenna|ciccioli|lonza|strutto|lardo/,"\u{1F416}"],
+  [/salam|soppressat|sopressa|mortadella|prosciutto|speck|capocollo|ciauscolo|ventricina|pitina|bresaola|chorizo|carne salada|carne secca/,"\u{1F953}"],
+  [/salsicc|lugane|nduja|cotechino|zampone|budell|muset/,"\u{1F32D}"],[/pancetta|guanciale/,"\u{1F953}"],
+  [/macinat/,"\u{1F356}"],[/manzo|vitello|chianina|fassona|bue|cavallo|bistecca|stracotto|ossobuco|carne/,"\u{1F969}"],
+  [/trippa|lampredotto|milza|polmone|fegato|lingua|animelle|frattaglie|interiora|coratella|curatella|cordula|pajata|nervetti|stigghiola|involtini/,"\u{1F356}"],
+  /* frutta */
+  [/limone|scorza di limone/,"\u{1F34B}"],[/^lime$/,"\u{1F34B}"],[/aranc|mandarin|clementin|pompelmo/,"\u{1F34A}"],[/mele cotogne|^mele|mele disidratate/,"\u{1F34E}"],
+  [/pere/,"\u{1F350}"],[/pesche|albicocch|nespole/,"\u{1F351}"],[/ciliegie|amarene|visciole/,"\u{1F352}"],[/fragol/,"\u{1F353}"],
+  [/mirtill|lampon|more|frutti di bosco|bacche/,"\u{1FAD0}"],[/uva|uvetta/,"\u{1F347}"],[/anguria/,"\u{1F349}"],[/melone/,"\u{1F348}"],
+  [/banan/,"\u{1F34C}"],[/ananas/,"\u{1F34D}"],[/kiwi/,"\u{1F95D}"],[/mango|papaya|frutto della passione/,"\u{1F96D}"],[/cocco/,"\u{1F965}"],
+  [/avocado/,"\u{1F951}"],[/fichi|datteri|prugne|susine|cachi|melagrana/,"\u{1F351}"],
+  [/castagn/,"\u{1F330}"],[/arachid/,"\u{1F95C}"],[/noci|nocciol|mandorl|pistacch|anacard|pinoli|macadamia|pecan|semi di girasole|semi di zucca/,"\u{1F330}"],
+  /* verdure */
+  [/aglio/,"\u{1F9C4}"],[/cipoll|scalogno|porri/,"\u{1F9C5}"],[/patat|gnocchi/,"\u{1F954}"],[/carot/,"\u{1F955}"],[/pomodor/,"\u{1F345}"],
+  [/melanzan/,"\u{1F346}"],[/zucchin|cetriol/,"\u{1F952}"],[/zucca|fiori di zucca/,"\u{1F383}"],[/peperoncin/,"\u{1F336}️"],[/peperon/,"\u{1FAD1}"],
+  [/broccol|cavolfior|cime di rapa|friariell/,"\u{1F966}"],[/funghi|tartufo/,"\u{1F344}"],[/mais/,"\u{1F33D}"],
+  [/piselli|fave|fagiol|ceci|lenticch|legumi|germogli di soia/,"\u{1FAD8}"],
+  [/lattuga|insalata|rucola|scarola|cicoria|radicchio|puntarelle|spinaci|bietol|erbette|verza|cavolo|crauti|brovada|verdure|tenerumi|cardi|carciof|asparag|finocch|sedano|barbabietol|rafano/,"\u{1F96C}"],
+  /* erbe e spezie */
+  [/zenzero/,"\u{1FADA}"],[/^pepe|pepe verde/,"\u{1F9C2}"],[/^sale/,"\u{1F9C2}"],[/vaniglia/,"\u{1F33C}"],[/gelsomino|fiori di finocchietto/,"\u{1F33C}"],
+  [/basilic|prezzemol|(^| )menta|mentucc|salvia|rosmarin|timo|origano|maggiorana|alloro|aneto|coriandolo|erba cipollina|mirto|lentisco|angelica|finocchio marino|foglie di cappero/,"\u{1F33F}"],
+  [/cannella|cardamomo|garofano|cumino|curcuma|curry|garam|noce moscata|paprica|zafferano|anice|semi di finocchio|spezie|senape in polvere/,"\u{1F9C2}"],
+  /* dispensa */
+  [/olio/,"\u{1FAD2}"],[/olive/,"\u{1FAD2}"],[/aceto/,"\u{1F376}"],[/miele/,"\u{1F36F}"],[/marmellata|sciroppo/,"\u{1F36F}"],
+  [/cioccolat|cacao/,"\u{1F36B}"],[/zucchero|confettini|coloranti|torrone/,"\u{1F36C}"],[/biscott|amaretti|savoiardi|ostie|gallette/,"\u{1F36A}"],
+  [/brioche|pan di spagna/,"\u{1F950}"],[/pizza|pinsa/,"\u{1F355}"],[/pane|pitta|friselle|pangrattato/,"\u{1F35E}"],
+  [/riso|noodles di riso/,"\u{1F35A}"],[/noodles/,"\u{1F35C}"],[/pasta|fregol|fregula|cous cous|bulgur/,"\u{1F35D}"],
+  [/farin|semol|fecola|amido|lievito|bicarbonato|polenta|grano|farro|orzo|cereali/,"\u{1F33E}"],
+  [/brodo/,"\u{1F372}"],[/salsa di soia|miso|tofu|tahina|semi di sesamo|olio di sesamo/,"\u{1FAD8}"],[/salsa|senape|besciamella|bagnet|cunza/,"\u{1F963}"],
+  [/capperi/,"\u{1F33F}"],[/gelatina/,"\u{1F36E}"]
+];
+const EMOJI_REPARTO = {"Verdure e ortaggi":"\u{1F96C}","Frutta":"\u{1F34E}","Carne e salumi":"\u{1F969}","Pesce":"\u{1F41F}","Latticini e uova":"\u{1F9C0}",
+  "Dispensa":"\u{1FAD9}","Erbe e spezie":"\u{1F33F}","Essiccati e disidratati":"\u{1F342}","Surgelati e congelati":"\u{1F9CA}","Scatolette e conserve":"\u{1F96B}","Cantina":"\u{1F377}"};
+const _emojiIng = {};
+function emojiIng(k){
+  if(_emojiIng[k] !== undefined) return _emojiIng[k];
+  const n = normTesto(k), t = EMOJI_ING.find(([re])=>re.test(n));
+  return _emojiIng[k] = t ? t[1] : (EMOJI_REPARTO[CAT_OF[k] || ""] || "\u{1F37D}️");
+}
 /* ===== I 14 allergeni del Regolamento UE 1169/2011 (FIC), Allegato II, nello stesso ordine ===== */
 const ALLERGENI_UE = ["glutine","crostacei","uova","pesce","arachidi","soia","latte","frutta a guscio","sedano","senape","sesamo","solfiti","lupini","molluschi"];
 const ALLERG_INFO = {
@@ -3236,7 +3300,7 @@ function htmlRepartiDisp(){
     const chip = i=>{ const ora = diStagioneOra(i);
           const stag = ora !== null ? (ora?` <span class="ing-stag" title="Di stagione ora">\u{1F5D3}\uFE0F</span>`:` <span class="ing-stag ing-stag-no" title="Non \u00e8 la sua stagione">\u{1F5D3}\uFE0F</span>`) : "";
           const nb = tit === "Cantina" ? nBottiglie(i) : 0;
-          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}">${esc(etichettaDisp(i))}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}${badgeScad(i)}</button>`; };
+          return `<button class="chip ${S.dispensa.includes(i)?"on":""}" data-i="${esc(i)}"><span class="ing-em" aria-hidden="true">${emojiIng(i)}</span>${esc(etichettaDisp(i))}${stag}${nb ? ` <span class="cant-n">\u00d7${nb}</span>` : ""}${badgeScad(i)}</button>`; };
     const sotto = sottoReparti(tit, vis);
     return `<details class="pcella full cat-gruppo ${COLORE_REPARTO[tit]||"cat-grigio"}" ${q||repAperti.has(tit)?"open":""} data-rep="${esc(tit)}">
       <summary>${nomeRep(tit)} <em>${presi?presi+" segnati":lista.length+" voci"}</em></summary>
@@ -3491,13 +3555,13 @@ function tappaVoglia(){
         const gruppi = DEPERIBILI.map(c=>[c, alfa(dep.filter(k=>(CAT_DISP[c]||[]).includes(k)))]).filter(([, l])=>l.length);
         if(scelti.length) gruppi.push(["", alfa(scelti)]);
         return gruppi.map(([c, l])=>`<div class="rec-rep"><div class="rec-rep-t">${c ? IC[c] + " " + nomeRep(c) : "\u{1F4E6} " + L("Altro","Other")}</div>
-          <div class="chips">${l.map(k=>`<button class="chip ${sess.recupero.includes(k)?"on":""}" data-i="${esc(k)}">${k}</button>`).join("")}</div></div>`).join("");
+          <div class="chips">${l.map(k=>`<button class="chip ${sess.recupero.includes(k)?"on":""}" data-i="${esc(k)}"><span class="ing-em" aria-hidden="true">${emojiIng(k)}</span>${k}</button>`).join("")}</div></div>`).join("");
       })()}</div>`
       :`<p class="mini">Nella dispensa non hai segnato freschi, latticini, carne, pesce o surgelati. Cercalo qui sotto: vale qualsiasi cosa, anche un avanzo.</p>`}
     <label class="campo" style="margin-top:12px"><span>Non è in elenco? Cercalo o aggiungilo</span>
       <input type="text" id="recCerca" value="${esc(cercaRec)}" placeholder="Scrivi le prime lettere"></label>
     ${trovati.length?`<div class="chips" id="recTrova">${trovati.map(k=>
-        `<button class="chip" data-i="${esc(k)}">${k}</button>`).join("")}</div>`:""}
+        `<button class="chip" data-i="${esc(k)}"><span class="ing-em" aria-hidden="true">${emojiIng(k)}</span>${k}</button>`).join("")}</div>`:""}
     ${q && !gia ? `<button class="btn ghost small" id="recAdd" style="margin-top:8px">Aggiungi «${esc(cercaRec.trim())}» e mettilo in dispensa</button>` : ""}
     <p class="mini" style="margin-top:8px">Quello che scegli qui entra anche nella dispensa, così le ricette lo contano come disponibile.</p>
   </div>`;},
@@ -9286,11 +9350,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v289".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v290".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.13.0";
+var NOME_VERSIONE = "2.14.0";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
