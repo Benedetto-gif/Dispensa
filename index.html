@@ -112,6 +112,11 @@ try{ document.documentElement.classList.add("avvio"); var mt = document.getEleme
 </script>
 <style>html.avvio,html.avvio body{background:#17281A !important}.conta-ricette{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;margin:4px 0 8px;line-height:1.45;font-size:.95em}.conta-ricette .mini{display:block;opacity:.9}
 .rec-rep{margin-top:10px}.rec-rep:first-child{margin-top:6px}.rec-rep-t{font-weight:800;font-size:.85rem;margin:0 0 5px;opacity:.95}
+#tornaMappa{position:fixed;left:12px;bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:70;display:flex;align-items:center;gap:6px;
+  padding:10px 14px 10px 11px;border:0;border-radius:999px;background:#5B6670;color:#fff;font:800 .9rem/1 Inter,system-ui,sans-serif;
+  box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer}
+#tornaMappa span{font-size:1.2rem}
+#tornaMappa:active{transform:scale(.95)}
 /* ===== Il percorso: prima pagina con la mappa disegnata dell'app ===== */
 #percorso{position:fixed;inset:0;z-index:9000;overflow-y:auto;overscroll-behavior:contain;background:var(--carta);color:var(--inchiostro,inherit);
   padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 24px);transition:opacity .35s ease}
@@ -8768,6 +8773,7 @@ if(S.percorsoAvvio !== false) apriPercorso();
    e i cartelli per le deviazioni. Tocchi una tappa e ci vai, oppure "Entra nell'app".
    =========================================================== */
 function apriPercorso(){
+  spegniRitornoMappa();
   let el = document.getElementById("percorso");
   if(el) el.remove();
   const ok = [S.profilo.fatto, passoFatto1(), (S.dispensa || []).length > 0, false, false];
@@ -8818,13 +8824,47 @@ function apriPercorso(){
   </div>`;
   document.body.append(el);
   const chiudiP = ()=>{ el.classList.add("via"); setTimeout(()=>el.remove(), 350); };
-  const vaiA = f=>{ chiudiP(); f(); };
+  /* partendo da una tappa o da un cartello resta un tasto per tornare alla mappa
+     (e il tasto Indietro del telefono riporta qui); con "Entra nell'app" no */
+  const vaiA = (f, ritorno)=>{ chiudiP(); f(); if(ritorno !== false) attivaRitornoMappa(); };
   el.querySelectorAll("[data-pc-t]").forEach(b=>b.onclick = ()=>vaiA(TAPPE[+b.dataset.pcT].go));
   el.querySelectorAll("[data-pc-c]").forEach(b=>b.onclick = ()=>vaiA(CARTELLI[+b.dataset.pcC].go));
-  el.querySelector("#pcEntra").onclick = ()=>vaiA(()=>vai(S.profilo.fatto ? 5 : 0));
+  el.querySelector("#pcEntra").onclick = ()=>vaiA(()=>vai(S.profilo.fatto ? 5 : 0), false);
   el.querySelector("#pcLista").onclick = ()=>vaiA(()=>apriTutto());
   el.querySelector("#pcAvvio").onchange = e=>{ S.percorsoAvvio = e.target.checked; salva(); };
 }
+/* ----- ritorno alla mappa ----- */
+var ritornoMappa = false, ignoraPopMappa = false;   /* var: apriPercorso parte all'avvio, prima di questa riga */
+function attivaRitornoMappa(){
+  ritornoMappa = true;
+  try{ history.pushState({mappa:1}, ""); }catch(e){}
+  let b = document.getElementById("tornaMappa");
+  if(!b){
+    b = document.createElement("button"); b.type = "button"; b.id = "tornaMappa"; b.setAttribute("data-no-tr", "");
+    b.innerHTML = `<span>\u{1F9ED}</span>${L("Torna alla mappa","Back to the map")}`;
+    b.onclick = tornaAllaMappa;
+    document.body.append(b);
+  }
+}
+function spegniRitornoMappa(){
+  ritornoMappa = false;
+  const b = document.getElementById("tornaMappa"); if(b) b.remove();
+}
+function tornaAllaMappa(){
+  if(veloAperto){ if(veloAperto === "cucina" && typeof spegniVoce === "function") spegniVoce(); chiudiVelo(); }
+  if(boxAperto) lasciaBox();
+  if(menuAperto){ menuAperto = false; disegnaMenu(); }
+  if(history.state && history.state.mappa){ ignoraPopMappa = true; try{ history.back(); }catch(e){ ignoraPopMappa = false; } }
+  apriPercorso();
+}
+/* tasto Indietro del telefono: chiude prima pagine e pannelli aperti sopra, poi torna alla mappa */
+window.addEventListener("popstate", ()=>{
+  if(ignoraPopMappa){ ignoraPopMappa = false; return; }
+  if(!ritornoMappa) return;
+  const st = history.state || {};
+  if(st.mappa || st.box) return;       /* si e' solo chiusa una pagina aperta dopo: resto dove sono */
+  tornaAllaMappa();
+});
 /* la tappa 2 conta come fatta quando l'utente ha gia' scelto almeno una volta per chi cucina */
 function passoFatto1(){ return !!(S.ospitiScelti || (S.ospitiSalvati || []).length); }
 
