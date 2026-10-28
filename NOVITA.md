@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.14.2 | v292 | 28/10/2026 | Frutta secca con i suoi disegni: mandorle, noci, nocciole, pistacchi, pinoli, anacardi, macadamia, pecan, semi, datteri, fichi, prugne e albicocche secche |
 | 2.14.1 | v291 | 28/10/2026 | Icone coerenti col reparto: «pomodoro cuore di bue» è un pomodoro, non una bistecca |
 | 2.14.0 | v290 | 28/10/2026 | Ogni ingrediente della dispensa (e di «Devo consumare») ha la sua icona |
 | 2.13.0 | v289 | 28/10/2026 | «Per chi cucini?» animato: il coperto per uno che fuma, i commensali che arrivano e il brindisi |

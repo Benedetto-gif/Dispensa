@@ -243,6 +243,7 @@ body.barra-mappa #tornaMappa{display:none}
 .pc-st b{font-size:1rem;line-height:1.15}
 .pc-st small{font-size:.78rem;opacity:.85;line-height:1.25}
 .ing-em{margin-right:4px}
+.ic-ing,.pcella svg.ic-ing,.chip svg.ic-ing{width:1.4em!important;height:1.4em!important;margin:-.15em 0!important;vertical-align:-.35em;display:inline-block!important;opacity:1!important}
 .pc-cart>.pc-cart-t{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1;font-size:.8rem}
 .pc-cart>.pc-cart-t small{font-weight:600;font-size:.7rem;opacity:.92;margin-top:2px}
 .pc-cart{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;padding:6px 10px 6px 8px;border-radius:10px;
@@ -1335,7 +1336,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.14.1</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.14.2</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -1768,7 +1769,30 @@ const BASE       = new Set([...D.base, ...BASE_ESTESA]);      // acqua, olio, pe
 CAT_DISP["Dispensa"] = CAT_DISP["Dispensa"] || [];
 D.base.forEach(k=>{ if(!CAT_DISP["Dispensa"].includes(k)) CAT_DISP["Dispensa"].unshift(k); });
 /* ===== un'icona per ogni ingrediente della dispensa (dal piu' specifico al piu' generico) ===== */
+/* frutta secca: le emoji hanno solo castagna e arachide, quindi le altre le disegno io (piccole illustrazioni) */
+const sv = (c)=>`<svg class="ic-ing" viewBox="0 0 24 24" aria-hidden="true">${c}</svg>`;
+const SVG_SECCA = {
+  mandorla: sv('<path d="M12 2.5C7 6 5.2 11 6 15.5c.7 4 3.4 6 6 6s5.3-2 6-6C18.8 11 17 6 12 2.5z" fill="#C68A4E" stroke="#8A5A2B" stroke-width="1.2"/><path d="M12 5c-2 3-2.6 7-2 11M14.5 8c.6 3 .5 6-.4 9" stroke="#8A5A2B" stroke-width=".9" fill="none" opacity=".7"/>'),
+  noce: sv('<circle cx="12" cy="12.5" r="9" fill="#D9B27C" stroke="#9A7340" stroke-width="1.2"/><path d="M12 3.5v18M8 7c1.5 1 1.5 3 0 4s-1.5 3 0 4M16 7c-1.5 1-1.5 3 0 4s1.5 3 0 4" stroke="#9A7340" stroke-width="1.1" fill="none"/>'),
+  nocciola: sv('<circle cx="12" cy="13.5" r="8" fill="#A0652E" stroke="#6E4220" stroke-width="1.2"/><path d="M4.6 11.5C6 6.5 9 4.5 12 4.5s6 2 7.4 7c-2.4-1.3-4.8-1.8-7.4-1.8s-5 .5-7.4 1.8z" fill="#D9B98A" stroke="#6E4220" stroke-width="1"/><circle cx="9.5" cy="15" r="1.3" fill="#fff" opacity=".35"/>'),
+  pistacchio: sv('<path d="M6 5c4-3 11-1 13 5s-2 12-8 11.5S2.5 15 3.2 10C3.5 8 4.5 6.2 6 5z" fill="#E9D6B0" stroke="#A88C5A" stroke-width="1.2"/><path d="M8 8.5c2.5-2 7-1 8.2 2.6s-1 7.4-4.6 7.2S6 14.6 6.4 11.6c.2-1.2.7-2.3 1.6-3.1z" fill="#8DB33A" stroke="#5E7F22" stroke-width="1"/><path d="M10.5 10.5c1 .8 1.4 2.4.8 4" stroke="#B9466F" stroke-width="1.2" fill="none" opacity=".7"/>'),
+  pinoli: sv('<g fill="#F1E3BE" stroke="#B89A5E" stroke-width="1"><ellipse cx="7.5" cy="12" rx="2.6" ry="5.5" transform="rotate(-18 7.5 12)"/><ellipse cx="13" cy="10.5" rx="2.6" ry="5.5" transform="rotate(8 13 10.5)"/><ellipse cx="17.5" cy="14" rx="2.4" ry="5" transform="rotate(30 17.5 14)"/></g>'),
+  anacardo: sv('<path d="M17.5 5.5c-4-2.5-10-1-11.8 4.2-1.6 4.6 1 9.6 5.6 10.6 2.4.5 3.9-1.2 3-2.9-.8-1.6-2.8-1.6-3.6-3.4-.9-2 .5-4 3.1-4.2 2.6-.2 5.6-1.9 3.7-4.3z" fill="#F0DDB4" stroke="#B8955A" stroke-width="1.2"/>'),
+  macadamia: sv('<circle cx="12" cy="12.5" r="8.5" fill="#F3E6C6" stroke="#BFA06A" stroke-width="1.2"/><circle cx="9" cy="10" r="2" fill="#fff" opacity=".6"/><path d="M12 4v4" stroke="#BFA06A" stroke-width="1"/>'),
+  pecan: sv('<path d="M12 2.5c4 0 6 4 6 9.5s-2 10-6 10-6-4.5-6-10 2-9.5 6-9.5z" fill="#9B5B2C" stroke="#6A3A18" stroke-width="1.2"/><path d="M12 3v18.5M9 7c-1 3-1 7 0 10M15 7c1 3 1 7 0 10" stroke="#D69A5E" stroke-width="1" fill="none"/>'),
+  girasole: sv('<g stroke="#2C2C2C" stroke-width=".9"><path d="M7 4c3 1.5 4 6 2.8 11L7 19.5 4.6 15C3.6 10 4.3 5.4 7 4z" fill="#7A7A7A"/><path d="M17 4.5c2.7 1.4 3.4 6 2.4 10.6L17 19.5l-2.4-4.4C13.6 10.5 14.3 6 17 4.5z" fill="#7A7A7A"/></g><path d="M6.6 6v10M16.8 6.5v10" stroke="#EDEDED" stroke-width="1.1"/>'),
+  zucca: sv('<g fill="#A9C25A" stroke="#6F8A2B" stroke-width="1"><ellipse cx="8" cy="12" rx="3.6" ry="6.5" transform="rotate(-12 8 12)"/><ellipse cx="16" cy="12" rx="3.6" ry="6.5" transform="rotate(12 16 12)"/></g>'),
+  dattero: sv('<g fill="#7B3F1C" stroke="#4E2610" stroke-width="1"><ellipse cx="9" cy="12" rx="4" ry="8" transform="rotate(-20 9 12)"/><ellipse cx="16" cy="13" rx="3.6" ry="7.5" transform="rotate(15 16 13)"/></g><path d="M7.5 7c1 2 1.2 5 .6 8M15 8.5c.8 2 .8 4.5.2 7" stroke="#B0683A" stroke-width=".9" fill="none"/>'),
+  fico: sv('<path d="M12 3c1 0 1.5 1.2 1.6 2.5C17.5 7 20 11 19.6 15c-.4 4.2-4 6.5-7.6 6.5S4.8 19.2 4.4 15C4 11 6.5 7 10.4 5.5 10.5 4.2 11 3 12 3z" fill="#8A6A3E" stroke="#5A4224" stroke-width="1.2"/><circle cx="9.5" cy="14" r=".8" fill="#E8C98A"/><circle cx="13" cy="16" r=".8" fill="#E8C98A"/><circle cx="14.5" cy="12.5" r=".8" fill="#E8C98A"/>'),
+  prugna: sv('<ellipse cx="12" cy="13" rx="7.5" ry="8.5" fill="#3F2A4A" stroke="#22152A" stroke-width="1.2"/><path d="M8 9c1.5-1.5 3-2 4.5-2" stroke="#8B6A9C" stroke-width="1.2" fill="none"/><path d="M12 4.5c.5-1.5 1.5-2.2 2.8-2.4" stroke="#5A4224" stroke-width="1.3" fill="none"/>'),
+  albicocca: sv('<circle cx="12" cy="13" r="8" fill="#E08A2C" stroke="#A45A12" stroke-width="1.2"/><path d="M12 5c-1.5 3-1.5 13 0 16" stroke="#A45A12" stroke-width="1" fill="none"/><circle cx="8.5" cy="10" r="1.6" fill="#fff" opacity=".35"/>')
+};
 const EMOJI_ING = [
+  /* frutta secca e disidratata, ognuna col suo disegno */
+  [/farina di mandorle|^mandorl/,SVG_SECCA.mandorla],[/noci di macadamia|macadamia/,SVG_SECCA.macadamia],[/noci pecan|pecan/,SVG_SECCA.pecan],
+  [/^noci|gherigli/,SVG_SECCA.noce],[/nocciol/,SVG_SECCA.nocciola],[/pistacch/,SVG_SECCA.pistacchio],[/pinoli/,SVG_SECCA.pinoli],[/anacard/,SVG_SECCA.anacardo],
+  [/semi di girasole/,SVG_SECCA.girasole],[/semi di zucca/,SVG_SECCA.zucca],[/datter/,SVG_SECCA.dattero],[/fichi secchi/,SVG_SECCA.fico],
+  [/prugne secche/,SVG_SECCA.prugna],[/albicocche secche/,SVG_SECCA.albicocca],
   /* prima i casi che una parola piu' generica scambierebbe: "cipollotto" non e' pollo, "surgelato" non e' gelato */
   [/coloranti/,"\u{1F3A8}"],  [/erba cipollina|semi di finocchio|semi di anice/,"\u{1F33F}"],[/aglio/,"\u{1F9C4}"],[/cipoll|scalogno|porri/,"\u{1F9C5}"],[/melagrana/,"\u{1F34E}"],
   [/lievito/,"\u{1F33E}"],[/^brodo/,"\u{1F372}"],[/pasta per involtini|pasta fillo|pasta brisee|pasta sfoglia/,"\u{1F950}"],
@@ -1802,7 +1826,7 @@ const EMOJI_ING = [
   [/mirtill|lampon|more|frutti di bosco|bacche/,"\u{1FAD0}"],[/uva|uvetta/,"\u{1F347}"],[/anguria/,"\u{1F349}"],[/melone/,"\u{1F348}"],
   [/banan/,"\u{1F34C}"],[/ananas/,"\u{1F34D}"],[/kiwi/,"\u{1F95D}"],[/mango|papaya|frutto della passione/,"\u{1F96D}"],[/cocco/,"\u{1F965}"],
   [/avocado/,"\u{1F951}"],[/fichi|datteri|prugne|susine|cachi|melagrana/,"\u{1F351}"],
-  [/castagn/,"\u{1F330}"],[/arachid/,"\u{1F95C}"],[/noci|nocciol|mandorl|pistacch|anacard|pinoli|macadamia|pecan|semi di girasole|semi di zucca/,"\u{1F330}"],
+  [/castagn/,"\u{1F330}"],[/arachid/,"\u{1F95C}"],
   /* verdure */
   [/aglio/,"\u{1F9C4}"],[/cipoll|scalogno|porri/,"\u{1F9C5}"],[/patat|gnocchi/,"\u{1F954}"],[/carot/,"\u{1F955}"],[/pomodor/,"\u{1F345}"],
   [/melanzan/,"\u{1F346}"],[/zucchin|cetriol/,"\u{1F952}"],[/zucca|fiori di zucca/,"\u{1F383}"],[/peperoncin/,"\u{1F336}️"],[/peperon/,"\u{1FAD1}"],
@@ -9359,11 +9383,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v291".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v292".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.14.1";
+var NOME_VERSIONE = "2.14.2";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
