@@ -117,6 +117,33 @@ try{ document.documentElement.classList.add("avvio"); var mt = document.getEleme
   box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer}
 #tornaMappa span{font-size:1.2rem}
 #tornaMappa:active{transform:scale(.95)}
+/* scene animate dentro i cerchi del percorso */
+.pa{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:block}
+.pa-ciclo>span{position:absolute;inset:0;display:grid;place-items:center;opacity:0;animation:pa-ciclo 6.4s ease-in-out infinite;animation-delay:calc(var(--k) * 1.6s)}
+@keyframes pa-ciclo{0%{opacity:0;transform:translateY(40%) scale(.6)}5%{opacity:1;transform:none}22%{opacity:1;transform:none}27%{opacity:0;transform:translateY(-40%) scale(.6)}100%{opacity:0}}
+.pa-volti{display:grid;grid-template-columns:1fr 1fr;place-items:center;padding:16%;font-size:.5em}
+.pa-volti span{opacity:0;animation:5s ease-out infinite}
+.pv1{animation-name:pa-v1!important}.pv2{animation-name:pa-v2!important}.pv3{animation-name:pa-v3!important}.pv4{animation-name:pa-v4!important}
+@keyframes pa-v1{0%{opacity:0;transform:scale(.3)}6%,88%{opacity:1;transform:none}96%,100%{opacity:0}}
+@keyframes pa-v2{0%,20%{opacity:0;transform:scale(.3)}26%,88%{opacity:1;transform:none}96%,100%{opacity:0}}
+@keyframes pa-v3{0%,40%{opacity:0;transform:scale(.3)}46%,88%{opacity:1;transform:none}96%,100%{opacity:0}}
+@keyframes pa-v4{0%,60%{opacity:0;transform:scale(.3)}66%,88%{opacity:1;transform:none}96%,100%{opacity:0}}
+.pa-firma svg{position:absolute;left:8%;right:8%;top:30%;width:84%;height:auto;overflow:visible}
+.pa-nome{font:italic 800 21px Newsreader,Georgia,serif;fill:#FFF8E1;paint-order:stroke;stroke:rgba(0,0,0,.25);stroke-width:1.5px;clip-path:inset(0 100% 0 0);animation:pa-scrivi 4s linear infinite}
+@keyframes pa-scrivi{0%{clip-path:inset(0 100% 0 0);opacity:1}60%,85%{clip-path:inset(0 0 0 0);opacity:1}100%{clip-path:inset(0 0 0 0);opacity:0}}
+.pa-penna{position:absolute;top:26%;left:4%;font-size:.7em;animation:pa-penna 4s linear infinite}
+@keyframes pa-penna{0%{left:2%;top:24%;transform:rotate(-8deg);opacity:1}15%{top:32%;transform:rotate(6deg)}30%{top:22%;transform:rotate(-6deg)}45%{top:32%;transform:rotate(6deg)}60%{left:66%;top:24%;transform:rotate(0)}85%{left:66%;top:6%;opacity:1}100%{left:66%;top:6%;opacity:0}}
+.pa-fornelli .pa-cuoco{position:absolute;inset:0;display:grid;place-items:center;padding-top:14%;animation:pa-dondola 2.4s ease-in-out infinite;transform-origin:50% 90%}
+@keyframes pa-dondola{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.pa-fumo{position:absolute;left:0;right:0;top:6%;height:30%;display:flex;justify-content:center;gap:5px}
+.pa-fumo i{width:5px;height:16px;border-radius:5px;background:rgba(255,255,255,.75);opacity:0;animation:pa-fumo 2s ease-out infinite}
+.pa-fumo i:nth-child(2){animation-delay:.6s}.pa-fumo i:nth-child(3){animation-delay:1.2s}
+@keyframes pa-fumo{0%{opacity:0;transform:translateY(10px) scaleY(.5)}30%{opacity:.85}100%{opacity:0;transform:translateY(-8px) scaleY(1.2)}}
+@media (prefers-reduced-motion:reduce){
+  .pa *, .pa-nome{animation:none!important}
+  .pa-ciclo>span:first-child,.pa-volti span{opacity:1}
+  .pa-nome{clip-path:none}.pa-fumo{display:none}
+}
 /* ===== Il percorso: prima pagina con la mappa disegnata dell'app ===== */
 #percorso{position:fixed;inset:0;z-index:9000;overflow-y:auto;overscroll-behavior:contain;background:var(--carta);color:var(--inchiostro,inherit);
   padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 24px);transition:opacity .35s ease}
@@ -1228,7 +1255,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v270</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v271</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -8775,7 +8802,7 @@ function apriPercorso(){
   const TAPPE = [
     {x:95,  y:57,  c:"#2E8B57", e:"\u{1F44B}", t:L("Conosciamoci","Let’s get acquainted"), d:L("chi sei, cosa non mangi","who you are, what you don’t eat"), go:()=>vai(0)},
     {x:265, y:172, c:"#1F78B4", e:"\u{1F465}", t:L("Per chi cucini?","Who are you cooking for?"), d:L("solo tu o anche altri","just you or others too"), go:()=>vai(1)},
-    {x:95,  y:287, c:"#D98E04", e:"\u{1F96B}", t:L("La dispensa","The pantry"), d:nDisp ? L(`${nDisp} ingredienti`, `${nDisp} ingredients`) : L("cosa hai in casa","what you have at home"), go:()=>vai(2)},
+    {x:95,  y:287, c:"#D98E04", e:"\u{1F96B}", t:L("La dispensa","The pantry"), d:nDisp ? L(`${nDisp} ${nDisp === 1 ? "ingrediente" : "ingredienti"}`, `${nDisp} ingredient${nDisp === 1 ? "" : "s"}`) : L("cosa hai in casa","what you have at home"), go:()=>vai(2)},
     {x:265, y:402, c:"#8E44AD", e:"\u{1F37D}️", t:L("Cosa mangiamo?","What shall we eat?"), d:L("un piatto, un menu, un avanzo","a dish, a menu, leftovers"), go:()=>vai(3)},
     {x:120, y:525, c:"#C0392B", e:"\u{1F468}‍\u{1F373}", t:L("Ai fornelli","At the stove"), d:L("la ricetta passo passo","the recipe step by step"), go:()=>{ sess.modo = sess.modo || "app"; vai(4); }}
   ];
@@ -8808,7 +8835,7 @@ function apriPercorso(){
       </svg>
       ${CARTELLI.map((c, i)=>`<button type="button" class="pc-cart" style="left:${pct(c.x,360)};top:${pct(c.y,625)};--pc:${c.c}" ${c.go ? `data-pc-c="${i}"` : "disabled"}><span>${c.e}</span>${c.t}</button>`).join("")}
       ${TAPPE.map((t, i)=>`<button type="button" class="pc-st" style="left:${pct(t.x,360)};top:${pct(t.y,625)};--pc:${t.c}" data-pc-t="${i}">
-        <span class="pc-cerchio${i === prossima ? " pc-prossima" : ""}">${t.e}<span class="pc-num">${i + 1}</span>${ok[i] ? `<span class="pc-ok">✓</span>` : ""}</span>
+        <span class="pc-cerchio${i === prossima ? " pc-prossima" : ""}">${animTappa(i, t.e)}<span class="pc-num">${i + 1}</span>${ok[i] ? `<span class="pc-ok">✓</span>` : ""}</span>
         <span class="pc-et"><b>${t.t}</b><small>${t.d}</small></span></button>`).join("")}
     </div>
   </div>`;
@@ -8819,6 +8846,24 @@ function apriPercorso(){
   const vaiA = (f, ritorno)=>{ chiudiP(); f(); if(ritorno !== false) attivaRitornoMappa(); };
   el.querySelectorAll("[data-pc-t]").forEach(b=>b.onclick = ()=>vaiA(TAPPE[+b.dataset.pcT].go));
   el.querySelectorAll("[data-pc-c]").forEach(b=>b.onclick = ()=>vaiA(CARTELLI[+b.dataset.pcC].go));
+}
+/* le tappe animate: ogni cerchio racconta la sua pagina con una piccola scena che si ripete */
+function animTappa(i, e){
+  const ciclo = l=>`<span class="pa pa-ciclo">${l.map((x, k)=>`<span style="--k:${k}">${x}</span>`).join("")}</span>`;
+  const nome = esc((S.profilo.nome || L("Nome","Name")).slice(0, 8));
+  const scene = [
+    /* 1. Conosciamoci: una mano con la penna scrive il nome */
+    `<span class="pa pa-firma"><svg viewBox="0 0 60 30" aria-hidden="true"><text x="4" y="21" class="pa-nome">${nome}</text></svg><span class="pa-penna">✍️</span></span>`,
+    /* 2. Per chi cucini: i volti aumentano, uno, due, tre, quattro */
+    `<span class="pa pa-volti">${["\u{1F642}","\u{1F469}","\u{1F474}","\u{1F467}"].map((x, k)=>`<span class="pv${k + 1}">${x}</span>`).join("")}</span>`,
+    /* 3. La dispensa: entrano gli ingredienti, uno dopo l'altro */
+    ciclo(["\u{1F96B}","\u{1F955}","\u{1F9C0}","\u{1F95A}"]),
+    /* 4. Cosa mangiamo: padella col pollo, spaghetti, pesce, dolce */
+    ciclo(["\u{1F357}","\u{1F35D}","\u{1F41F}","\u{1F370}"]),
+    /* 5. Ai fornelli: il cuoco e la pentola che fuma */
+    `<span class="pa pa-fornelli"><span class="pa-cuoco">\u{1F468}‍\u{1F373}</span><span class="pa-fumo"><i></i><i></i><i></i></span></span>`
+  ];
+  return scene[i] || e;
 }
 /* ----- ritorno alla mappa ----- */
 var ritornoMappa = false, ignoraPopMappa = false;   /* var: apriPercorso parte all'avvio, prima di questa riga */
@@ -8911,7 +8956,7 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-const VERSIONE_APP = "checucino-v270".replace("checucino-", "");
+const VERSIONE_APP = "checucino-v271".replace("checucino-", "");
 function versioneMia(){ return VERSIONE_APP; }
 let verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
 const numVer = x=>parseInt(String(x).replace(/\D/g, "")) || 0;
