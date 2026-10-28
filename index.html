@@ -130,6 +130,9 @@ try{ document.documentElement.classList.add("avvio"); var mt = document.getEleme
   background:none;border:0;padding:0;color:inherit;cursor:pointer;font:inherit;text-align:center}
 .pc-cerchio{position:relative;width:clamp(62px,19vw,78px);height:clamp(62px,19vw,78px);border-radius:50%;display:grid;place-items:center;
   font-size:clamp(1.9rem,8.5vw,2.4rem);background:var(--pc);box-shadow:0 0 0 4px var(--carta),0 0 0 7px var(--pc),0 6px 16px rgba(0,0,0,.28);transition:transform .15s}
+.pc-prossima::after{content:"";position:absolute;inset:-7px;border-radius:50%;border:4px solid var(--pc);animation:pc-pulsa 1.8s ease-out infinite}
+@keyframes pc-pulsa{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.45);opacity:0}}
+@media (prefers-reduced-motion:reduce){.pc-prossima::after{animation:none;opacity:.6}}
 .pc-st:active .pc-cerchio{transform:scale(.93)}
 .pc-num{position:absolute;top:-6px;left:-6px;width:26px;height:26px;border-radius:50%;background:#fff;color:#14213d;font:800 .85rem/26px Inter,system-ui,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 .pc-ok{position:absolute;bottom:-4px;right:-6px;width:24px;height:24px;border-radius:50%;background:#2E9D5B;color:#fff;font:800 .8rem/24px system-ui;box-shadow:0 2px 6px rgba(0,0,0,.3)}
@@ -140,25 +143,6 @@ try{ document.documentElement.classList.add("avvio"); var mt = document.getEleme
 .pc-cart{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:5px;padding:6px 10px 6px 8px;border-radius:10px;
   background:var(--pc);color:#fff;border:0;font:700 .8rem/1.1 Inter,system-ui,sans-serif;box-shadow:0 3px 10px rgba(0,0,0,.25);cursor:pointer;white-space:nowrap}
 .pc-cart span{font-size:1.15rem}
-.pc-entra{position:sticky;bottom:calc(env(safe-area-inset-bottom) + 10px);z-index:2;display:block;width:100%;margin:10px 0 0;padding:16px;border:0;border-radius:16px;background:#2E9D5B;color:#fff;
-  font:800 1.1rem/1.2 Inter,system-ui,sans-serif;box-shadow:0 6px 16px rgba(0,0,0,.25);cursor:pointer}
-.pc-uva{display:flex;flex-direction:column;align-items:center;margin:4px auto 0;padding-bottom:6px}
-.pc-raspo{width:120px;height:46px;margin-bottom:-8px}
-.pc-acini{display:flex;justify-content:center;gap:4px}
-.pc-acino{position:relative;width:clamp(124px,36vw,146px);aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;color:#fff;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:10px;text-align:center;
-  font:800 1rem/1.15 Inter,system-ui,sans-serif;
-  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.45) 0 8%,transparent 26%),radial-gradient(circle at 50% 60%,var(--ac),color-mix(in srgb,var(--ac) 70%,#000));
-  box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 -6px 12px rgba(0,0,0,.18)}
-.pc-acino span{font-size:2rem;line-height:1}
-.pc-acino i{font-style:normal;font-weight:600;opacity:.9;font-size:.72rem}
-.pc-acino:active{transform:scale(.94)}
-.pc-grande{width:clamp(168px,48vw,196px);margin-top:-18px;font-size:1.12rem;z-index:1}
-.pc-grande span{font-size:2.3rem}
-.pc-home{display:block;margin:8px auto 0;background:none;border:0;color:inherit;text-decoration:underline;font:600 .95rem/1.2 Inter,system-ui,sans-serif;opacity:.9;cursor:pointer;padding:6px}
-.pc-piede{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;font-size:.85rem;opacity:.9}
-.pc-piede button{background:none;border:0;color:inherit;text-decoration:underline;font:inherit;cursor:pointer;padding:4px 0}
-.pc-piede label{display:flex;align-items:center;gap:6px}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -8797,7 +8781,7 @@ function apriPercorso(){
   const nDisp = (S.dispensa || []).length, nMie = (S.mie || []).length;
   /* "Continua": la prima tappa non ancora fatta fra Conosciamoci e Dispensa; se sono fatte, Cosa mangiamo?
      (Per chi cucini si sceglie ogni volta dentro il percorso, quindi non la conto) */
-  const prossima = !ok[0] ? 0 : !ok[2] ? 2 : 3;
+  const prossima = !ok[0] ? 0 : !ok[2] ? 2 : 3;   /* la tappa che "pulsa": la prossima da fare */
   /* posizioni in un riquadro 360 x 625 */
   const TAPPE = [
     {x:95,  y:57,  c:"#2E8B57", e:"\u{1F44B}", t:L("Conosciamoci","Let’s get acquainted"), d:L("chi sei, cosa non mangi","who you are, what you don’t eat"), go:()=>vai(0)},
@@ -8810,7 +8794,7 @@ function apriPercorso(){
     {x:262, y:66,  c:"#7A2E4A", e:"\u{1F4D6}", t:L("Le tue ricette","Your recipes") + (nMie ? " (" + nMie + ")" : ""), go:()=>apriMie()},
     {x:92,  y:182, c:"#2F6FA3", e:"\u{1F393}", t:L("Impariamo","Let’s learn"), go:()=>apriScuola()},
     {x:268, y:297, c:"#157159", e:"\u{1F6D2}", t:L("La spesa","Shopping"), go:()=>apriSpesa()},
-    {x:92,  y:410, c:"#5B6670", e:"\u{1F9ED}", t:L("Tutte le funzioni","Everything"), go:()=>apriTutto()},
+    {x:92,  y:410, c:"#5B6670", e:"\u2699\uFE0F", t:"Extra", go:()=>setTimeout(()=>{ menuAperto = true; disegnaMenu(); }, 0)},   /* dopo il clic, se no il clic stesso lo richiude */
     {x:285, y:525, c:"#B07D1A", e:"\u{1F3C1}", t:L("Buon appetito!","Enjoy!"), go:null}
   ];
   /* la strada: curve morbide che passano per le tappe */
@@ -8823,7 +8807,7 @@ function apriPercorso(){
   el = document.createElement("div"); el.id = "percorso"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", L("Il percorso dell’app","The app’s path"));
   el.innerHTML = `<div class="pc-in" data-no-tr>
     <h1 class="pc-tit">${S.profilo.nome ? L("Ciao ", "Hi ") + esc(S.profilo.nome) + "!" : L("Che cucino?","What’s cooking?")}</h1>
-    <p class="pc-sub">${L("Segui la strada, una tappa dopo l’altra. Tocca una tappa per andarci.","Follow the road, one stop after another. Tap a stop to go there.")}</p>
+    <p class="pc-sub">${L("Tocca una tappa per andarci. Quella che pulsa \u00e8 la prossima da fare.","Tap a stop to go there. The pulsing one is next.")}</p>
     <div class="pc-mappa">
       <svg class="pc-strada" viewBox="0 0 360 625" preserveAspectRatio="none" aria-hidden="true">
         <style>.pc-sent{fill:none;stroke:currentColor;stroke-width:3;stroke-dasharray:2 7;stroke-linecap:round;opacity:.45}</style>
@@ -8835,19 +8819,8 @@ function apriPercorso(){
       </svg>
       ${CARTELLI.map((c, i)=>`<button type="button" class="pc-cart" style="left:${pct(c.x,360)};top:${pct(c.y,625)};--pc:${c.c}" ${c.go ? `data-pc-c="${i}"` : "disabled"}><span>${c.e}</span>${c.t}</button>`).join("")}
       ${TAPPE.map((t, i)=>`<button type="button" class="pc-st" style="left:${pct(t.x,360)};top:${pct(t.y,625)};--pc:${t.c}" data-pc-t="${i}">
-        <span class="pc-cerchio">${t.e}<span class="pc-num">${i + 1}</span>${ok[i] ? `<span class="pc-ok">✓</span>` : ""}</span>
+        <span class="pc-cerchio${i === prossima ? " pc-prossima" : ""}">${t.e}<span class="pc-num">${i + 1}</span>${ok[i] ? `<span class="pc-ok">✓</span>` : ""}</span>
         <span class="pc-et"><b>${t.t}</b><small>${t.d}</small></span></button>`).join("")}
-    </div>
-    <div class="pc-uva" aria-label="${L("Dove vuoi andare","Where to go")}">
-      <svg class="pc-raspo" viewBox="0 0 120 46" aria-hidden="true"><path d="M60 46 C60 30 58 18 66 6" stroke="#6B4F2A" stroke-width="5" fill="none" stroke-linecap="round"/>
-        <path d="M64 14 C78 0 104 2 112 14 C100 22 80 26 64 14 Z" fill="#4E9A3A"/><path d="M66 14 C82 12 96 12 110 14" stroke="#2F6B22" stroke-width="1.6" fill="none"/>
-        <path d="M58 22 C48 20 42 12 46 6" stroke="#6B4F2A" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
-      <div class="pc-acini">
-        ${S.profilo.fatto ? `<button type="button" class="pc-acino" id="pcHome" style="--ac:#6C3483"><span>\u{1F3E0}</span>${L("Prima pagina","Home page")}</button>` : ""}
-        <button type="button" class="pc-acino" id="pcLista" style="--ac:#7D3C98"><span>\u{1F9ED}</span>${L("Tutte le funzioni","All features")}</button>
-      </div>
-      <button type="button" class="pc-acino pc-grande" id="pcEntra" style="--ac:#2E9D5B"><span>\u27A1\uFE0F</span>${!S.profilo.fatto ? L("Cominciamo:<br>1. Conosciamoci","Let\u2019s start:<br>1. Get acquainted")
-        : L(`Continua:<br>${prossima + 1}. ${TAPPE[prossima].t}`, `Continue:<br>${prossima + 1}. ${TAPPE[prossima].t}`)}</button>
     </div>
   </div>`;
   document.body.append(el);
@@ -8857,9 +8830,6 @@ function apriPercorso(){
   const vaiA = (f, ritorno)=>{ chiudiP(); f(); if(ritorno !== false) attivaRitornoMappa(); };
   el.querySelectorAll("[data-pc-t]").forEach(b=>b.onclick = ()=>vaiA(TAPPE[+b.dataset.pcT].go));
   el.querySelectorAll("[data-pc-c]").forEach(b=>b.onclick = ()=>vaiA(CARTELLI[+b.dataset.pcC].go));
-  el.querySelector("#pcEntra").onclick = ()=>vaiA(TAPPE[S.profilo.fatto ? prossima : 0].go);
-  { const h = el.querySelector("#pcHome"); if(h) h.onclick = ()=>vaiA(()=>vai(5), false); }
-  el.querySelector("#pcLista").onclick = ()=>vaiA(()=>apriTutto());
 }
 /* ----- ritorno alla mappa ----- */
 var ritornoMappa = false, ignoraPopMappa = false;   /* var: apriPercorso parte all'avvio, prima di questa riga */
