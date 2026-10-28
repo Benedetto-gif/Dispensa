@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.12.6 | v288 | 28/10/2026 | Animazioni sfasate: dispensa e piatti (e i box di «Cosa ti va oggi?») non cambiano più nello stesso istante |
 | 2.12.5 | v287 | 28/10/2026 | Niente più «Chiudi»: nei pannelli aperti dalla mappa c'è «🧭 Mappa», in quelli aperti dentro una pagina «← Indietro» |
 | 2.12.4 | v286 | 28/10/2026 | Condividi → Che cucino? e link di ricette ricevute di nuovo funzionanti (la mappa li copriva) |
 | 2.12.3 | v285 | 28/10/2026 | Mappa: «Le tue ricette» accanto a «Cosa mangiamo?» con il conteggio (tue e totali); Extra spostato in alto |
