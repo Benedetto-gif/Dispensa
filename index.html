@@ -1270,7 +1270,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v276</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v277</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2605,7 +2605,7 @@ function regoleTavolo(){ const s = new Set(); tavolata().forEach(c=>{ if(c.relig
 function violaTavolo(r){ for(const rel of regoleTavolo()){ const v = violaRegola(r, rel); if(v) return {rel, v}; } return null; }
 function nomeRelig(rel){ const x = RELIGIONI[rel]; return x ? x.e + " " + L(x.it, x.en) : ""; }
 function chipsRelig(id, val){
-  return `<div class="chips" id="${id}" style="margin-top:8px"><button class="chip ${!val?"on":""}" data-v="" style="font-size:.78rem">${L("nessuna","none")}</button>${Object.keys(RELIGIONI).map(k=>`<button class="chip ${val===k?"on":""}" data-v="${k}" style="font-size:.78rem">${nomeRelig(k)}</button>`).join("")}</div>`;
+  return `<div class="chips" id="${id}" style="margin-top:8px">${Object.keys(RELIGIONI).map(k=>`<button class="chip ${val===k?"on":""}" data-v="${k}" style="font-size:.78rem">${nomeRelig(k)}</button>`).join("")}</div>`;
 }
 
 function allergeniTavolo(){
@@ -2931,8 +2931,9 @@ function tappaProfilo(){
     </div>
   </div></div>`;
 
-  app.querySelectorAll("#pStile .chip").forEach(b=>b.onclick=()=>{ S.profilo.stile=b.dataset.v; salva(); tappaProfilo(); });
-  app.querySelectorAll("#pRelig .chip").forEach(b=>b.onclick=()=>{ S.profilo.relig=b.dataset.v; salva(); tappaProfilo(); });
+  app.querySelectorAll("#pStile .chip").forEach(b=>b.onclick=()=>{ S.profilo.stile = S.profilo.stile === b.dataset.v ? "onnivoro" : b.dataset.v; salva(); tappaProfilo(); });
+  /* tocco per scegliere, ritocco per togliere */
+  app.querySelectorAll("#pRelig .chip").forEach(b=>b.onclick=()=>{ S.profilo.relig = S.profilo.relig === b.dataset.v ? "" : b.dataset.v; salva(); tappaProfilo(); });
   app.querySelectorAll("#pAll .chip").forEach(b=>b.onclick=()=>{
     const l=S.profilo.allergeni, v=b.dataset.v, i=l.indexOf(v);
     i<0?l.push(v):l.splice(i,1); b.classList.toggle("on"); salva();
@@ -3045,9 +3046,9 @@ function tappaOspiti(){
   let stile="onnivoro", alg=[], salvato=false, relig="";
   const box = document.getElementById("nuovo");
   box.querySelectorAll("#oRelig .chip").forEach(b=>b.onclick=()=>{
-    relig=b.dataset.v; box.querySelectorAll("#oRelig .chip").forEach(x=>x.classList.toggle("on",x===b)); });
+    relig = relig === b.dataset.v ? "" : b.dataset.v; box.querySelectorAll("#oRelig .chip").forEach(x=>x.classList.toggle("on", x.dataset.v===relig)); });
   box.querySelectorAll("#oStile .chip").forEach(b=>b.onclick=()=>{
-    stile=b.dataset.v; box.querySelectorAll("#oStile .chip").forEach(x=>x.classList.toggle("on",x===b)); });
+    stile = stile === b.dataset.v ? "onnivoro" : b.dataset.v; box.querySelectorAll("#oStile .chip").forEach(x=>x.classList.toggle("on", x.dataset.v===stile)); });
   box.querySelectorAll("#oAll .chip").forEach(b=>b.onclick=()=>{
     const i=alg.indexOf(b.dataset.v); i<0?alg.push(b.dataset.v):alg.splice(i,1); b.classList.toggle("on"); });
   const sw = document.getElementById("oSalva");
@@ -9042,7 +9043,7 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v276".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v277".replace("checucino-", "");
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
 var verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
 function numVer(x){ return parseInt(String(x).replace(/\D/g, "")) || 0; }
