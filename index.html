@@ -1335,7 +1335,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.14.0</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.14.1</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -1791,14 +1791,14 @@ const EMOJI_ING = [
   [/sott.?aceto|sott.?olio|cetriolini|mostarda/,"\u{1FAD9}"],
   /* carne e salumi */
   [/lumach/,"\u{1F40C}"],[/pollo|gallin|creste di gallo|fegatini/,"\u{1F357}"],[/anatra|faraona|palomba/,"\u{1F986}"],[/conigli|lepre/,"\u{1F407}"],
-  [/agnell|pecora|capra|capretto|camoscio/,"\u{1F411}"],[/cinghiale|maiale|maialino|costine|cotenna|ciccioli|lonza|strutto|lardo/,"\u{1F416}"],
+  [/salsicc/,"\u{1F32D}"],[/agnell|pecora|capra|capretto|camoscio/,"\u{1F411}"],[/cinghiale|maiale|maialino|costine|cotenna|ciccioli|lonza|strutto|lardo/,"\u{1F416}"],
   [/salam|soppressat|sopressa|mortadella|prosciutto|speck|capocollo|ciauscolo|ventricina|pitina|bresaola|chorizo|carne salada|carne secca/,"\u{1F953}"],
   [/salsicc|lugane|nduja|cotechino|zampone|budell|muset/,"\u{1F32D}"],[/pancetta|guanciale/,"\u{1F953}"],
   [/macinat/,"\u{1F356}"],[/manzo|vitello|chianina|fassona|bue|cavallo|bistecca|stracotto|ossobuco|carne/,"\u{1F969}"],
   [/trippa|lampredotto|milza|polmone|fegato|lingua|animelle|frattaglie|interiora|coratella|curatella|cordula|pajata|nervetti|stigghiola|involtini/,"\u{1F356}"],
   /* frutta */
   [/limone|scorza di limone/,"\u{1F34B}"],[/^lime$/,"\u{1F34B}"],[/aranc|mandarin|clementin|pompelmo/,"\u{1F34A}"],[/mele cotogne|^mele|mele disidratate/,"\u{1F34E}"],
-  [/pere/,"\u{1F350}"],[/pesche|albicocch|nespole/,"\u{1F351}"],[/ciliegie|amarene|visciole/,"\u{1F352}"],[/fragol/,"\u{1F353}"],
+  [/(^| )pera|pere/,"\u{1F350}"],[/pesche|albicocch|nespole/,"\u{1F351}"],[/ciliegie|amarene|visciole/,"\u{1F352}"],[/fragol/,"\u{1F353}"],
   [/mirtill|lampon|more|frutti di bosco|bacche/,"\u{1FAD0}"],[/uva|uvetta/,"\u{1F347}"],[/anguria/,"\u{1F349}"],[/melone/,"\u{1F348}"],
   [/banan/,"\u{1F34C}"],[/ananas/,"\u{1F34D}"],[/kiwi/,"\u{1F95D}"],[/mango|papaya|frutto della passione/,"\u{1F96D}"],[/cocco/,"\u{1F965}"],
   [/avocado/,"\u{1F951}"],[/fichi|datteri|prugne|susine|cachi|melagrana/,"\u{1F351}"],
@@ -1824,10 +1824,19 @@ const EMOJI_ING = [
 ];
 const EMOJI_REPARTO = {"Verdure e ortaggi":"\u{1F96C}","Frutta":"\u{1F34E}","Carne e salumi":"\u{1F969}","Pesce":"\u{1F41F}","Latticini e uova":"\u{1F9C0}",
   "Dispensa":"\u{1FAD9}","Erbe e spezie":"\u{1F33F}","Essiccati e disidratati":"\u{1F342}","Surgelati e congelati":"\u{1F9CA}","Scatolette e conserve":"\u{1F96B}","Cantina":"\u{1F377}"};
+const EM_CARNE = ["\u{1F357}","\u{1F986}","\u{1F407}","\u{1F411}","\u{1F416}","\u{1F953}","\u{1F32D}","\u{1F356}","\u{1F969}","\u{1F40C}"];
+const EM_PESCE = ["\u{1F990}","\u{1F991}","\u{1F9AA}","\u{1F41F}"];
+const EM_LATTE = ["\u{1F9C0}","\u{1F9C8}","\u{1F95B}","\u{1F95A}"];
+const VIETATE_IN = (()=>{ const vegetale = new Set([...EM_CARNE, ...EM_PESCE, ...EM_LATTE]);
+  return {"Verdure e ortaggi":vegetale, "Frutta":vegetale, "Erbe e spezie":vegetale,
+          "Carne e salumi":new Set([...EM_PESCE, ...EM_LATTE, "\u{1F96C}"]), "Pesce":new Set([...EM_CARNE, ...EM_LATTE, "\u{1F96C}"]), "Latticini e uova":new Set([...EM_CARNE, ...EM_PESCE])}; })();
 const _emojiIng = {};
 function emojiIng(k){
   if(_emojiIng[k] !== undefined) return _emojiIng[k];
-  const n = normTesto(k), t = EMOJI_ING.find(([re])=>re.test(n));
+  const n = normTesto(k), rep = CAT_OF[k] || "";
+  /* l'icona deve stare nel reparto giusto: "pomodoro cuore di bue" e' un pomodoro, non una bistecca */
+  const vieta = VIETATE_IN[rep] || null;
+  const t = EMOJI_ING.find(([re, e])=>re.test(n) && !(vieta && vieta.has(e)));
   return _emojiIng[k] = t ? t[1] : (EMOJI_REPARTO[CAT_OF[k] || ""] || "\u{1F37D}️");
 }
 /* ===== I 14 allergeni del Regolamento UE 1169/2011 (FIC), Allegato II, nello stesso ordine ===== */
@@ -9350,11 +9359,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v290".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v291".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.14.0";
+var NOME_VERSIONE = "2.14.1";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
