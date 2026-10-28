@@ -156,6 +156,11 @@ body.barra-mappa #tornaMappa{display:none}
   padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 24px);transition:opacity .35s ease}
 #percorso.via{opacity:0;pointer-events:none}
 .pc-in{max-width:480px;margin:0 auto}
+.az-attenzione{border:2px solid #D98E04!important}
+.az-capito{display:flex;gap:8px;align-items:flex-start;margin:12px 0 4px;font-weight:700}
+#azVai[disabled]{opacity:.45}
+#azVai.az-armato{animation:az-pulsa .8s ease-in-out infinite alternate}
+@keyframes az-pulsa{to{filter:brightness(1.25)}}
 .pc-ver{display:block;margin:-6px 0 6px auto;padding:5px 10px;border:1px solid currentColor;border-radius:999px;background:none;color:inherit;opacity:.75;font:700 .75rem/1 Inter,system-ui,sans-serif;cursor:pointer}
 .pc-ver.nuova{opacity:1;background:#2E9D5B;border-color:#2E9D5B;color:#fff}
 .pc-tit{font-family:Newsreader,Georgia,serif;font-size:clamp(1.6rem,7vw,2.1rem);font-weight:600;margin:0;text-align:center;letter-spacing:-.01em}
@@ -1265,7 +1270,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v275</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v276</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2469,6 +2474,7 @@ function apriAzzera(){
   const nR = (S.mie||[]).length, nS = (S.schedeMie||[]).length;
   apriVelo("azzera", `<div class="velo-top"><h2>${L("Azzera i dati","Erase data")}</h2>
       <button class="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
+    <div class="az-salva" id="azSalva">${htmlAzSalva()}</div>
     <p>${L("Cancello profilo, ospiti, dispensa, lista della spesa, preferite e ricette cucinate.","I\u2019ll erase your profile, guests, pantry, shopping list, favourites and cooked recipes.")}</p>
     ${nR || nS ? `<div class="card" style="margin-top:10px">
       <b>${L("Cosa vuoi tenere?","What do you want to keep?")}</b>
@@ -2476,9 +2482,21 @@ function apriAzzera(){
       ${nS ? `<label class="az-riga"><input type="checkbox" id="azSchede" checked> ${L(`Tieni le mie schede di \u00abImpariamo a cucinare\u00bb (${nS})`, `Keep my \u00abLet\u2019s learn to cook\u00bb cards (${nS})`)}</label>` : ""}
     </div>` : ""}
     <p class="mini" style="margin-top:10px">${L("Tengo da parte una copia di quello che cancello: se ci ripensi, la recuperi da Extra \u2192 \u00abRecupera i dati azzerati\u00bb.","I keep a copy of what I erase: if you change your mind, restore it from Extras \u2192 \u00abRestore the erased data\u00bb.")}</p>
-    <div class="azioni"><button class="btn rischio-btn" id="azVai">${L("Azzera","Erase")}</button>
+    <label class="az-riga az-capito"><input type="checkbox" id="azCapito"> ${L("Ho capito: cancello i miei dati da questo telefono","I understand: I\u2019m erasing my data from this phone")}</label>
+    <div class="azioni"><button class="btn rischio-btn" id="azVai" disabled>${L("Azzera","Erase")}</button>
       <button class="btn ghost" onclick="chiudiVelo()">${L("Annulla","Cancel")}</button></div>`);
-  document.getElementById("azVai").onclick = ()=>{
+  /* doppio controllo: prima la spunta, poi il tasto va toccato due volte (la seconda entro 5 secondi) */
+  const vai_ = document.getElementById("azVai"), capito = document.getElementById("azCapito");
+  let armato = false, tArm = null;
+  const disarma = ()=>{ armato = false; clearTimeout(tArm); vai_.textContent = L("Azzera","Erase"); vai_.classList.remove("az-armato"); };
+  capito.onchange = ()=>{ vai_.disabled = !capito.checked; disarma(); };
+  const salvaBox = document.getElementById("azSalva");
+  salvaBox.addEventListener("click", async e=>{
+    const b = e.target.closest("[data-az-salva]"); if(!b) return;
+    await esportaDati(b.dataset.azSalva === "file");
+    salvaBox.innerHTML = htmlAzSalva();
+  });
+  const esegui = ()=>{
     const tieniMie = !!(document.getElementById("azMie") || {}).checked, tieniSchede = !!(document.getElementById("azSchede") || {}).checked;
     try{ localStorage.setItem(CHIAVE_BACKUP, JSON.stringify(S)); }catch(e){}
     const vecchio = S;
@@ -2487,6 +2505,26 @@ function apriAzzera(){
     if(tieniSchede) S.schedeMie = vecchio.schedeMie || [];
     sess = nuovaSessione(); salva(); chiudiVelo(); vai(0);
   };
+  vai_.onclick = ()=>{
+    if(!capito.checked) return;
+    if(!armato){ armato = true; vai_.textContent = "\u26A0\uFE0F " + L("Tocca ancora per azzerare","Tap again to erase"); vai_.classList.add("az-armato");
+      tArm = setTimeout(disarma, 5000); return; }
+    disarma(); esegui();
+  };
+}
+/* riquadro in cima ad Azzera: quando hai salvato l'ultima volta, cosa non e' ancora salvato, e i tasti per salvare */
+function htmlAzSalva(){
+  const n = elencoDaSalvare().length;
+  const data = S.ultimoSalvataggio ? new Date(S.ultimoSalvataggio).toLocaleDateString(IN_INGLESE?"en-GB":"it-IT",{day:"numeric",month:"long",year:"numeric"}) : "";
+  const stato = !data ? L("Non hai mai salvato i tuoi dati.","You have never saved your data.")
+    : n ? L(`Ultimo salvataggio il ${data}, ma da allora ci sono ${n === 1 ? "1 novit\u00e0 non salvata" : n + " novit\u00e0 non salvate"}.`, `Last saved on ${data}, but there ${n === 1 ? "is 1 unsaved change" : "are " + n + " unsaved changes"} since then.`)
+    : L(`Ultimo salvataggio il ${data}: \u00e8 tutto salvato.`, `Last saved on ${data}: everything is saved.`);
+  const tutto = data && !n;
+  return `<div class="card ${tutto ? "" : "az-attenzione"}">
+    <b>${tutto ? "\u2705" : "\u26A0\uFE0F"} ${L("Prima di azzerare, salva","Before erasing, save")}</b>
+    <p class="mini" style="margin:4px 0 8px">${stato} ${L("Se vuoi solo fare pulizia, salva prima: dopo potrai riprendere quello che ti serve con \u00abImporta ricette\u00bb.","If you only want a clean-up, save first: afterwards you can bring back what you need with \u201cImport recipes\u201d.")}</p>
+    <div class="azioni" style="margin:0"><button type="button" class="btn small" data-az-salva="cloud">\u2601\uFE0F ${L("Salva nel cloud","Save to the cloud")}</button>
+      <button type="button" class="btn ghost small" data-az-salva="file">\u{1F4C1} ${L("Salva come file","Save as a file")}</button></div></div>`;
 }
 function recuperaAzzera(){
   let b = null; try{ b = JSON.parse(localStorage.getItem(CHIAVE_BACKUP) || "null"); }catch(e){}
@@ -9004,7 +9042,7 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v275".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v276".replace("checucino-", "");
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
 var verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
 function numVer(x){ return parseInt(String(x).replace(/\D/g, "")) || 0; }
