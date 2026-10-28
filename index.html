@@ -111,6 +111,7 @@ try{ SFONDO.applica(SFONDO.lista()[SFONDO.sel()]); SFONDO.applicaRiq(SFONDO.riq(
 try{ document.documentElement.classList.add("avvio"); var mt = document.getElementById("metaTema"); window.TEMA_DOPO = mt.content; mt.content = "#17281A"; }catch(e){}
 </script>
 <style>html.avvio,html.avvio body{background:#17281A !important}.conta-ricette{background:rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;margin:4px 0 8px;line-height:1.45;font-size:.95em}.conta-ricette .mini{display:block;opacity:.9}
+.rec-rep{margin-top:10px}.rec-rep:first-child{margin-top:6px}.rec-rep-t{font-weight:800;font-size:.85rem;margin:0 0 5px;opacity:.95}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3280,8 +3281,15 @@ function tappaVoglia(){
     const gia = tutte.some(k=>normTesto(k) === q || (IN_INGLESE && normTesto(nomeIng(k)) === q));
     return `<div>
     <div class="mini">Cosa va consumato</div>
-    ${dep.length||scelti.length?`<div class="chips" id="rec">${dep.concat(scelti).map(k=>
-        `<button class="chip ${sess.recupero.includes(k)?"on":""}" data-i="${esc(k)}">${k}</button>`).join("")}</div>`
+    ${dep.length||scelti.length?`<div id="rec">${(()=>{
+        /* raggruppati per reparto (nell'ordine della dispensa), e dentro ogni reparto in ordine alfabetico */
+        const IC = {"Verdure e ortaggi":"\u{1F96C}", "Frutta":"\u{1F34E}", "Carne e salumi":"\u{1F969}", "Pesce":"\u{1F41F}", "Latticini e uova":"\u{1F9C0}", "Surgelati e congelati":"\u2744\uFE0F"};
+        const alfa = l=>l.slice().sort((x, y)=>x.localeCompare(y, "it", {sensitivity:"base"}));
+        const gruppi = DEPERIBILI.map(c=>[c, alfa(dep.filter(k=>(CAT_DISP[c]||[]).includes(k)))]).filter(([, l])=>l.length);
+        if(scelti.length) gruppi.push(["", alfa(scelti)]);
+        return gruppi.map(([c, l])=>`<div class="rec-rep"><div class="rec-rep-t">${c ? IC[c] + " " + nomeRep(c) : "\u{1F4E6} " + L("Altro","Other")}</div>
+          <div class="chips">${l.map(k=>`<button class="chip ${sess.recupero.includes(k)?"on":""}" data-i="${esc(k)}">${k}</button>`).join("")}</div></div>`).join("");
+      })()}</div>`
       :`<p class="mini">Nella dispensa non hai segnato freschi, latticini, carne, pesce o surgelati. Cercalo qui sotto: vale qualsiasi cosa, anche un avanzo.</p>`}
     <label class="campo" style="margin-top:12px"><span>Non è in elenco? Cercalo o aggiungilo</span>
       <input type="text" id="recCerca" value="${esc(cercaRec)}" placeholder="Scrivi le prime lettere"></label>
