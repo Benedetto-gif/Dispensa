@@ -5192,8 +5192,11 @@ function importaDati(){
           S.ingMiei = Object.assign({}, d.ingMiei || {}, S.ingMiei || {});
           S.preferite = Array.from(new Set((S.preferite || []).concat(d.preferite || [])));
           if(typeof d.ricetteNelSalvataggio === "number" && !S.ultimoSalvataggio){ S.ultimoSalvataggio = d.ultimoSalvataggio; S.ricetteNelSalvataggio = d.ricetteNelSalvataggio; }
-          msg = L(`Unite al telefono: ${agg} ${agg === 1 ? "ricetta aggiunta" : "ricette aggiunte"}`, `Merged into the phone: ${agg} recipe${agg === 1 ? "" : "s"} added`)
-            + (gia ? L(`, ${gia} gi\u00e0 presenti (lasciate com\u2019erano)`, `, ${gia} already there (left as they were)`) : "")
+          const nel = (d.mie || []).length;
+          msg = (!nel ? L("Questo salvataggio non contiene ricette tue: non c\u2019era niente da aggiungere.", "This save contains none of your recipes: nothing to add.")
+            : !agg ? L(`Nessuna ricetta nuova: ${nel === 1 ? "l\u2019unica ricetta del salvataggio \u00e8 gi\u00e0" : "tutte le " + nel + " ricette del salvataggio sono gi\u00e0"} nell\u2019app.`, `No new recipes: all ${nel} recipe${nel === 1 ? "" : "s"} in the save are already in the app.`)
+            : L(`Il salvataggio contiene ${nel} tue ricette: ${agg} ${agg === 1 ? "aggiunta" : "aggiunte"}`, `The save contains ${nel} of your recipes: ${agg} added`)
+              + (gia ? L(`, ${gia} gi\u00e0 presenti (lasciate com\u2019erano)`, `, ${gia} already there (left as they were)`) : ""))
             + (aggS ? L(`, ${aggS} schede o lezioni aggiunte`, `, ${aggS} cards or lessons added`) : "") + "."
             + "\n" + L("Dispensa, preferenze e il resto del telefono non sono stati toccati.", "Pantry, settings and everything else on the phone were left untouched.");
         }
