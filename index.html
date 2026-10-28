@@ -818,9 +818,11 @@ header.top{position:sticky;top:0;z-index:30;background:var(--carta);border-botto
 .marchio{font-family:Newsreader,serif;font-size:1.25rem;font-weight:600;letter-spacing:-.015em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .marchio span{color:var(--verde)}
 .menu-btn{background:var(--superficie);border:1px solid var(--linea);border-radius:10px;padding:7px 12px;cursor:pointer;font-size:.88rem;font-weight:500}
-.menu-pan{position:absolute;right:16px;top:52px;z-index:40;width:min(300px,calc(100vw - 32px));
-  background:var(--superficie);border:1px solid var(--linea);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.16);
-  overflow-y:auto;max-height:calc(100vh - 72px);padding:10px}
+/* il menu Extra e' agganciato allo schermo (fixed), non alla pagina: si apre sempre sotto l'intestazione,
+   anche se la pagina e' scorsa in basso, e scorre per conto suo */
+.menu-pan{position:fixed;right:max(12px,calc((100vw - 620px)/2));top:var(--menu-top,60px);z-index:60;width:min(300px,calc(100vw - 24px));
+  background:var(--superficie);border:1px solid var(--linea);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.22);
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;max-height:calc(100vh - var(--menu-top,60px) - 12px);max-height:calc(100dvh - var(--menu-top,60px) - 12px);padding:10px}
 .menu-box{border-radius:12px;padding:9px 10px 8px;margin:0 0 8px}
 .menu-box:last-child{margin-bottom:0}
 .menu-box .sez{padding:2px 2px 7px;font-size:.76rem;font-weight:800;text-transform:uppercase;letter-spacing:.04em;
@@ -8214,6 +8216,8 @@ document.addEventListener("click", e=>{
 function disegnaMenu(){
   menuBtn.setAttribute("aria-expanded", menuAperto);
   if(!menuAperto){ menuPan.innerHTML=""; return; }
+  { const h = document.querySelector("header.top"), r = h ? h.getBoundingClientRect() : null;
+    document.documentElement.style.setProperty("--menu-top", Math.max(8, Math.round(r ? r.bottom + 6 : 60)) + "px"); }
   const pronta = S.dispensa.length > 0;
   /* ricette mie gia' scritte (non le sole foto a mano, che vanno prima trascritte) e non ancora convalidate */
   const daConv = (S.mie || []).filter(x=>!x.validata && !x.soloFoto).length;
