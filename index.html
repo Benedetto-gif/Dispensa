@@ -1315,7 +1315,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.12.1</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.12.2</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2333,9 +2333,10 @@ function pulisciProc(proc){ return Array.isArray(proc) ? senzaNumeriFoto(proc.ma
   if(cambiate) try{ localStorage.setItem("checucino.v3", JSON.stringify(S)); }catch(e){}
 })();
 if(!S.primoUso){ S.primoUso = Date.now(); salva(); }
-/* al primo avvio, gli ingredienti di base risultano già in dispensa: l'utente toglie solo quelli che non ha */
+/* al primo avvio gli ingredienti di base (olio, sale, farina...) NON sono dati per presenti: potrebbero mancare.
+   Vanno nella lista della spesa; appena li spunti in dispensa escono dalla lista (e se li togli ci rientrano). */
 if(!S.baseMigrato){
-  BASE.forEach(k=>{ if(!S.dispensa.includes(k)) S.dispensa.push(k); });
+  BASE.forEach(k=>{ if(S.dispensa.includes(k)) return; if(k === "acqua") S.dispensa.push(k); else metti(k, k, ""); });   /* l'acqua del rubinetto c'e' sempre */
   S.baseMigrato = true;
   salva();
 }
@@ -9235,11 +9236,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v283".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v284".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.12.1";
+var NOME_VERSIONE = "2.12.2";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
