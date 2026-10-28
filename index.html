@@ -1317,7 +1317,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.12.4</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.12.5</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -4643,6 +4643,21 @@ function apriVelo(nome, html){
   velo.innerHTML = `<div class="velo velo-${nome}"><div class="velo-in">${html}</div></div>`;
   document.body.style.overflow = "hidden";
   window.scrollTo({top:0});
+  sistemaTastoUscita();
+}
+/* niente piu' "Chiudi" generico: se il pannello e' stato aperto dalla mappa (o dal menu Extra aperto dalla mappa)
+   il tasto riporta alla mappa; se e' stato aperto dentro una pagina (una ricetta, la dispensa...) torna a quella pagina */
+function sistemaTastoUscita(){
+  const b = velo.querySelector(".velo-top .chiudi"); if(!b) return;
+  if(typeof aperturaDaMappa !== "undefined" && aperturaDaMappa){
+    const n = b.cloneNode(false);
+    [...n.attributes].forEach(a=>{ if(a.name !== "class" && a.name !== "type") n.removeAttribute(a.name); });
+    n.textContent = "\u{1F9ED} " + L("Mappa","Map");
+    n.onclick = e=>{ e.stopPropagation(); if(veloAperto === "cucina" && typeof spegniVoce === "function") spegniVoce(); chiudiVelo(); tornaAllaMappa(); };
+    b.replaceWith(n);
+  } else {
+    b.textContent = "\u2190 " + L("Indietro","Back");
+  }
 }
 function chiudiVelo(){
   setTimeout(forseTornaAllaMappa, 0);
@@ -9106,7 +9121,7 @@ function apriPercorso(){
   el.querySelector("#pcVer").onclick = e=>tastoVerMappa(e.currentTarget);
   el.querySelectorAll("[data-pc-t]").forEach(b=>b.onclick = ()=>{ passoIngresso = Math.min(+b.dataset.pcT, 4); vaiA(TAPPE[+b.dataset.pcT].go); });
   /* i cartelli aprono pannelli sopra la mappa: chiudendoli si torna alla mappa, non alla pagina sotto */
-  el.querySelectorAll("[data-pc-c]").forEach(b=>b.onclick = ()=>{ vaiA(CARTELLI[+b.dataset.pcC].go); aperturaDaMappa = true; });
+  el.querySelectorAll("[data-pc-c]").forEach(b=>b.onclick = ()=>{ aperturaDaMappa = true; vaiA(CARTELLI[+b.dataset.pcC].go); });
 }
 /* le tappe animate: ogni cerchio racconta la sua pagina con una piccola scena che si ripete */
 function animTappa(i, e){
@@ -9245,11 +9260,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v286".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v287".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.12.4";
+var NOME_VERSIONE = "2.12.5";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
