@@ -193,6 +193,13 @@ body.barra-mappa #tornaMappa{display:none}
   padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 24px);transition:opacity .35s ease}
 #percorso.via{opacity:0;pointer-events:none}
 .pc-in{max-width:480px;margin:0 auto}
+.ric-foto{margin:10px 0 4px}
+.rf{margin:0}
+.rf img{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:12px;background:rgba(0,0,0,.08)}
+.rf figcaption{font-size:.72rem;opacity:.8;margin-top:4px;line-height:1.35}
+.rf figcaption a{color:inherit}
+.rf-nota{opacity:.85;font-style:italic}
+.rf-tasti{margin-top:4px}
 .az-attenzione{border:2px solid #D98E04!important}
 .az-capito{display:flex;gap:8px;align-items:flex-start;margin:12px 0 4px;font-weight:700}
 #azVai[disabled]{opacity:.45}
@@ -1307,7 +1314,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v278</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v279</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -4352,6 +4359,7 @@ function scheda(o){
       <div>${o.fuoriClima?`<span class="tag fuori-clima">${climaRicetta(r)==="estivo"?"\u{1F31E} "+L("piatto estivo","summer dish"):"❄️ "+L("piatto invernale","winter dish")}</span>`:""}${o.leggeraCena?`<span class="tag">\u{1F319} ${L("leggero, adatto alla cena","light, good for dinner")}</span>`:""}${o.pesanteCena?`<span class="tag fuori-clima">☀️ ${L("più adatto a pranzo","better for lunch")}</span>`:""}${(giudizio(r.id)||{}).s?`<span class="tag voto" title="${L("Il tuo voto","Your rating")}">${stelleTesto(giudizio(r.id).s)}</span>`:""}${(giudizio(r.id)||{}).nota?`<span class="tag">\u{1F4DD} ${L("con la tua nota","with your note")}</span>`:""}${nelMenu(r.id)?`<span class="tag">\u{1F4C5} ${L("nel menu della settimana","in this week’s menu")}</span>`:""}${r.id<0?`<span class="tag pref">tua ricetta</span>`:""}${o.pref?`<span class="tag pref">preferita</span>`:""}${o.fatta?`<span class="tag fatta">fatta da poco</span>`:""}${o.zona?`<span class="tag zona">della tua regione</span>`:""}${o.stag.in?`<span class="tag stag">\u{1F5D3}\uFE0F ${o.stag.in} ${o.stag.in===1?"ingrediente":"ingredienti"} di stagione</span>`:""}${(r.att||[]).some(a=>D.attrezzi[a])?`<span class="tag">\u{1F6E0}\ufe0f attrezzo speciale</span>`:""}${r.unico?`<span class="tag">piatto unico</span>`:""}${r.minimo?`<span class="tag">pochi ingredienti</span>`:""}</div>
       ${esclusi.length?`<div class="avviso">Non va bene per ${esclusi.map(c=>esc(c.nome)).join(" e ")}</div>`:""}
     </summary>
+    <div class="ric-foto" data-foto-ric="${r.id}"></div>
     <div class="dett">
       ${(giudizio(r.id)||{}).nota?`<div class="mia-nota" data-no-tr>\u{1F4DD} <b>${L("La tua nota","Your note")}:</b> ${esc(giudizio(r.id).nota)}</div>`:""}
       ${rigaDosi(r)}
@@ -4912,6 +4920,12 @@ function apriFine(r){
           <input type="checkbox" id="fineSpesa" checked style="width:20px;height:20px;accent-color:var(--verde)">
         </label>
       </div>` : `<p class="mini">Di questa ricetta non hai nulla segnato in dispensa, quindi non tolgo niente.</p>`}
+    <div class="card">
+      <b>\u{1F4F7} ${L("Fotografa il tuo piatto","Photograph your dish")}</b>
+      <p class="mini" style="margin:4px 0 8px">${fotoMiaDi(r.id) ? L("Hai gi\u00e0 una foto di questo piatto: puoi sostituirla con quella di oggi.","You already have a photo of this dish: you can replace it with today\u2019s.") : L("Da ora la scheda della ricetta mostrer\u00e0 la tua foto al posto di quella di Wikipedia.","From now on the recipe card will show your photo instead of the Wikipedia one.")}</p>
+      <button type="button" class="btn ghost small" data-foto-mia="${r.id}">\u{1F4F7} ${fotoMiaDi(r.id) ? L("Sostituisci la foto","Replace the photo") : L("Scatta la foto","Take the photo")}</button>
+      <span class="mini" id="fineFotoOk"></span>
+    </div>
     <div class="azioni">
       <button class="btn" data-fine="ok" data-id="${r.id}">Fatto</button>
       <button class="btn ghost" data-fine="annulla">Annulla</button>
@@ -5343,7 +5357,7 @@ async function condividiRicette(){
   const PERSONALI = ["voto","giudizio","notaMia","cucinata","nascosta","preferita"];
   const ricette = mie.map(r=>{ const c = JSON.parse(JSON.stringify(r)); PERSONALI.forEach(k=>delete c[k]); return c; });
   const foto = {};
-  for(const id of tutteLeFoto()){ try{ const bl = await FotoDB.get(id); if(bl) foto[id] = await blobInDataUrl(bl); }catch(e){} }
+  for(const id of [].concat(...mie.map(r=>r.foto || []))){ try{ const bl = await FotoDB.get(id); if(bl) foto[id] = await blobInDataUrl(bl); }catch(e){} }
   const testo = JSON.stringify({app:"che-cucino", tipo:"ricette", versione:1, dati:{mie:ricette}, foto});
   const giorno = new Date().toISOString().slice(0,10), nome = "ricette-che-cucino-" + giorno;
   const n = ricette.length;
@@ -5394,6 +5408,7 @@ function importaDati(){
           const idS = new Set(S.schedeMie.map(x=>x.id)); let aggS = 0;
           (d.schedeMie || []).forEach(x=>{ if(x && !idS.has(x.id)){ S.schedeMie.push(x); idS.add(x.id); aggS++; } });
           S.ingMiei = Object.assign({}, d.ingMiei || {}, S.ingMiei || {});
+          if(!soloRicette) S.fotoPiatti = Object.assign({}, d.fotoPiatti || {}, S.fotoPiatti || {});
           if(!soloRicette) S.preferite = Array.from(new Set((S.preferite || []).concat(d.preferite || [])));
           if(typeof d.ricetteNelSalvataggio === "number" && !S.ultimoSalvataggio){ S.ultimoSalvataggio = d.ultimoSalvataggio; S.ricetteNelSalvataggio = d.ricetteNelSalvataggio; }
           const nel = (d.mie || []).length;
@@ -6803,7 +6818,7 @@ async function urlFoto(id){
 function blobInDataUrl(bl){
   return new Promise((ok, ko)=>{ const fr = new FileReader(); fr.onload = ()=>ok(fr.result); fr.onerror = ko; fr.readAsDataURL(bl); });
 }
-function tutteLeFoto(){ return [].concat(...(S.mie || []).map(r=>r.foto || [])); }
+function tutteLeFoto(){ return [].concat(...(S.mie || []).map(r=>r.foto || []), Object.values(S.fotoPiatti || {})); }
 function eliminaFotoDi(r){ (r.foto || []).forEach(id=>{ FotoDB.del(id).catch(()=>{}); }); }
 /* la grafia vuole dettaglio: 2200 px sul lato lungo, JPEG di buona qualita' */
 async function salvaFotoFile(file){
@@ -7062,6 +7077,104 @@ function apriImport(modo, cerca){
   else if(!foto){ const c = document.getElementById("impCerca"); if(c) setTimeout(()=>c.focus(), 80); }
 }
 
+/* ===========================================================
+   Foto del piatto: la tua (scattata quando lo cucini) oppure una foto
+   libera da Wikipedia, con autore e licenza; se non c'e' nessuna delle due resta l'icona.
+   =========================================================== */
+const CH_WIKIFOTO = "checucino.wikifoto";
+let _wikiFoto = null;
+function cacheWikiFoto(){ if(!_wikiFoto){ try{ _wikiFoto = JSON.parse(localStorage.getItem(CH_WIKIFOTO) || "{}"); }catch(e){ _wikiFoto = {}; } } return _wikiFoto; }
+function salvaCacheWikiFoto(){ try{ localStorage.setItem(CH_WIKIFOTO, JSON.stringify(_wikiFoto || {})); }catch(e){} }
+const VUOTE_FOTO = new Set("di del della dello dei degli delle al alla allo ai agli alle con e ed in a da la il lo le i gli un una uno su sul sulla per the with and of on de du des la el y o al a la au aux et en".split(" "));
+function paroleNome(t){
+  return normTesto(String(t || "").replace(/\(.*?\)/g, " ")).replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(w=>w.length > 1 && !VUOTE_FOTO.has(w));
+}
+const stessaParola = (a, b)=>a === b || (a.length > 4 && b.length > 4 && a.slice(0, Math.max(4, Math.min(a.length, b.length) - 2)) === b.slice(0, Math.max(4, Math.min(a.length, b.length) - 2)));
+/* la voce trovata e' davvero il nostro piatto? (evita, per "Pollo al limone", la foto di un limone) */
+function titoloCombacia(nome, titolo){
+  const n = paroleNome(nome), t = paroleNome(titolo);
+  if(!n.length || !t.length) return false;
+  const dentro = (a, b)=>a.every(x=>b.some(y=>stessaParola(x, y)));
+  if(dentro(n, t)) return true;                                   /* "Carbonara" -> "Spaghetti alla carbonara" */
+  /* voce di una sola parola: va bene solo se il resto del nome e' un aggettivo di provenienza ("Pastiera napoletana" -> "Pastiera"),
+     non per "Risotto agli asparagi" -> "Risotto", che mostrerebbe un risotto qualunque */
+  const provenienza = w=>/(an[aeio]|es[ei]|ol[aeio]|sard[aeio]|tan[aeio])$/.test(w);
+  if(dentro(t, n) && (t.length >= 2 || (stessaParola(t[0], n[0]) && n.slice(1).every(provenienza)))) return true;
+  return false;
+}
+function testoSemplice(h){ const d = document.createElement("div"); d.innerHTML = String(h || ""); return (d.textContent || "").replace(/\s+/g, " ").trim(); }
+async function cercaFotoWiki(r){
+  const tentativi = [["it", r.n]];
+  const en = (RIC_EN[r.id] || {}).n; if(en && en !== r.n) tentativi.push(["en", en]); else tentativi.push(["en", r.n]);
+  for(const [lin, nome] of tentativi){
+    const w = "https://" + lin + ".wikipedia.org/w/api.php?format=json&origin=*&action=query";
+    const j = await (await fetch(w + "&generator=search&gsrlimit=4&prop=pageimages&piprop=thumbnail|name&pithumbsize=800&pilicense=free&gsrsearch=" + encodeURIComponent(nome))).json();
+    const pag = Object.values((j.query || {}).pages || {}).sort((a, b)=>(a.index || 0) - (b.index || 0));
+    const p = pag.find(x=>x.thumbnail && x.pageimage && titoloCombacia(nome, x.title));
+    if(!p) continue;
+    let autore = "", licenza = "", link = "https://" + lin + ".wikipedia.org/wiki/File:" + encodeURIComponent(p.pageimage);
+    try{
+      const k = await (await fetch(w + "&prop=imageinfo&iiprop=extmetadata|url&titles=" + encodeURIComponent("File:" + p.pageimage))).json();
+      const ii = ((Object.values((k.query || {}).pages || {})[0] || {}).imageinfo || [])[0] || {}, md = ii.extmetadata || {};
+      if(md.NonFree && String(md.NonFree.value) === "true") continue;
+      autore = testoSemplice((md.Artist || {}).value).slice(0, 60); licenza = testoSemplice((md.LicenseShortName || {}).value); link = ii.descriptionurl || link;
+    }catch(e){}
+    return {u: p.thumbnail.source, t: p.title, a: autore, l: licenza, h: link, lin};
+  }
+  return null;
+}
+async function fotoWikiDi(r){
+  const c = cacheWikiFoto(), x = c[r.id];
+  if(x && (x.u || Date.now() - (x.no || 0) < 30 * 864e5)) return x.u ? x : null;
+  const f = await cercaFotoWiki(r);          /* se manca la rete l'errore sale: non segno nulla e riprovo la prossima volta */
+  c[r.id] = f || {no: Date.now()}; salvaCacheWikiFoto();
+  return f;
+}
+function fotoMiaDi(id){ return (S.fotoPiatti || {})[id] || ""; }
+async function caricaFotoRicetta(box){
+  const id = +box.dataset.fotoRic, r = trovaRicetta(id); if(!r || box.dataset.caricata) return;
+  box.dataset.caricata = "1";
+  const tasti = mia=>`<div class="rf-tasti"><button type="button" class="link-mini" data-foto-mia="${id}">\u{1F4F7} ${mia ? L("Cambia la tua foto","Change your photo") : L("Metti la tua foto del piatto","Add your photo of the dish")}</button>${mia ? ` <button type="button" class="link-mini" data-foto-togli="${id}">${L("togli","remove")}</button>` : ""}</div>`;
+  const mia = fotoMiaDi(id);
+  if(mia){
+    const u = await urlFoto(mia).catch(()=>"");
+    if(u){ box.innerHTML = `<figure class="rf"><img src="${u}" alt="${esc(nomeR(r))}" loading="lazy"><figcaption>\u{1F4F7} ${L("La tua foto","Your photo")}</figcaption></figure>${tasti(true)}`; return; }
+  }
+  box.innerHTML = tasti(false);
+  try{
+    const f = await fotoWikiDi(r);
+    if(!f || !box.isConnected) return;
+    box.innerHTML = `<figure class="rf"><img src="${esc(f.u)}" alt="${esc(f.t)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('figure').remove()">
+      <figcaption data-no-tr>${L("Foto da Wikipedia","Photo from Wikipedia")}: ${esc(f.t)}${f.a ? " · " + esc(f.a) : ""}${f.l ? " · " + esc(f.l) : ""} · <a href="${esc(f.h)}" target="_blank" rel="noopener">${L("fonte","source")}</a>
+      <br><span class="rf-nota">${L("Foto indicativa: il piatto della ricetta può essere un po’ diverso.","Indicative photo: the dish in the recipe may look a little different.")}</span></figcaption></figure>${tasti(false)}`;
+  }catch(e){}
+}
+async function metteFotoPiatto(id, file){
+  const c = await immagineRidotta(file, 1400);
+  const bl = await new Promise(ok=>c.toBlob(ok, "image/jpeg", .85));
+  const vecchia = fotoMiaDi(id), nuova = "piatto-" + id + "-" + Date.now();
+  await FotoDB.put(nuova, bl);
+  if(vecchia){ FotoDB.del(vecchia).catch(()=>{}); delete _urlFoto[vecchia]; }
+  S.fotoPiatti = S.fotoPiatti || {}; S.fotoPiatti[id] = nuova; salva();
+  { const ok = document.getElementById("fineFotoOk"); if(ok) ok.textContent = " \u2705 " + L("Foto salvata","Photo saved"); }
+  segnaDaSalvare("foto", id, nomeR(trovaRicetta(id) || {n:""}));
+  aggiornaFotoRicetta(id);
+}
+function aggiornaFotoRicetta(id){
+  document.querySelectorAll(`[data-foto-ric="${id}"]`).forEach(b=>{ delete b.dataset.caricata; caricaFotoRicetta(b); });
+}
+/* la foto si carica quando apri la scheda (cosi' non scarico immagini per ricette che non guardi) */
+document.addEventListener("toggle", e=>{
+  const d = e.target; if(!d || !d.open || !d.classList || !d.classList.contains("ric")) return;
+  const b = d.querySelector(":scope > [data-foto-ric]"); if(b) caricaFotoRicetta(b);
+}, true);
+document.addEventListener("click", e=>{
+  const m = e.target.closest("[data-foto-mia]");
+  if(m){ e.preventDefault(); const id = +m.dataset.fotoMia; scattaFoto(f=>metteFotoPiatto(id, f)); return; }
+  const t = e.target.closest("[data-foto-togli]");
+  if(t){ e.preventDefault(); const id = +t.dataset.fotoTogli, v = fotoMiaDi(id);
+    if(v && confirm(L("Tolgo la tua foto di questo piatto?","Remove your photo of this dish?"))){ FotoDB.del(v).catch(()=>{}); delete S.fotoPiatti[id]; salva(); aggiornaFotoRicetta(id); } }
+});
 /* ===== Cerca una ricetta sul web dentro l'app =====
    Cerco nei siti consigliati (GialloZafferano e motori di ricerca ristretti a quei siti),
    passando dagli stessi "ponti" usati per leggere le ricette; tocchi un risultato e la scarico. */
@@ -9095,7 +9208,7 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v278".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v279".replace("checucino-", "");
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
 var verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
 function numVer(x){ return parseInt(String(x).replace(/\D/g, "")) || 0; }
