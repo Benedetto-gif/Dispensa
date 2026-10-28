@@ -118,6 +118,43 @@ try{ document.documentElement.classList.add("avvio"); var mt = document.getEleme
 #tornaMappa span{font-size:1.2rem}
 body.barra-mappa #tornaMappa{display:none}
 #tornaMappa:active{transform:scale(.95)}
+/* scene dei box "Cosa ti va oggi?" */
+.va{position:relative;display:block;width:78px;height:50px;margin-bottom:6px;font-size:22px;line-height:1}
+.va i{font-style:normal}
+.va-giro{position:absolute;display:block}
+.va-giro>i{position:absolute;left:0;top:0;opacity:0;animation:va-giro 8s ease-in-out infinite;animation-delay:calc(var(--k) * 2s)}
+@keyframes va-giro{0%{opacity:0;transform:scale(.4)}4%,22%{opacity:1;transform:scale(1)}26%,100%{opacity:0;transform:scale(.4)}}
+/* idea */
+.va-testa{position:absolute;left:0;bottom:0;font-size:24px}
+.va-bolla{position:absolute;border-radius:50%;background:#fff;opacity:0;animation:va-bolla 2s ease-out infinite}
+.va-bolla.b1{width:5px;height:5px;left:24px;bottom:22px}
+.va-bolla.b2{width:8px;height:8px;left:30px;bottom:30px;animation-delay:.3s}
+@keyframes va-bolla{0%{opacity:0}20%,80%{opacity:.95}100%{opacity:.95}}
+.va-nuvola{position:absolute;left:36px;top:0;width:42px;height:30px;border-radius:16px;background:#fff;box-shadow:-8px 4px 0 -3px #fff,8px 5px 0 -4px #fff}
+.va-nuvola .va-giro{left:10px;top:4px;font-size:20px}
+/* app */
+.va-dado{position:absolute;left:0;bottom:2px;font-size:26px;animation:va-dado 2s cubic-bezier(.3,.6,.4,1) infinite;transform-origin:50% 60%}
+@keyframes va-dado{0%{transform:translate(0,0) rotate(0)}30%{transform:translate(14px,-16px) rotate(200deg)}60%{transform:translate(26px,0) rotate(360deg)}100%{transform:translate(26px,0) rotate(360deg)}}
+.va-esce{left:50px;top:6px;font-size:24px}
+/* recupero */
+.va-frigo{position:absolute;left:0;top:2px;width:24px;height:44px;border-radius:5px;background:#E8EEF2;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15)}
+.va-porta{position:absolute;inset:0;border-radius:5px;background:#F7FAFC;box-shadow:inset 0 0 0 2px rgba(0,0,0,.18);transform-origin:left center;animation:va-porta 4.5s ease-in-out infinite}
+.va-porta::after{content:"";position:absolute;right:4px;top:10px;width:2px;height:10px;border-radius:2px;background:#9AA5AD}
+@keyframes va-porta{0%,8%{transform:perspective(60px) rotateY(0)}18%,78%{transform:perspective(60px) rotateY(-75deg)}90%,100%{transform:perspective(60px) rotateY(0)}}
+.va-volo i{position:absolute;left:6px;top:14px;font-size:16px;opacity:0;animation:va-volo 4.5s ease-in-out infinite}
+.va-volo i:nth-child(2){animation-delay:.5s}.va-volo i:nth-child(3){animation-delay:1s}
+@keyframes va-volo{0%,18%{opacity:0;transform:translate(0,0)}24%{opacity:1;transform:translate(10px,-10px)}44%{opacity:1;transform:translate(36px,4px)}50%,100%{opacity:0;transform:translate(42px,14px)}}
+.va-padella{position:absolute;right:0;bottom:0;font-size:26px;animation:va-padella 4.5s ease-in-out infinite}
+@keyframes va-padella{0%,40%,100%{transform:rotate(0)}48%{transform:rotate(-10deg)}56%{transform:rotate(8deg)}64%{transform:rotate(0)}}
+/* tema */
+.va-globo .va-giro{left:0;top:6px;font-size:30px}
+.va-gira>i{animation-name:va-gira;animation-duration:1.8s;animation-delay:calc(var(--k) * .6s)}
+@keyframes va-gira{0%{opacity:0}5%,33%{opacity:1}38%,100%{opacity:0}}
+.va-paese{left:38px;top:10px;font-size:18px;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){
+  .va *{animation:none!important}
+  .va-giro>i:first-child,.va-volo i:first-child{opacity:1}.va-bolla{opacity:.95}
+}
 /* scene animate dentro i cerchi del percorso */
 .pa{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:block}
 .pa-ciclo>span{position:absolute;inset:0;display:grid;place-items:center;opacity:0;animation:pa-ciclo 6.4s ease-in-out infinite;animation-delay:calc(var(--k) * 1.6s)}
@@ -1270,7 +1307,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v277</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v278</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -3374,6 +3411,21 @@ function tappaDispensa(){
 }
 
 /* --- 4. cosa ti va --- */
+/* ----- scene animate dei quattro box di "Cosa ti va oggi?" ----- */
+function scenaVoglia(m){
+  const giro = (l, cls)=>`<span class="va-giro ${cls||""}">${l.map((x, k)=>`<i style="--k:${k}">${x}</i>`).join("")}</span>`;
+  if(m === "idea")      /* nuvoletta del pensiero: dentro compaiono i piatti */
+    return `<span class="va va-idea" aria-hidden="true"><span class="va-testa">\u{1F914}</span><span class="va-bolla b1"></span><span class="va-bolla b2"></span>
+      <span class="va-nuvola">${giro(["\u{1F35D}","\u{1F355}","\u{1F41F}","\u{1F370}"])}</span></span>`;
+  if(m === "app")       /* il dado rotola e a ogni lancio esce un piatto */
+    return `<span class="va va-app" aria-hidden="true"><span class="va-dado">\u{1F3B2}</span>${giro(["\u{1F957}","\u{1F35B}","\u{1F969}","\u{1F366}"], "va-esce")}</span>`;
+  if(m === "recupero")  /* il frigo si apre, gli avanzi finiscono in padella */
+    return `<span class="va va-rec" aria-hidden="true"><span class="va-frigo"><span class="va-porta"></span></span>
+      <span class="va-volo"><i>\u{1F345}</i><i>\u{1F34B}</i><i>\u{1F9C0}</i></span><span class="va-padella">\u{1F373}</span></span>`;
+  /* il mappamondo gira e a ogni giro si accende un paese col suo piatto */
+  return `<span class="va va-tema" aria-hidden="true"><span class="va-globo">${giro(["\u{1F30D}","\u{1F30E}","\u{1F30F}"], "va-gira")}</span>
+    ${giro(["\u{1F1EA}\u{1F1F8}\u{1F958}","\u{1F1EF}\u{1F1F5}\u{1F363}","\u{1F1EC}\u{1F1F7}\u{1F957}","\u{1F1EE}\u{1F1F3}\u{1F35B}"], "va-paese")}</span>`;
+}
 function tappaVoglia(){
   const t = tavolata();
   const suggerito = stilePiuStretto();
@@ -3453,19 +3505,19 @@ function tappaVoglia(){
 
   <div class="pgrid3">
     <div class="pcella c-senape ${sess.modo==="idea"?"sel":""}" data-m="idea">
-      <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="12" r="7" stroke="currentColor" stroke-width="2"/><path d="M11 19h6M12 22h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      ${scenaVoglia("idea")}
       <b>Ho in mente un piatto</b><small>Cerca per nome, ingrediente o regione</small>
     </div>
     <div class="pcella c-auto ${sess.modo==="app"?"sel":""}" data-m="app">
-      <svg viewBox="0 0 28 28" fill="none"><path d="M14 4l2.5 8H24l-6.5 4.5 2.5 8L14 20l-6 4.5 2.5-8L4 12h7.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      ${scenaVoglia("app")}
       <b>Lascio scegliere all'app</b><small>L'app propone le ricette più fattibili con quello che hai</small>
     </div>
     <div class="pcella c-mattone ${sess.modo==="recupero"?"sel":""}" data-m="recupero">
-      <svg viewBox="0 0 28 28" fill="none"><rect x="7" y="10" width="14" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 10h18M11 10V7a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 14v5M12 16l2-2 2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      ${scenaVoglia("recupero")}
       <b>Devo consumare</b><small>Parto dal fresco o dall'avanzo</small>
     </div>
     <div class="pcella c-bordeaux ${sess.modo==="tema"?"sel":""}" data-m="tema">
-      <svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="10" stroke="currentColor" stroke-width="2"/><path d="M4 14h20M14 4c3 3 4 7 4 10s-1 7-4 10c-3-3-4-7-4-10s1-7 4-10z" stroke="currentColor" stroke-width="1.8"/></svg>
+      ${scenaVoglia("tema")}
       <b>Menu a tema</b><small>Un paese, il mare, la terra, leggero o le feste</small>
     </div>
   </div>
@@ -9043,7 +9095,7 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v277".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v278".replace("checucino-", "");
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
 var verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
 function numVer(x){ return parseInt(String(x).replace(/\D/g, "")) || 0; }
