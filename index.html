@@ -1113,6 +1113,7 @@ hr.sep{border:0;border-top:1px solid var(--linea);margin:20px 0}
 .cw-voce img,.cw-voce .cw-ic{width:56px;height:56px;border-radius:9px;object-fit:cover;flex:none;display:flex;align-items:center;justify-content:center;font-size:1.6rem;background:var(--linea)}
 .cw-tx{flex:1;min-width:0}.cw-tx b{display:block;font-size:1rem;line-height:1.25}.cw-tx small{opacity:.75}
 .cw-vai{font-size:1.2rem}.cw-gia{display:inline-block;margin-top:4px;background:#FFD45C;color:#3a2a00;font-size:.78rem;font-weight:700;border-radius:8px;padding:1px 7px}
+details.ric{scroll-margin-top:calc(var(--alt-testata,110px) + 8px)}
 #impEsame,#impRisultati{scroll-margin-top:12px}.cw-voce.cw-scelta{border-color:var(--verde);box-shadow:0 0 0 2px var(--verde)}
 .cw-attesa{animation:ideaLuce 1.6s ease-in-out infinite}
 .cw-link summary{cursor:pointer}
@@ -1314,7 +1315,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v280</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v281</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -7187,9 +7188,12 @@ async function metteFotoPiatto(id, file){
 function aggiornaFotoRicetta(id){
   document.querySelectorAll(`[data-foto-ric="${id}"]`).forEach(b=>{ delete b.dataset.caricata; caricaFotoRicetta(b); });
 }
-/* la foto si carica quando apri la scheda (cosi' non scarico immagini per ricette che non guardi) */
+/* la foto si carica quando apri la scheda (cosi' non scarico immagini per ricette che non guardi);
+   e aprendo una ricetta si chiudono le altre, cosi' resta in vista solo quella */
 document.addEventListener("toggle", e=>{
   const d = e.target; if(!d || !d.open || !d.classList || !d.classList.contains("ric")) return;
+  document.querySelectorAll("details.ric[open]").forEach(x=>{ if(x !== d) x.open = false; });
+  requestAnimationFrame(()=>{ const y = d.getBoundingClientRect().top; if(y < 60 || y > innerHeight * .6) d.scrollIntoView({block:"start", behavior:"smooth"}); });
   const b = d.querySelector(":scope > [data-foto-ric]"); if(b) caricaFotoRicetta(b);
 }, true);
 document.addEventListener("click", e=>{
@@ -9232,7 +9236,7 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v280".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v281".replace("checucino-", "");
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
 var verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
 function numVer(x){ return parseInt(String(x).replace(/\D/g, "")) || 0; }
