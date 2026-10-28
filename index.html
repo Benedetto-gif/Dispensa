@@ -1315,7 +1315,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v281</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.12.0</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -7685,7 +7685,7 @@ const PERCHE_EN = `<div class="perche">
 function apriPerche(){
   apriPercheTesto();
   const top = velo.querySelector(".velo-top");
-  if(top) top.insertAdjacentHTML("afterend", `<button type="button" class="btn" style="margin:4px 0 10px" onclick="apriTutto()">\u{1F9ED} ${L("La mappa dell\u2019app","Map of the app")}</button><div class="perche-agg"><span>${L("Versione","Version")} <b>${versioneMia()}</b></span>
+  if(top) top.insertAdjacentHTML("afterend", `<button type="button" class="btn" style="margin:4px 0 10px" onclick="apriTutto()">\u{1F9ED} ${L("La mappa dell\u2019app","Map of the app")}</button><div class="perche-agg"><span>${L("Versione","Version")} <b>${etichetta(versioneMia())}</b></span>
     <button type="button" class="btn small" data-aggiorna>\u{1F504} ${L("Aggiorna l\u2019app","Update the app")}</button></div>`);
 }
 function apriPercheTesto(){
@@ -9122,9 +9122,9 @@ function animTappa(i, e){
 /* ----- la versione sulla mappa: toccandola si aggiorna, se online ce n'e' una piu' nuova ----- */
 function testoVerMappa(){
   const mia = versioneMia();
-  if(verOnlineNota && numVer(verOnlineNota) > numVer(mia)) return `\u{1F504} ${mia} \u2192 ${verOnlineNota}: ${L("tocca per aggiornare","tap to update")}`;
-  if(verOnlineNota) return `\u2705 ${mia}`;
-  return mia;
+  if(verOnlineNota && numVer(verOnlineNota) > numVer(mia)) return `\u{1F504} ${etichetta(mia)} \u2192 ${etichetta(verOnlineNota)}: ${L("tocca per aggiornare","tap to update")}`;
+  if(verOnlineNota) return `\u2705 ${etichetta(mia)}`;
+  return etichetta(mia);
 }
 async function tastoVerMappa(b){
   b.disabled = true; b.textContent = "\u23F3 " + L("Controllo\u2026","Checking\u2026");
@@ -9133,7 +9133,7 @@ async function tastoVerMappa(b){
   const mia = versioneMia();
   if(!online){ b.textContent = L("Serve internet per controllare","Internet needed to check"); }
   else if(numVer(online) > numVer(mia)){ b.disabled = false; aggiornaApp(b); return; }
-  else b.textContent = `\u2705 ${L("Hai l\u2019ultima versione","You have the latest version")} ${mia}`;
+  else b.textContent = `\u2705 ${L("Hai l\u2019ultima versione","You have the latest version")} ${etichetta(mia)}`;
   setTimeout(()=>{ b.disabled = false; b.textContent = testoVerMappa(); }, 3000);
 }
 /* ----- ritorno alla mappa ----- */
@@ -9230,21 +9230,29 @@ if("serviceWorker" in navigator){
 /* ===== Aggiorna l'app: scarica da capo i file nuovi senza toccare i tuoi dati ===== */
 /* un solo punto che scrive la versione: tasto "i" e schermata iniziale insieme, cosi' non si disallineano */
 function scriviVersione(v){
+  v = etichetta(v);
   const el = document.querySelector("#infoBtn .ver"), sp = document.getElementById("verSplash");
   if(el) el.textContent = v;
   if(sp) sp.textContent = v;
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v281".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v282".replace("checucino-", "");
+/* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
+   2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
+   La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
+var NOME_VERSIONE = "2.12.0";
+var verOnlineNome = "";
+function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
 var verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
 function numVer(x){ return parseInt(String(x).replace(/\D/g, "")) || 0; }
 function testoAggiorna(){
   const mia = versioneMia();
-  if(verOnlineNota && numVer(verOnlineNota) <= numVer(mia)) return `\u2705 ${L("Hai l\u2019ultima versione","You have the latest version")} ${mia}`;
-  if(verOnlineNota) return `\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L(`c\u2019\u00e8 la ${verOnlineNota}, hai la ${mia}`, `${verOnlineNota} is out, you have ${mia}`)})</span>`;
-  return `\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L("hai la","you have")} ${mia})</span>`;
+  const em = etichetta(mia), eo = etichetta(verOnlineNota);
+  if(verOnlineNota && numVer(verOnlineNota) <= numVer(mia)) return `\u2705 ${L("Hai l\u2019ultima versione","You have the latest version")} ${em}`;
+  if(verOnlineNota) return `\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L(`c\u2019\u00e8 la ${eo}, hai la ${em}`, `${eo} is out, you have ${em}`)})</span>`;
+  return `\u{1F504} ${L("Aggiorna l\u2019app","Update the app")} <span class="mini">(${L("hai la","you have")} ${em})</span>`;
 }
 /* la versione vera e' quella della cache installata dal service worker: l'etichetta si allinea da sola */
 async function versioneInstallata(){ const v = versioneMia(); scriviVersione(v); return v; }
@@ -9252,6 +9260,7 @@ async function versioneOnline(){
   const t = await (await fetch("service-worker.js?n=" + Date.now(), {cache:"no-store"})).text();
   const m = t.match(/checucino-v(\d+)/);
   if(m) verOnlineNota = "v" + m[1];
+  { const k = t.match(/NOME_VERSIONE\s*=\s*'([\d.]+)'/); verOnlineNome = k ? k[1] : ""; }
   return m ? "v" + m[1] : "";
 }
 async function aggiornaApp(btn){
@@ -9262,8 +9271,8 @@ async function aggiornaApp(btn){
   catch(e){ scrivi("\u{1F504} " + L("Aggiorna l’app","Update the app")); alert(L("Per aggiornare serve la connessione a internet.","An internet connection is needed to update.")); return; }
   const mia = await versioneInstallata();
   if(online && online === mia &&
-     !confirm(L(`Hai già l’ultima versione (${mia}).\nRicarico comunque l’app da capo? I tuoi dati restano dove sono.`,
-                `You already have the latest version (${mia}).\nReload the app from scratch anyway? Your data stays where it is.`))){
+     !confirm(L(`Hai già l’ultima versione (${etichetta(mia)}).\nRicarico comunque l’app da capo? I tuoi dati restano dove sono.`,
+                `You already have the latest version (${etichetta(mia)}).\nReload the app from scratch anyway? Your data stays where it is.`))){
     scrivi("\u{1F504} " + L("Aggiorna l’app","Update the app")); return; }
   scrivi("⏳ " + L("Scarico la versione nuova…","Downloading the new version…"));
   /* i dati (ricette, dispensa, cantina, foto) non stanno nella cache dei file: non vengono toccati */
@@ -9289,7 +9298,7 @@ window.addEventListener("load", ()=>{
       if(!online || n(online) <= n(mia) || document.getElementById("avvisoAgg")) return;
       const d = document.createElement("div");
       d.id = "avvisoAgg";
-      d.innerHTML = `<span>✨ ${L(`È pronta la ${online} (tu hai la ${mia})`,`Version ${online} is ready (you have ${mia})`)}</span>
+      d.innerHTML = `<span>✨ ${L(`È pronta la ${etichetta(online)} (tu hai la ${etichetta(mia)})`,`Version ${etichetta(online)} is ready (you have ${etichetta(mia)})`)}</span>
         <button type="button" data-aggiorna>\u{1F504} ${L("Aggiorna","Update")}</button>
         <button type="button" class="agg-x" aria-label="${L("Più tardi","Later")}" onclick="this.parentNode.remove()">✕</button>`;
       document.body.appendChild(d);
