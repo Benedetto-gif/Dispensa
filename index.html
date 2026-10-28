@@ -116,6 +116,7 @@ try{ document.documentElement.classList.add("avvio"); var mt = document.getEleme
   padding:10px 14px 10px 11px;border:0;border-radius:999px;background:#5B6670;color:#fff;font:800 .9rem/1 Inter,system-ui,sans-serif;
   box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer}
 #tornaMappa span{font-size:1.2rem}
+body.barra-mappa #tornaMappa{display:none}
 #tornaMappa:active{transform:scale(.95)}
 /* scene animate dentro i cerchi del percorso */
 .pa{position:absolute;inset:0;border-radius:50%;overflow:hidden;display:block}
@@ -1262,7 +1263,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v273</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v274</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2831,6 +2832,11 @@ function disegna(){
 }
 function pulsanti(indietro, avanti, fnAvanti, fnIndietro){
   barra.innerHTML = "";
+  /* arrivati qui da una tappa della mappa: "Indietro" riporta alla mappa, non alla pagina precedente del vecchio percorso */
+  if(typeof ritornoMappa !== "undefined" && ritornoMappa && passo === passoIngresso && (indietro === "Indietro" || !indietro)){
+    indietro = "\u{1F9ED} Mappa"; fnIndietro = ()=>tornaAllaMappa();
+  }
+  document.body.classList.toggle("barra-mappa", !!(indietro && /Mappa/.test(indietro)));
   if(indietro){ const b=document.createElement("button"); b.className="btn ghost"; b.textContent=indietro; b.onclick=fnIndietro; barra.append(b); }
   if(avanti){ const a=document.createElement("button"); a.className="btn"; a.textContent=avanti; a.onclick=fnAvanti; barra.append(a); }
 }
@@ -4533,6 +4539,7 @@ function apriVelo(nome, html){
   window.scrollTo({top:0});
 }
 function chiudiVelo(){
+  setTimeout(forseTornaAllaMappa, 0);
   veloAperto = ""; velo.innerHTML = ""; document.body.style.overflow = "";
   fermaTimer(); rilasciaSchermo();
   if(passo === 5) tappaHome();   /* la home rilegge la lista della spesa */
@@ -8325,7 +8332,7 @@ document.addEventListener("click", e=>{
 });
 function disegnaMenu(){
   menuBtn.setAttribute("aria-expanded", menuAperto);
-  if(!menuAperto){ menuPan.innerHTML=""; return; }
+  if(!menuAperto){ menuPan.innerHTML=""; setTimeout(forseTornaAllaMappa, 0); return; }
   { const h = document.querySelector("header.top"), r = h ? h.getBoundingClientRect() : null;
     document.documentElement.style.setProperty("--menu-top", Math.max(8, Math.round(r ? r.bottom + 6 : 60)) + "px"); }
   /* ricette mie gia' scritte (non le sole foto a mano, che vanno prima trascritte) e non ancora convalidate */
@@ -8799,6 +8806,7 @@ apriPercorso();   /* la mappa apre sempre l'app: dai suoi tasti si va dove serve
    e i cartelli per le deviazioni. Tocchi una tappa e ci vai, oppure "Entra nell'app".
    =========================================================== */
 function apriPercorso(){
+  aperturaDaMappa = false;
   spegniRitornoMappa();
   let el = document.getElementById("percorso");
   if(el) el.remove();
@@ -8852,9 +8860,10 @@ function apriPercorso(){
   const chiudiP = ()=>{ el.classList.add("via"); setTimeout(()=>el.remove(), 350); };
   /* partendo da una tappa o da un cartello resta un tasto per tornare alla mappa
      (e il tasto Indietro del telefono riporta qui); con "Entra nell'app" no */
-  const vaiA = (f, ritorno)=>{ chiudiP(); f(); if(ritorno !== false) attivaRitornoMappa(); };
-  el.querySelectorAll("[data-pc-t]").forEach(b=>b.onclick = ()=>vaiA(TAPPE[+b.dataset.pcT].go));
-  el.querySelectorAll("[data-pc-c]").forEach(b=>b.onclick = ()=>vaiA(CARTELLI[+b.dataset.pcC].go));
+  const vaiA = (f, ritorno)=>{ chiudiP(); if(ritorno !== false) attivaRitornoMappa(); f(); };
+  el.querySelectorAll("[data-pc-t]").forEach(b=>b.onclick = ()=>{ passoIngresso = Math.min(+b.dataset.pcT, 4); vaiA(TAPPE[+b.dataset.pcT].go); });
+  /* i cartelli aprono pannelli sopra la mappa: chiudendoli si torna alla mappa, non alla pagina sotto */
+  el.querySelectorAll("[data-pc-c]").forEach(b=>b.onclick = ()=>{ vaiA(CARTELLI[+b.dataset.pcC].go); aperturaDaMappa = true; });
 }
 /* le tappe animate: ogni cerchio racconta la sua pagina con una piccola scena che si ripete */
 function animTappa(i, e){
@@ -8875,6 +8884,15 @@ function animTappa(i, e){
   return scene[i] || e;
 }
 /* ----- ritorno alla mappa ----- */
+/* pannello o menu aperto da un cartello della mappa: quando si chiude (e non se ne apre un altro al suo posto)
+   si torna alla mappa invece di restare sulla pagina che c'era sotto */
+var aperturaDaMappa = false, passoIngresso = -1;
+function forseTornaAllaMappa(){
+  if(!aperturaDaMappa || veloAperto || menuAperto || document.getElementById("percorso")) return;
+  aperturaDaMappa = false;
+  if(history.state && history.state.mappa){ ignoraPopMappa = true; try{ history.back(); }catch(e){ ignoraPopMappa = false; } }
+  apriPercorso();
+}
 var ritornoMappa = false, ignoraPopMappa = false;   /* var: apriPercorso parte all'avvio, prima di questa riga */
 function attivaRitornoMappa(){
   ritornoMappa = true;
@@ -8965,7 +8983,7 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-const VERSIONE_APP = "checucino-v273".replace("checucino-", "");
+const VERSIONE_APP = "checucino-v274".replace("checucino-", "");
 function versioneMia(){ return VERSIONE_APP; }
 let verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
 const numVer = x=>parseInt(String(x).replace(/\D/g, "")) || 0;
