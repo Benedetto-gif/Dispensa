@@ -2784,7 +2784,10 @@ const TAPPE = ["Chi cucina","Per chi","Dispensa","Cosa va","Ricette"];
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pulito = s => esc(String(s).replace(/<[^>]*>/g,""));
 
-function vai(n){ lasciaBox(); passo = n; window.scrollTo({top:0}); disegna(); }
+function vai(n){ lasciaBox();
+  /* superata la pagina "Per chi cucini?" (da solo o con ospiti) la tappa 2 della mappa risulta fatta */
+  if(passo === 1 && n > 1 && !S.ospitiScelti){ S.ospitiScelti = true; salva(); }
+  passo = n; window.scrollTo({top:0}); disegna(); }
 function disegna(){
   const home = passo === 5;
   document.getElementById("rail").style.display = home ? "none" : "";
