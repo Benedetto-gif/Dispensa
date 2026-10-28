@@ -1314,7 +1314,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v279</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v280</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -7081,7 +7081,8 @@ function apriImport(modo, cerca){
    Foto del piatto: la tua (scattata quando lo cucini) oppure una foto
    libera da Wikipedia, con autore e licenza; se non c'e' nessuna delle due resta l'icona.
    =========================================================== */
-const CH_WIKIFOTO = "checucino.wikifoto";
+const CH_WIKIFOTO = "checucino.wikifoto2";   /* "2": scarto le foto scelte col vecchio controllo, solo sul nome */
+try{ localStorage.removeItem("checucino.wikifoto"); }catch(e){}
 let _wikiFoto = null;
 function cacheWikiFoto(){ if(!_wikiFoto){ try{ _wikiFoto = JSON.parse(localStorage.getItem(CH_WIKIFOTO) || "{}"); }catch(e){ _wikiFoto = {}; } } return _wikiFoto; }
 function salvaCacheWikiFoto(){ try{ localStorage.setItem(CH_WIKIFOTO, JSON.stringify(_wikiFoto || {})); }catch(e){} }
@@ -7102,15 +7103,38 @@ function titoloCombacia(nome, titolo){
   if(dentro(t, n) && (t.length >= 2 || (stessaParola(t[0], n[0]) && n.slice(1).every(provenienza)))) return true;
   return false;
 }
+/* oltre al nome controllo che la voce parli dello stesso tipo di piatto e degli stessi ingredienti:
+   "Stracciatella romana" (minestra in brodo) non deve prendere la foto del gelato alla stracciatella */
+const RE_DOLCE_VOCE = /\b(gelat[oi]|dolc[ei]|dessert|torta|biscott|pasticc|budin|semifredd|sorbett|confett|crema pasticcera|ice[ -]?cream|cake|pastry|sweet|confection|pudding|cookie|biscuit)/;
+const RE_SALATO_VOCE = /\b(minestr|zupp|brodo|primo piatto|secondo piatto|contorno|antipasto|risott|pasta (?:fresca|secca|ripiena)|carne|pesce|soup|broth|main course|stew|starter)/;
+function vocePlausibile(r, titolo, estratto){
+  const t = normTesto(titolo + " " + estratto);
+  const dolce = r.cat === "Dolci";
+  /* nel titolo guardo solo le parole che non sono gia' nel nome della ricetta ("Zuppa inglese" e' un dolce anche se dice "zuppa") */
+  const nomeW = paroleNome(r.n);
+  const tit = paroleNome(titolo).filter(w=>!nomeW.some(x=>stessaParola(x, w))).join(" ");
+  /* il tipo di piatto deve tornare: un dolce non e' una minestra e viceversa (conta molto la parentesi del titolo) */
+  if(!dolce && RE_DOLCE_VOCE.test(tit)) return false;
+  if(dolce && RE_SALATO_VOCE.test(tit)) return false;
+  if(!estratto) return true;
+  const inizio = normTesto(estratto).slice(0, 220);
+  if(!dolce && RE_DOLCE_VOCE.test(inizio) && !RE_SALATO_VOCE.test(inizio)) return false;
+  if(dolce && RE_SALATO_VOCE.test(inizio) && !RE_DOLCE_VOCE.test(inizio)) return false;
+  /* e almeno un ingrediente della ricetta (o il tipo di piatto) deve comparire nella voce */
+  const BASE_V = new Set(["acqua","sale","pepe nero","olio extravergine","zucchero","farina"]);
+  const ing = r.ing.map(i=>normTesto(i.k)).filter(k=>!BASE_V.has(k));
+  const cita = ing.some(k=>k.split(" ").filter(w=>w.length > 3).some(w=>t.includes(w.slice(0, Math.max(4, w.length - 2)))));
+  return cita || (dolce ? RE_DOLCE_VOCE.test(t) : RE_SALATO_VOCE.test(t));
+}
 function testoSemplice(h){ const d = document.createElement("div"); d.innerHTML = String(h || ""); return (d.textContent || "").replace(/\s+/g, " ").trim(); }
 async function cercaFotoWiki(r){
   const tentativi = [["it", r.n]];
   const en = (RIC_EN[r.id] || {}).n; if(en && en !== r.n) tentativi.push(["en", en]); else tentativi.push(["en", r.n]);
   for(const [lin, nome] of tentativi){
     const w = "https://" + lin + ".wikipedia.org/w/api.php?format=json&origin=*&action=query";
-    const j = await (await fetch(w + "&generator=search&gsrlimit=4&prop=pageimages&piprop=thumbnail|name&pithumbsize=800&pilicense=free&gsrsearch=" + encodeURIComponent(nome))).json();
+    const j = await (await fetch(w + "&generator=search&gsrlimit=5&prop=pageimages|extracts&piprop=thumbnail|name&pithumbsize=800&pilicense=free&exintro=1&explaintext=1&exsentences=3&exlimit=max&gsrsearch=" + encodeURIComponent(nome))).json();
     const pag = Object.values((j.query || {}).pages || {}).sort((a, b)=>(a.index || 0) - (b.index || 0));
-    const p = pag.find(x=>x.thumbnail && x.pageimage && titoloCombacia(nome, x.title));
+    const p = pag.find(x=>x.thumbnail && x.pageimage && titoloCombacia(nome, x.title) && vocePlausibile(r, x.title, x.extract || ""));
     if(!p) continue;
     let autore = "", licenza = "", link = "https://" + lin + ".wikipedia.org/wiki/File:" + encodeURIComponent(p.pageimage);
     try{
@@ -9208,7 +9232,7 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v279".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v280".replace("checucino-", "");
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
 var verOnlineNota = "";      /* l'ultima versione trovata online, per il tasto del menu */
 function numVer(x){ return parseInt(String(x).replace(/\D/g, "")) || 0; }
