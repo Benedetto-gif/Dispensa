@@ -222,7 +222,9 @@ body.barra-mappa #tornaMappa{display:none}
 #azVai[disabled]{opacity:.45}
 #azVai.az-armato{animation:az-pulsa .8s ease-in-out infinite alternate}
 @keyframes az-pulsa{to{filter:brightness(1.25)}}
-.pc-ver{display:block;margin:-6px 0 6px auto;padding:5px 10px;border:1px solid currentColor;border-radius:999px;background:none;color:inherit;opacity:.75;font:700 .75rem/1 Inter,system-ui,sans-serif;cursor:pointer}
+.pc-barra{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-6px 0 6px}
+.pc-lingua{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border:1px solid currentColor;border-radius:999px;background:none;color:inherit;font:700 .8rem/1 Inter,system-ui,sans-serif;cursor:pointer}
+.pc-ver{display:block;margin:0 0 0 auto;padding:5px 10px;border:1px solid currentColor;border-radius:999px;background:none;color:inherit;opacity:.75;font:700 .75rem/1 Inter,system-ui,sans-serif;cursor:pointer}
 .pc-ver.nuova{opacity:1;background:#2E9D5B;border-color:#2E9D5B;color:#fff}
 .pc-tit{font-family:Newsreader,Georgia,serif;font-size:clamp(1.6rem,7vw,2.1rem);font-weight:600;margin:0;text-align:center;letter-spacing:-.01em}
 .pc-sub{text-align:center;margin:2px 0 4px;opacity:.85;font-size:.9rem}
@@ -1336,7 +1338,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.16.0</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.16.1</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -9234,7 +9236,10 @@ function apriPercorso(){
   const pct = (v, tot)=>(v / tot * 100).toFixed(2) + "%";
   el = document.createElement("div"); el.id = "percorso"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", L("Il percorso dell’app","The app’s path"));
   el.innerHTML = `<div class="pc-in" data-no-tr>
-    <button type="button" class="pc-ver" id="pcVer" data-no-tr>${testoVerMappa()}</button>
+    <div class="pc-barra">
+      <button type="button" class="pc-lingua" id="pcLingua" data-no-tr aria-label="${IN_INGLESE ? "Passa all\u2019italiano" : "Switch to English"}">${IN_INGLESE ? "\u{1F1EE}\u{1F1F9} Italiano" : "\u{1F1EC}\u{1F1E7} English"}</button>
+      <button type="button" class="pc-ver" id="pcVer" data-no-tr>${testoVerMappa()}</button>
+    </div>
     <h1 class="pc-tit">${S.profilo.nome ? L("Ciao ", "Hi ") + esc(S.profilo.nome) + "!" : L("Che cucino?","What’s cooking?")}</h1>
     <p class="pc-sub">${L("Tocca una tappa per andarci. Quella che pulsa \u00e8 la prossima da fare.","Tap a stop to go there. The pulsing one is next.")}</p>
     <div class="pc-mappa">
@@ -9258,6 +9263,7 @@ function apriPercorso(){
      (e il tasto Indietro del telefono riporta qui); con "Entra nell'app" no */
   const vaiA = (f, ritorno)=>{ chiudiP(); if(ritorno !== false) attivaRitornoMappa(); f(); };
   el.querySelector("#pcVer").onclick = e=>tastoVerMappa(e.currentTarget);
+  el.querySelector("#pcLingua").onclick = ()=>cambiaLingua(IN_INGLESE ? "it" : "en");
   el.querySelectorAll("[data-pc-t]").forEach(b=>b.onclick = ()=>{ passoIngresso = Math.min(+b.dataset.pcT, 4); vaiA(TAPPE[+b.dataset.pcT].go); });
   /* i cartelli aprono pannelli sopra la mappa: chiudendoli si torna alla mappa, non alla pagina sotto */
   el.querySelectorAll("[data-pc-c]").forEach(b=>b.onclick = ()=>{ aperturaDaMappa = true; vaiA(CARTELLI[+b.dataset.pcC].go); });
@@ -9502,11 +9508,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v294".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v295".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.16.0";
+var NOME_VERSIONE = "2.16.1";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }

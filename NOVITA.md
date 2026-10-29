@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.16.1 | v295 | 29/10/2026 | Sulla mappa d'apertura il tasto 🇬🇧 English / 🇮🇹 Italiano per cambiare lingua |
 | 2.16.0 | v294 | 29/10/2026 | Un «blop» a ogni tocco dei tasti, ogni volta un filo diverso; si spegne in Strumenti → Aspetto |
 | 2.15.0 | v293 | 29/10/2026 | Jingle d'apertura: bollore e tre note che salgono come i punti interrogativi della pentola; suona al primo tocco della giornata, si spegne o si riascolta in Strumenti → Aspetto |
 | 2.14.2 | v292 | 28/10/2026 | Frutta secca con i suoi disegni: mandorle, noci, nocciole, pistacchi, pinoli, anacardi, macadamia, pecan, semi, datteri, fichi, prugne e albicocche secche |
