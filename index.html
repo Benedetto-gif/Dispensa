@@ -1336,7 +1336,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.15.0</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.16.0</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -8398,7 +8398,11 @@ function apriImpostazioni(){
       <input type="checkbox" id="impJingle" ${JINGLE.attivo()?"checked":""}>
       <span>\u{1F3B5} ${L("Suona al primo tocco della giornata","Plays at the first tap of the day")}</span>
     </label>
-    <button type="button" class="btn small" id="impJingleProva">\u{1F50A} ${L("Ascolta","Listen")}</button>`);
+    <button type="button" class="btn small" id="impJingleProva">\u{1F50A} ${L("Ascolta","Listen")}</button>
+    <label class="campo" style="display:flex;align-items:center;gap:8px;margin-top:10px">
+      <input type="checkbox" id="impBlop" ${JINGLE.blopAttivo()?"checked":""}>
+      <span>\u{1FAE7} ${L("\u00abBlop\u00bb a ogni tocco dei tasti","\u201cBlop\u201d on every button tap")}</span>
+    </label>`);
   const K = ["R","G","B"];
   const leggi = () => K.map(k=>+document.getElementById("asp"+k).value);
   const dipingiCursori = col => K.forEach((k,j)=>{
@@ -8485,6 +8489,9 @@ function apriImpostazioni(){
   document.querySelectorAll("#aspPronti [data-pronto]").forEach(b=>b.onclick=()=>usa(SFONDO.PREDEF[+b.dataset.pronto].c.slice(), true));
   document.getElementById("impJingle").onchange = e=>{
     try{ if(e.target.checked) localStorage.removeItem("checucino.jingle"); else localStorage.setItem("checucino.jingle","0"); }catch(_){}
+  };
+  document.getElementById("impBlop").onchange = e=>{
+    try{ if(e.target.checked) localStorage.removeItem("checucino.blop"); else localStorage.setItem("checucino.blop","0"); }catch(_){}
   };
   document.getElementById("impJingleProva").onclick = ()=>{ try{ JINGLE.suona(); }catch(_){} };
   document.getElementById("impFiligrana").onchange = e=>{
@@ -9438,14 +9445,46 @@ var JINGLE = (function(){
     nota(c, tot, n+.56,   659.25, 1.0, .22);   /* accordo finale, piano */
   }
   /* al primo tocco della giornata */
+  let ultimoJingle = 0;
   function primoTocco(){
     ["pointerdown","touchend","click","keydown"].forEach(ev=>document.removeEventListener(ev, primoTocco, true));
     if(!attivo() || giaOggi()) return;
-    segna();
+    segna(); ultimoJingle = Date.now();
     try{ suona(); }catch(e){}
   }
   ["pointerdown","touchend","click","keydown"].forEach(ev=>document.addEventListener(ev, primoTocco, {capture:true, passive:true}));
-  return { suona, attivo };
+
+  /* --- "blop" a ogni tocco di un tasto: una bollina breve, ogni volta un filo diversa --- */
+  const blopAttivo = ()=>{ try{ return localStorage.getItem("checucino.blop") !== "0"; }catch(e){ return true; } };
+  function blop(){
+    const c = contesto(); if(!c) return;
+    const t = c.currentTime + .005, f = 330 + Math.random()*70;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f*2.4, t+.05);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(.13, t+.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+.075);
+    o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+.09);
+  }
+  /* e' un tasto? pulsanti, link, chip, caselle, e tutto cio' che mostra la manina */
+  function eTasto(el){
+    for(let k=0; el && el !== document.body && k<6; k++, el = el.parentElement){
+      if(el.matches && el.matches("button, a[href], [role=button], [onclick], .chip, input[type=checkbox], input[type=radio], select, summary")) return true;
+      try{ if(getComputedStyle(el).cursor === "pointer") return true; }catch(e){}
+    }
+    return false;
+  }
+  let ultimoBlop = 0;
+  document.addEventListener("click", e=>{
+    if(!blopAttivo() || !eTasto(e.target)) return;
+    const ora = Date.now();
+    if(ora - ultimoJingle < 1500 || ora - ultimoBlop < 60) return;  /* niente blop sopra il jingle, ne' doppi (etichetta + casella) */
+    ultimoBlop = ora;
+    try{ blop(); }catch(_){}
+  }, {capture:true, passive:true});
+  return { suona, attivo, blop, blopAttivo };
 })();
 
 if("serviceWorker" in navigator){
@@ -9463,11 +9502,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v293".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v294".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.15.0";
+var NOME_VERSIONE = "2.16.0";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
