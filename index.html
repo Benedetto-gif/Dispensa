@@ -1336,7 +1336,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.14.2</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.15.0</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -8392,7 +8392,13 @@ function apriImpostazioni(){
     <label class="campo" style="display:flex;align-items:center;gap:8px">
       <input type="checkbox" id="impFiligrana" ${filigrana?"checked":""}>
       <span>\u{1F955} ${L("Mostra ortaggi, frutta e uova come sfondo leggero","Show vegetables, fruit and eggs as a light background")}</span>
-    </label>`);
+    </label>
+    <div class="sez">${L("Jingle d\u2019apertura","Opening jingle")}</div>
+    <label class="campo" style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="impJingle" ${JINGLE.attivo()?"checked":""}>
+      <span>\u{1F3B5} ${L("Suona al primo tocco della giornata","Plays at the first tap of the day")}</span>
+    </label>
+    <button type="button" class="btn small" id="impJingleProva">\u{1F50A} ${L("Ascolta","Listen")}</button>`);
   const K = ["R","G","B"];
   const leggi = () => K.map(k=>+document.getElementById("asp"+k).value);
   const dipingiCursori = col => K.forEach((k,j)=>{
@@ -8477,6 +8483,10 @@ function apriImpostazioni(){
     lst.splice(n, 1); const m = Math.max(0, n - 1); SFONDO.salva(lst, m); SFONDO.applica(lst[m]); aggiornaTastoSfondo(); apriImpostazioni();
   };
   document.querySelectorAll("#aspPronti [data-pronto]").forEach(b=>b.onclick=()=>usa(SFONDO.PREDEF[+b.dataset.pronto].c.slice(), true));
+  document.getElementById("impJingle").onchange = e=>{
+    try{ if(e.target.checked) localStorage.removeItem("checucino.jingle"); else localStorage.setItem("checucino.jingle","0"); }catch(_){}
+  };
+  document.getElementById("impJingleProva").onclick = ()=>{ try{ JINGLE.suona(); }catch(_){} };
   document.getElementById("impFiligrana").onchange = e=>{
     if(e.target.checked){ localStorage.setItem("checucino.filigrana","1"); document.body.setAttribute("data-filigrana","1"); }
     else{ localStorage.removeItem("checucino.filigrana"); document.body.removeAttribute("data-filigrana"); }
@@ -9368,6 +9378,76 @@ function passoFatto1(){ return !!(sess && sess.tavolaFatta); }
   setTimeout(chiudi, 7500);
 })();
 
+/* ===========================================================
+   Jingle d'apertura: qualche bolla di bollore e tre note che salgono,
+   come i tre punti interrogativi che escono dalla pentola.
+   Suono generato dal codice (Web Audio), niente file. I browser non lasciano
+   suonare nulla prima di un tocco: parte al primo tocco, una volta al giorno,
+   e si spegne da Strumenti > Aspetto.
+   =========================================================== */
+var JINGLE = (function(){
+  let ctx = null;
+  const attivo = ()=>{ try{ return localStorage.getItem("checucino.jingle") !== "0"; }catch(e){ return true; } };
+  const oggi = ()=>{ const d = new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); };
+  const giaOggi = ()=>{ try{ return localStorage.getItem("checucino.jingleGiorno") === oggi(); }catch(e){ return false; } };
+  const segna = ()=>{ try{ localStorage.setItem("checucino.jingleGiorno", oggi()); }catch(e){} };
+  function contesto(){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    if(!ctx) ctx = new AC();
+    if(ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+  /* una bolla: nota breve che sale di colpo, come un "blub" */
+  function bolla(c, out, t, f){
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f*2.6, t+.07);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(.55, t+.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+.11);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t+.13);
+  }
+  /* una nota di marimba: fondamentale + armonico alto che si spegne prima */
+  function nota(c, out, t, f, dur, vol){
+    [[1, vol, "sine"], [4, vol*.22, "sine"], [2, vol*.18, "triangle"]].forEach(([m, v, tipo], k)=>{
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = tipo; o.frequency.setValueAtTime(f*m, t);
+      const d = k ? dur*.35 : dur;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(v, t+.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+d);
+      o.connect(g); g.connect(out); o.start(t); o.stop(t+d+.05);
+    });
+  }
+  function suona(){
+    const c = contesto(); if(!c) return;
+    const t = c.currentTime + .06;
+    const tot = c.createGain(); tot.gain.value = .22;   /* volume morbido */
+    const comp = c.createDynamicsCompressor();
+    tot.connect(comp); comp.connect(c.destination);
+    /* il bollore */
+    [[0, 210], [.12, 260], [.21, 190], [.31, 300]].forEach(([d, f])=>bolla(c, tot, t+d, f));
+    /* i tre punti interrogativi: Do, Mi, Sol che salgono, e il Do alto che chiude */
+    const n = t + .5;
+    nota(c, tot, n,       523.25, .45, .5);
+    nota(c, tot, n+.17,   659.25, .45, .5);
+    nota(c, tot, n+.34,   783.99, .5,  .55);
+    nota(c, tot, n+.56,  1046.50, 1.1, .5);
+    nota(c, tot, n+.56,   659.25, 1.0, .22);   /* accordo finale, piano */
+  }
+  /* al primo tocco della giornata */
+  function primoTocco(){
+    ["pointerdown","touchend","click","keydown"].forEach(ev=>document.removeEventListener(ev, primoTocco, true));
+    if(!attivo() || giaOggi()) return;
+    segna();
+    try{ suona(); }catch(e){}
+  }
+  ["pointerdown","touchend","click","keydown"].forEach(ev=>document.addEventListener(ev, primoTocco, {capture:true, passive:true}));
+  return { suona, attivo };
+})();
+
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=>{
     navigator.serviceWorker.register("service-worker.js").catch(()=>{});
@@ -9383,11 +9463,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v292".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v293".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.14.2";
+var NOME_VERSIONE = "2.15.0";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }

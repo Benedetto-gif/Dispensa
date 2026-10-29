@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.15.0 | v293 | 29/10/2026 | Jingle d'apertura: bollore e tre note che salgono come i punti interrogativi della pentola; suona al primo tocco della giornata, si spegne o si riascolta in Strumenti → Aspetto |
 | 2.14.2 | v292 | 28/10/2026 | Frutta secca con i suoi disegni: mandorle, noci, nocciole, pistacchi, pinoli, anacardi, macadamia, pecan, semi, datteri, fichi, prugne e albicocche secche |
 | 2.14.1 | v291 | 28/10/2026 | Icone coerenti col reparto: «pomodoro cuore di bue» è un pomodoro, non una bistecca |
 | 2.14.0 | v290 | 28/10/2026 | Ogni ingrediente della dispensa (e di «Devo consumare») ha la sua icona |
