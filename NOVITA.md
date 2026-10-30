@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.22.0 | v302 | 30/10/2026 | Cinque lezioni nuove: «Igiene in cucina e ordine del frigo» (le cinque chiavi dell’OMS; il capitolo diventa «Spesa e sicurezza in cucina»), «Congelare e scongelare bene», «La passata di pomodoro», «Confetture e marmellate», «Fermentare in casa» |
 | 2.21.0 | v301 | 30/10/2026 | Il capitolo diventa «Conservare e trattare gli alimenti» con tre lezioni nuove: la marinatura, essiccare e disidratare, la salatura con sale e zucchero (gravlax, tuorli curati); tra le tecniche arriva «La sabbiatura» (frolla, brisée, crumble) |
 | 2.20.0 | v300 | 30/10/2026 | Nuovo capitolo delle lezioni «Conservare in casa», secondo le linee guida del Ministero della Salute e dell’ISS: vasetti sicuri e botulino, sott’aceto, sott’olio, sottovuoto per conservare; ogni voce con il suo disegno |
 | 2.19.0 | v299 | 30/10/2026 | Nuova lezione «La cottura a bassa temperatura (CBT)» tra le tecniche: attrezzatura, metodo dell’acqua senza macchina, tabella di temperature e tempi, lo spessore, sicurezza alimentare (combinazioni tempo/temperatura, limite dei 55 °C, pesce e Anisakis, persone fragili), raffreddare e conservare |
