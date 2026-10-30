@@ -1338,7 +1338,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.20.0</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.21.0</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -8016,8 +8016,8 @@ function apriScuola(id){
       <p class="mini">${L("Cialde, corallo, schiume, creme, terre, affumicature e fiori: le guarnizioni per presentare un piatto come al ristorante.","Tuiles, coral, foams, creams, soils, smoking and flowers: the garnishes to present a dish like a restaurant.")}</p>
       <div class="sc-grid" data-no-tr>${lez.filter(x=>x.g === "imp").map(x=>`<div class="bcella ${x.c}" data-scuola="${x.id}" role="button" tabindex="0">
         <span class="sc-e">${x.e}</span><b>${x.t}</b><small>${x.s}</small></div>`).join("")}</div>
-      <h3 class="sc-gruppo">${L("Conservare in casa","Preserving at home")}</h3>
-      <p class="mini">${L("Sottaceti, sott\u2019oli e sottovuoto fatti in sicurezza, secondo le linee guida del Ministero della Salute.","Pickles, vegetables in oil and vacuum packing made safely, following the Italian Ministry of Health guidelines.")}</p>
+      <h3 class="sc-gruppo">${L("Conservare e trattare gli alimenti","Preserving and treating food")}</h3>
+      <p class="mini">${L("Sottaceti, sott\u2019oli, sottovuoto, marinature, essiccazione e salatura fatti in sicurezza, secondo le linee guida sanitarie.","Pickles, vegetables in oil, vacuum packing, marinating, drying and curing done safely, following health guidelines.")}</p>
       <div class="sc-grid" data-no-tr>${lez.filter(x=>x.g === "con").map(x=>`<div class="bcella ${x.c}" data-scuola="${x.id}" role="button" tabindex="0">
         <span class="sc-e">${x.e}</span><b>${x.t}</b><small>${x.s}</small></div>`).join("")}</div>
       <h3 class="sc-gruppo">${L("Fare la spesa","Shopping")}</h3>
@@ -9521,11 +9521,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v300".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v301".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.20.0";
+var NOME_VERSIONE = "2.21.0";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
