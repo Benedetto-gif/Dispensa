@@ -1338,7 +1338,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.23.0</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.24.0</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -8012,6 +8012,9 @@ function apriScuola(id){
         ${x.mia?`<span class="badge">${L("tua","yours")}</span>`:""}
         <span class="sc-e">${x.e}</span><b>${x.t}</b><small>${x.s}</small></div>`).join("")}</div>
       <button class="btn ghost sc-agg" data-scuola-nuova="${g}">\uFF0B ${g === "att" ? L("Aggiungi un attrezzo","Add a piece of equipment") : L("Aggiungi una tecnica","Add a technique")}</button>`).join("")}
+      <h3 class="sc-gruppo">${L("La pasticceria","Pastry and desserts")}</h3>
+      <div class="sc-grid" data-no-tr>${lez.filter(x=>x.g === "pas").map(x=>`<div class="bcella ${x.c}" data-scuola="${x.id}" role="button" tabindex="0">
+        <span class="sc-e">${x.e}</span><b>${x.t}</b><small>${x.s}</small></div>`).join("")}</div>
       <h3 class="sc-gruppo">${L("Guarnizioni e impiattamento gourmet","Gourmet garnishes and plating")}</h3>
       <p class="mini">${L("Cialde, corallo, schiume, creme, terre, affumicature e fiori: le guarnizioni per presentare un piatto come al ristorante.","Tuiles, coral, foams, creams, soils, smoking and flowers: the garnishes to present a dish like a restaurant.")}</p>
       <div class="sc-grid" data-no-tr>${lez.filter(x=>x.g === "imp").map(x=>`<div class="bcella ${x.c}" data-scuola="${x.id}" role="button" tabindex="0">
@@ -8282,7 +8285,7 @@ function apriTutto(){
     [L("Le tue ricette","Your recipes"), "#7A2E4A", [
       ["\u2795", L("Aggiungi ricette","Add recipes"), L("Cercale sul web dentro l\u2019app, fotografa un libro, conserva come foto quelle scritte a mano, o scrivile tu. Poi le convalidi.","Search the web inside the app, photograph a book, keep handwritten ones as photos, or write them yourself. Then validate them."), chiudiE(()=>apriMie())]]],
     [L("Imparare e conoscere","Learn and discover"), "#2F6FA3", [
-      ["\u{1F393}", L("Impariamo a cucinare","Let\u2019s learn to cook"), L("Tecniche, attrezzatura, guarnizioni e impiattamento gourmet, conservare in casa, fare la spesa e la scienza in cucina, con le ricette per esercitarti.","Techniques, equipment, gourmet garnishes and plating, preserving, shopping and kitchen science, with recipes to practise."), chiudiE(()=>apriScuola())],
+      ["\u{1F393}", L("Impariamo a cucinare","Let\u2019s learn to cook"), L("Tecniche, attrezzatura, pasticceria, guarnizioni e impiattamento gourmet, conservare in casa, fare la spesa e la scienza in cucina, con le ricette per esercitarti.","Techniques, equipment, pastry, gourmet garnishes and plating, preserving, shopping and kitchen science, with recipes to practise."), chiudiE(()=>apriScuola())],
       ["\u{1F3F7}\uFE0F", L("Leggere il cartellino","Reading the label"), L("Da dove arriva quello che compri: zone FAO, pescato o allevato, decongelato.","Where what you buy comes from: FAO areas, caught or farmed, defrosted."), chiudiE(()=>apriScuola("cartellino"))],
       ["\u{1F4F7}", L("Leggi un cartellino","Read a label"), L("Fotografa il cartellino al banco: pescato o allevato, in che mare, decongelato, da dove arriva.","Photograph the label at the counter: caught or farmed, which sea, defrosted, where it comes from."), chiudiE(()=>apriLettoreCartellino())],
       ["\u{1F52C}", L("Perch\u00e9 succede?","Why does it happen?"), L("Fai una domanda e cerco la spiegazione scientifica.","Ask a question and I look up the scientific explanation."), chiudiE(()=>apriScienza())],
@@ -8664,7 +8667,7 @@ function tappaHome(){
   <path d="M12 16c2.5-.3 4.5 0 6 .8M12 21c2.5-.3 4.5 0 6 .8M26 16.8c1.5-.8 3.5-1.1 6-.8M26 21.8c1.5-.8 3.5-1.1 6-.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" opacity=".8"/>
 </svg>
         <b>Impariamo a cucinare</b>
-        <small>${L(`Le tecniche, l\u2019attrezzatura, l\u2019impiattamento gourmet, le conserve, la spesa e la scienza in cucina: ${(DATI["scuola-data"]||{it:[]}).it.length} lezioni`,`Techniques, equipment, gourmet plating, preserving, shopping and kitchen science: ${(DATI["scuola-data"]||{it:[]}).it.length} lessons`)}</small>
+        <small>${L(`Le tecniche, l\u2019attrezzatura, la pasticceria, l\u2019impiattamento gourmet, le conserve, la spesa e la scienza in cucina: ${(DATI["scuola-data"]||{it:[]}).it.length} lezioni`,`Techniques, equipment, pastry, gourmet plating, preserving, shopping and kitchen science: ${(DATI["scuola-data"]||{it:[]}).it.length} lessons`)}</small>
       </div>
       <div class="bcella c-mattone" id="hStag">
         <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -9521,11 +9524,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v303".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v304".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.23.0";
+var NOME_VERSIONE = "2.24.0";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }

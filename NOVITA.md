@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.24.0 | v304 | 30/10/2026 | Nuovo capitolo «La pasticceria» (con la pasticceria di base e la sabbiatura) e quattro lezioni: «Meringhe, caramello e zucchero», «Il cioccolato in pratica», «Gelato, sorbetto, granita e semifreddo», «Pasta sfoglia e pasta choux» |
 | 2.23.0 | v303 | 30/10/2026 | Cinque tecniche nuove: «Pulire e sfilettare il pesce», «La pasta fresca e ripiena», «Brasare, glassare, gratinare, cartoccio e crosta di sale», «Spezie ed erbe aromatiche», «L’equilibrio dei sapori» |
 | 2.22.0 | v302 | 30/10/2026 | Cinque lezioni nuove: «Igiene in cucina e ordine del frigo» (le cinque chiavi dell’OMS; il capitolo diventa «Spesa e sicurezza in cucina»), «Congelare e scongelare bene», «La passata di pomodoro», «Confetture e marmellate», «Fermentare in casa» |
 | 2.21.0 | v301 | 30/10/2026 | Il capitolo diventa «Conservare e trattare gli alimenti» con tre lezioni nuove: la marinatura, essiccare e disidratare, la salatura con sale e zucchero (gravlax, tuorli curati); tra le tecniche arriva «La sabbiatura» (frolla, brisée, crumble) |

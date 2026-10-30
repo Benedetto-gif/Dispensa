@@ -9,9 +9,9 @@
  * l'app continua comunque a funzionare senza connessione.
  */
 
-const VERSIONE = 'checucino-v303';
+const VERSIONE = 'checucino-v304';
 // numero ufficiale mostrato nell'app (MAGGIORE.MINORE.CORREZIONE); va cambiato insieme a VERSIONE
-const NOME_VERSIONE = '2.23.0';
+const NOME_VERSIONE = '2.24.0';
 
 const FILE = [
   './',
