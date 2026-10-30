@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.20.0 | v300 | 30/10/2026 | Nuovo capitolo delle lezioni «Conservare in casa», secondo le linee guida del Ministero della Salute e dell’ISS: vasetti sicuri e botulino, sott’aceto, sott’olio, sottovuoto per conservare; ogni voce con il suo disegno |
 | 2.19.0 | v299 | 30/10/2026 | Nuova lezione «La cottura a bassa temperatura (CBT)» tra le tecniche: attrezzatura, metodo dell’acqua senza macchina, tabella di temperature e tempi, lo spessore, sicurezza alimentare (combinazioni tempo/temperatura, limite dei 55 °C, pesce e Anisakis, persone fragili), raffreddare e conservare |
 | 2.18.0 | v298 | 30/10/2026 | Nuova lezione «L’affumicatura casalinga» nel capitolo gourmet: a caldo nel wok e nel barbecue, a freddo per formaggi e burro, al momento con pistola e cloche; legni e aromi, cosa non bruciare, sicurezza (IPA, Anisakis, Listeria, monossido) |
 | 2.17.0 | v297 | 30/10/2026 | Nuovo capitolo delle lezioni «Guarnizioni e impiattamento gourmet»: impiattamento, cialde e tuile, corallo croccante, schiume/spume/arie, creme, gel fluidi e oli colorati, terre/polveri/crumble/chips, fiori e microerbe; ogni voce con il suo disegno |
