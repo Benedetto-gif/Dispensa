@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.18.0 | v298 | 30/10/2026 | Nuova lezione «L’affumicatura casalinga» nel capitolo gourmet: a caldo nel wok e nel barbecue, a freddo per formaggi e burro, al momento con pistola e cloche; legni e aromi, cosa non bruciare, sicurezza (IPA, Anisakis, Listeria, monossido) |
 | 2.17.0 | v297 | 30/10/2026 | Nuovo capitolo delle lezioni «Guarnizioni e impiattamento gourmet»: impiattamento, cialde e tuile, corallo croccante, schiume/spume/arie, creme, gel fluidi e oli colorati, terre/polveri/crumble/chips, fiori e microerbe; ogni voce con il suo disegno |
 | 2.16.2 | v296 | 29/10/2026 | «Conosciamoci»: tolto «Avanti», doppione di «🧭 Mappa»; la Mappa salva e segna la tappa fatta (se c'è il nome) |
 | 2.16.1 | v295 | 29/10/2026 | Sulla mappa d'apertura il tasto 🇬🇧 English / 🇮🇹 Italiano per cambiare lingua |
