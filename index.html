@@ -228,6 +228,18 @@ body.barra-mappa #tornaMappa{display:none}
 .pc-ver.nuova{opacity:1;background:#2E9D5B;border-color:#2E9D5B;color:#fff}
 .pc-tit{font-family:Newsreader,Georgia,serif;font-size:clamp(1.6rem,7vw,2.1rem);font-weight:600;margin:0;text-align:center;letter-spacing:-.01em}
 .pc-sub{text-align:center;margin:2px 0 4px;opacity:.85;font-size:.9rem}
+.pc-rapida{display:flex;align-items:center;gap:12px;width:100%;margin:10px 0 6px;padding:12px 16px;border:0;border-radius:18px;
+  background:linear-gradient(135deg,#F2A12A,#E8574A);color:#fff;text-align:left;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18);font:inherit}
+.pc-rapida>span:first-child{font-size:1.9rem;line-height:1}
+.pc-rapida b{display:block;font-size:1.15rem}
+.pc-rapida small{display:block;opacity:.92;font-size:.85rem}
+.pc-rapida-va{margin-left:auto;font-size:1.8rem;opacity:.85}
+.rp-fonte{display:block;width:100%;margin-top:10px;text-align:left;white-space:normal;line-height:1.35}
+.rp-fonte small{opacity:.85;font-weight:500}
+.rp-conta{margin:16px 0 4px;font-weight:600}
+.rp-gruppo{font-size:1.1rem;margin:20px 0 10px;padding-top:10px;border-top:1px solid var(--linea)}
+.rp-gruppo small{font-weight:500;opacity:.75;font-size:.8rem;margin-left:4px}
+.rp-altre{margin-top:8px}
 .pc-mappa{position:relative;width:100%;aspect-ratio:360/625;margin-top:4px}
 .pc-mappa svg.pc-strada{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .pc-st{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;width:46%;
@@ -1338,7 +1350,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.24.0</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.25.0</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2782,14 +2794,19 @@ function stilePiuStretto(){
   return tavolata().reduce((m,c)=> RANGO[c.stile] > RANGO[m] ? c.stile : m, "onnivoro");
 }
 let _radDisp = {chiave:null, set:null};
+/* gli ingredienti che contano adesso: la dispensa, oppure la lista scritta nella via rapida */
+var DISP_RAPIDA = null;
+function dispAttiva(){ return DISP_RAPIDA || S.dispensa; }
 function radiciDispensa(){
-  const chiave = S.dispensa.join("|");
-  if(_radDisp.chiave !== chiave) _radDisp = {chiave, set: new Set(S.dispensa.map(radiceIng))};
+  const d = dispAttiva(), chiave = (DISP_RAPIDA ? "R|" : "") + d.join("|");
+  if(_radDisp.chiave !== chiave) _radDisp = {chiave, set: new Set(d.map(radiceIng))};
   return _radDisp.set;
 }
 function possiedo(k){
-  if(S.dispensa.includes(k)) return true;
-  if((EQUIV[k]||[]).some(x=>S.dispensa.includes(x))) return true;
+  const d = dispAttiva();
+  if(d.includes(k)) return true;
+  if((EQUIV[k]||[]).some(x=>d.includes(x))) return true;
+  if(DISP_RAPIDA && DISP_RAPIDA.some(x=>parolaGenerica(x, k))) return true;
   /* stesso ingrediente scritto al singolare o al plurale */
   const r = radiciDispensa();
   return r.has(radiceIng(k)) || (EQUIV[k]||[]).some(x=>r.has(radiceIng(x)));
@@ -2952,6 +2969,181 @@ function valutaCompleta(r){
   v.fatta = q ? (Date.now() - q) < GIORNI_RIPOSO*86400000 : false;
   return v;
 }
+/* ===========================================================
+   Via rapida: dagli ingredienti (la dispensa, oppure quelli che scrivi o detti)
+   alle ricette fattibili, divise in piatti unici, primi e secondi
+   =========================================================== */
+const RAPIDA_BASE = D.base;          /* acqua, olio, pepe, sale: li do per scontati anche nella lista scritta */
+const RAPIDA_PRIME = 5;              /* quante ricette per gruppo prima di "Mostra altre" */
+let rapidaAperti = {};               /* gruppi allargati con "Mostra altre" */
+let _nomiIngNoti = null;
+function nomiIngNoti(){
+  if(!_nomiIngNoti){
+    const set = new Set(TUTTI_ING);
+    archivio().forEach(r=>r.ing.forEach(i=>set.add(i.k)));
+    _nomiIngNoti = [...set].sort((a, b)=>b.length - a.length);   /* prima i nomi lunghi: "olio di semi" prima di "olio" */
+  }
+  return _nomiIngNoti;
+}
+/* un nome scritto o detto diventa la chiave di un ingrediente noto, se c'e' */
+function chiaveIngNoto(t){
+  const q = normTesto(t);
+  if(!q) return "";
+  if(IN_INGLESE){ const k = chiaveDaInglese(q); if(k) return k; }
+  const r = radiceIng(q);
+  return nomiIngNoti().find(k=>normTesto(k) === q || radiceIng(k) === r) || "";
+}
+/* "pecorino" scritto da solo vale per "pecorino romano", "parmigiano" per "parmigiano reggiano":
+   tutte le parole scritte devono comparire, intere, nel nome dell'ingrediente */
+function parolaGenerica(scritto, k){
+  const a = normTesto(scritto).split(" ").filter(Boolean);
+  if(!a.length) return false;
+  const b = normTesto(k).split(" ").map(radiceIng);
+  return a.every(w=>b.includes(radiceIng(w)));
+}
+const RP_PAROLE_VUOTE = new Set(["un","una","uno","un'","po","po'","del","dello","della","dei","delle","degli","di","da","il","la","lo","l'","i","gli","le","qualche","mezzo","mezza","due","tre","quattro","cinque","poco","poca","po'","ho","c'e","some","a","an","the","of","few","little","two","three"]);
+function rpPulisci(p){
+  const w = normTesto(p).split(" ").filter(Boolean);
+  while(w.length > 1 && RP_PAROLE_VUOTE.has(w[0])) w.shift();   /* solo all'inizio: "olio di semi" resta intero */
+  return w.join(" ");
+}
+/* "uova, zucchine e un po' di pecorino" -> [uova, zucchine, pecorino] */
+function leggiListaIng(testo){
+  const out = [];
+  const pezzi = String(testo || "").toLowerCase().replace(/[’']/g, "' ").split(/,|;|\n|\s+e\s+|\s+ed\s+|\s+and\s+/).map(rpPulisci).filter(Boolean);
+  pezzi.forEach(p=>{
+    const k = chiaveIngNoto(p);
+    if(k){ out.push(k); return; }
+    /* parola generica che esiste dentro un nome noto: la tengo com'e' ("pecorino") */
+    if(nomiIngNoti().some(n=>parolaGenerica(p, n))){ out.push(p); return; }
+    /* frase piu' lunga: cerco dentro i nomi noti, dal piu' lungo */
+    let resto = " " + p + " ", trovati = 0;
+    nomiIngNoti().forEach(n=>{
+      const nn = " " + normTesto(n) + " ";
+      if(n.length > 2 && resto.includes(nn)){ out.push(n); resto = resto.replace(nn, " "); trovati++; }
+    });
+    const avanzo = resto.trim();
+    if(avanzo.length > 2 && !trovati) out.push(avanzo);   /* parola sconosciuta: la tengo com'e' */
+  });
+  return [...new Set(out)];
+}
+function fonteRapida(){
+  if(S.rapidaFonte === "disp" || S.rapidaFonte === "lista") return S.rapidaFonte;
+  return (S.dispensa || []).filter(k=>!BASE.has(k)).length >= 3 ? "disp" : "lista";
+}
+const GRUPPI_RAPIDA = [
+  {id:"unico",   e:"\u{1F958}", t:()=>L("Piatti unici","One-dish meals"), ok:r=>r.unico && r.cat !== "Dolci"},
+  {id:"Primi",   e:"\u{1F35D}", t:()=>L("Primi","First courses"),        ok:r=>r.cat === "Primi" && !r.unico},
+  {id:"Secondi", e:"\u{1F969}", t:()=>L("Secondi","Main courses"),        ok:r=>r.cat === "Secondi" && !r.unico}
+];
+/* quanti ingredienti della lista scritta usa la ricetta (sale, olio, acqua e pepe non contano) */
+function usaScritti(r, scritti){
+  return r.ing.filter(i=>!BASE.has(i.k) && !minore(i.k) && scritti.some(x=>x === i.k || radiceIng(x) === radiceIng(i.k) || parolaGenerica(x, i.k) || (EQUIV[i.k]||[]).includes(x))).length;
+}
+/* ingredienti "di contorno": chi scrive di corsa spesso non li elenca, e mancarne uno non cambia il piatto */
+const RP_MINORI = /^(cipoll|aglio|scalogn|porro|prezzemol|basilic|ment|origan|rosmarin|salvi|alloro|tim[oi]\b|maggioran|erba cipollina|aneto|coriandol|peperoncin|limon|pangrattat|farina( 00| 0| bianca)?$|zucchero$|aceto( di vino)?$|burro$|vino bianco|brodo vegetale|noce moscata|cannella)/;
+function minore(k){ return RP_MINORI.test(normTesto(k)); }
+/* quello che quasi tutti hanno in casa: se manca solo questo, la ricetta la propongo lo stesso */
+const RP_COMUNI = /^(pasta|spaghetti|penne|rigatoni|linguine|fusilli|riso|patat|pane( raffermo)?$|pangrattato|uov[ao]|latte$|parmigiano|grana|formaggio grana|pecorino|passata di pomodoro|pomodori pelati|concentrato di pomodoro)/;
+function mancabile(k){ return minore(k) || RP_COMUNI.test(normTesto(k)); }
+function ricetteRapide(){
+  const lista = fonteRapida() === "lista";
+  const scritti = S.rapida || [];
+  const out = {};
+  GRUPPI_RAPIDA.forEach(g=>out[g.id] = []);
+  archivio().forEach(r=>{
+    const g = GRUPPI_RAPIDA.find(x=>x.ok(r));
+    if(!g || !adattaAlTavolo(r)) return;
+    const v = valutaCompleta(r);
+    if(lista){
+      /* con la lista scritta: chi scrive di corsa non elenca cipolla, aglio, erbe; accetto fino a 3 mancanti, ben indicati */
+      v.usati = usaScritti(r, scritti);
+      /* puo' mancare solo un aroma o qualcosa che quasi tutti hanno in casa (pasta, uova, patate...), al massimo 3 cose */
+      const manca = r.ing.filter(i=>!possiedo(i.k) && !sostituto(i.k));
+      if(!v.usati || manca.length > 3 || manca.some(i=>!mancabile(i.k))) return;
+    } else if(v.mancanti.length > 2 || v.pct < 60) return;
+    out[g.id].push(v);
+  });
+  Object.values(out).forEach(a=>a.sort((x, y)=>(x.mancanti.length ? 1 : 0) - (y.mancanti.length ? 1 : 0)
+    || (y.usati || 0) - (x.usati || 0) || x.mancanti.length - y.mancanti.length || y.pct - x.pct || x.r.tempo - y.r.tempo));
+  return out;
+}
+/* gli ingredienti che mancano piu' spesso alle ricette trovate: "Hai anche...?" */
+function suggerimentiRapida(gr){
+  const conta = {};
+  Object.values(gr).flat().slice(0, 300).forEach(v=>v.r.ing.forEach(i=>{ if(!possiedo(i.k) && !sostituto(i.k) && !BASE.has(i.k)) conta[i.k] = (conta[i.k] || 0) + 1; }));
+  return Object.keys(conta).sort((a, b)=>conta[b] - conta[a]).slice(0, 8);
+}
+function apriRapida(){
+  const fonte = fonteRapida();
+  S.rapida = S.rapida || [];
+  DISP_RAPIDA = fonte === "lista" ? [...new Set([...RAPIDA_BASE, ...S.rapida])] : null;
+  const nDisp = (S.dispensa || []).filter(k=>!BASE.has(k)).length;
+  const gr = ricetteRapide();
+  const sugg = fonte === "lista" ? suggerimentiRapida(gr) : [];
+  const tot = GRUPPI_RAPIDA.reduce((n, g)=>n + gr[g.id].length, 0);
+  const tutte = GRUPPI_RAPIDA.reduce((n, g)=>n + gr[g.id].filter(v=>!v.mancanti.length).length, 0);
+  const pronti = fonte === "disp" ? nDisp : S.rapida.length;
+  apriVelo("rapida", `<div class="velo-top"><h2>⚡ ${L("Via rapida","Quick way")}</h2>
+      <button class="chiudi" onclick="chiudiVelo()">${L("Chiudi","Close")}</button></div>
+    <p class="mini">${L("Dimmi cosa hai e ti mostro cosa puoi cucinare, diviso in piatti unici, primi e secondi.","Tell me what you have and I’ll show you what you can cook, split into one-dish meals, first and main courses.")}</p>
+    <button type="button" class="btn rp-fonte" id="rpFonte" aria-label="${L("Cambia: dispensa o lista scritta","Switch: pantry or written list")}">
+      ${fonte === "disp"
+        ? `\u{1F96B} ${L("Uso la mia dispensa","Using my pantry")} <small>(${nDisp} ${L("ingredienti","ingredients")}) · ${L("tocca per scrivere io cosa ho","tap to write what I have")}</small>`
+        : `✍️ ${L("Scrivo io cosa ho","I’ll write what I have")} <small>· ${L("tocca per usare la dispensa","tap to use the pantry")}</small>`}
+    </button>
+    ${fonte === "lista" ? `
+      <div class="rp-scrivi">
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <input type="text" id="rpIn" list="rpList" autocomplete="off" enterkeyhint="done" style="flex:1"
+            placeholder="${L("es. uova, zucchine, pecorino","e.g. eggs, courgettes, pecorino")}">
+          <button type="button" id="rpMic" class="mic-btn" aria-label="${L("Detta a voce","Dictate")}" title="${L("Detta a voce","Dictate")}">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="2"/><path d="M6 11v1a6 6 0 0 0 12 0v-1M12 18v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+          <button type="button" class="btn small" id="rpAgg">${L("Aggiungi","Add")}</button>
+        </div>
+        <datalist id="rpList">${nomiIngNoti().slice().sort().map(i=>`<option value="${esc(nomeIng(i))}">`).join("")}</datalist>
+        <p class="mini" style="margin-top:6px;opacity:.85">${L("Puoi scriverne o dirne tanti insieme, separati da virgole o da «e». Sale, olio, pepe e acqua li do per scontati.","You can write or say many at once, separated by commas or “and”. Salt, oil, pepper and water are taken for granted.")}</p>
+        <div class="chips" id="rpChips" style="margin-top:6px">${S.rapida.map(k=>`<button type="button" class="chip on" data-rp-tolgo="${esc(k)}" title="${L("Tocca per togliere","Tap to remove")}"><span class="ing-em" aria-hidden="true">${emojiIng(k)}</span>${esc(nomeIng(k))} ✕</button>`).join("")}</div>
+        ${S.rapida.length && sugg.length ? `<p class="mini" style="margin-top:10px">${L("Hai anche qualcuno di questi? Tocca per aggiungerlo:","Do you also have any of these? Tap to add:")}</p>
+          <div class="chips">${sugg.map(k=>`<button type="button" class="chip" data-rp-sugg="${esc(k)}"><span class="ing-em" aria-hidden="true">${emojiIng(k)}</span>\uFF0B ${esc(nomeIng(k))}</button>`).join("")}</div>` : ""}
+        ${S.rapida.length ? `<button type="button" class="az-link" id="rpSvuota" style="margin-top:4px">\u{1F5D1}️ ${L("Ricomincia la lista","Start the list again")}</button>` : ""}
+      </div>` : (nDisp ? "" : `<p class="mini" style="margin-top:8px">${L("La dispensa è vuota: tocca il tasto qui sopra e scrivi cosa hai.","The pantry is empty: tap the button above and write what you have.")}</p>`)}
+    ${notaStileTema()}
+    ${!pronti ? "" : !tot
+      ? `<p style="margin-top:14px">${L("Con questi ingredienti non trovo ricette. Aggiungine qualcuno, oppure prova la ricerca completa da «Cosa mangiamo?».","I can’t find recipes with these ingredients. Add a few, or try the full search from “What shall we eat?”.")}</p>`
+      : `<p class="rp-conta">${tutte ? L(`✅ ${tutte} ${tutte === 1 ? "ricetta" : "ricette"} con tutto quello che serve`, `✅ ${tutte} recipe${tutte === 1 ? "" : "s"} with everything you need`) : L("Nessuna ricetta completa: ecco quelle a cui manca poco.","No complete recipe: here are the ones missing little.")}</p>
+        ${GRUPPI_RAPIDA.map(g=>{
+          const a = gr[g.id]; if(!a.length) return "";
+          const n = a.filter(v=>!v.mancanti.length).length, aperto = rapidaAperti[g.id];
+          const vis = aperto ? a : a.slice(0, RAPIDA_PRIME);
+          return `<h3 class="rp-gruppo"><span aria-hidden="true">${g.e}</span> ${g.t()} <small>${n ? L(`${n} complete`, `${n} complete`) + " · " : ""}${a.length} ${L("in tutto","in all")}</small></h3>
+            <div class="ric-grid">${vis.map(scheda).join("")}</div>
+            ${a.length > RAPIDA_PRIME ? `<button type="button" class="az-link rp-altre" data-rp-altre="${g.id}">${aperto ? "▴ " + L("Mostra meno","Show fewer") : "▾ " + L(`Mostra le altre ${a.length - RAPIDA_PRIME}`, `Show the other ${a.length - RAPIDA_PRIME}`)}</button>` : ""}`;
+        }).join("")}`}`);
+  const fb = document.getElementById("rpFonte");
+  if(fb) fb.onclick = ()=>{ S.rapidaFonte = fonte === "disp" ? "lista" : "disp"; salva(); rapidaAperti = {}; apriRapida(); };
+  const inp = document.getElementById("rpIn");
+  const aggiungi = testo=>{
+    const nuovi = leggiListaIng(testo);
+    if(!nuovi.length) return;
+    S.rapida = [...new Set([...(S.rapida || []), ...nuovi])]; salva(); apriRapida();
+    const i2 = document.getElementById("rpIn"); if(i2) i2.focus();
+  };
+  if(inp){
+    inp.onkeydown = e=>{ if(e.key === "Enter"){ e.preventDefault(); aggiungi(inp.value); } };
+    /* scelta dal suggerimento: aggiunge subito */
+    inp.oninput = e=>{ if(e.inputType === "insertReplacementText" || (!e.inputType && inp.value)) aggiungi(inp.value); };
+    document.getElementById("rpAgg").onclick = ()=>aggiungi(inp.value);
+    const mic = document.getElementById("rpMic");
+    mic.onclick = ()=>dettaIngrediente(mic, testo=>aggiungi(testo));
+  }
+  velo.querySelectorAll("[data-rp-sugg]").forEach(b=>b.onclick = ()=>{ S.rapida = [...new Set([...(S.rapida || []), b.dataset.rpSugg])]; salva(); apriRapida(); });
+  velo.querySelectorAll("[data-rp-tolgo]").forEach(b=>b.onclick = ()=>{ S.rapida = S.rapida.filter(x=>x !== b.dataset.rpTolgo); salva(); apriRapida(); });
+  const sv = document.getElementById("rpSvuota"); if(sv) sv.onclick = ()=>{ S.rapida = []; salva(); apriRapida(); };
+  velo.querySelectorAll("[data-rp-altre]").forEach(b=>b.onclick = ()=>{ rapidaAperti[b.dataset.rpAltre] = !rapidaAperti[b.dataset.rpAltre]; apriRapida(); });
+}
+window.apriRapida = apriRapida;
+
 function filtra(){
   ricercaTollerante = false;
   let out = filtraUnaVolta();
@@ -3024,7 +3216,7 @@ const TAPPE = ["Chi cucina","Per chi","Dispensa","Cosa va","Ricette"];
 const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pulito = s => esc(String(s).replace(/<[^>]*>/g,""));
 
-function vai(n){ lasciaBox();
+function vai(n){ lasciaBox(); DISP_RAPIDA = null;
   /* superata la pagina "Per chi cucini?" (da solo o con ospiti) la tappa 2 della mappa risulta fatta */
   passo = n; window.scrollTo({top:0}); disegna(); }
 function disegna(){
@@ -8268,6 +8460,7 @@ function apriTutto(){
         setTimeout(()=>{ const c = document.querySelector('[data-rep="Cantina"]'); if(c) c.scrollIntoView({block:"start"}); }, 50); })],
       ["\u23F3", L("Scadenze","Use-by dates"), L("Data a mano, col codice a barre o con una foto: quello che scade presto va in prima pagina e diventa una ricetta.","Date by hand, by barcode or photo: what\u2019s expiring goes on the home page and becomes a recipe."), chiudiE(()=>apriScadenze())]]],
     [L("Cosa mangiare oggi","What to eat today"), "#C98A1B", [
+      ["\u26A1", L("Via rapida","Quick way"), L("Dalla dispensa, o dagli ingredienti che scrivi o detti, dritto alle ricette fattibili: piatti unici, primi e secondi.","From the pantry, or from ingredients you type or dictate, straight to the recipes you can make: one-dish meals, first and main courses."), chiudiE(()=>apriRapida())],
       ["\u{1F4A1}", L("Ho in mente un piatto","I have a dish in mind"), L("Scrivi il nome: l\u2019app ti dice se puoi farlo e cosa ti manca.","Type its name: the app tells you if you can make it and what\u2019s missing."), scegli("idea")],
       ["\u{1F3B2}", L("Lascio scegliere all\u2019app","Let the app choose"), L("Le ricette in ordine di fattibilit\u00e0, con stagione, ora del giorno e tempo che hai.","Recipes by feasibility, taking season, time of day and time available into account."), scegli("app")],
       ["\u267B\uFE0F", L("Devo consumare","I need to use up"), L("Scegli gli ingredienti da non sprecare: avanzi, cose in scadenza.","Choose the ingredients not to waste: leftovers, things about to expire."), scegli("recupero")],
@@ -9217,6 +9410,7 @@ if(!APERTA_DA_LINK) apriPercorso();   /* la mappa apre l'app: dai suoi tasti si 
    =========================================================== */
 function apriPercorso(){
   aperturaDaMappa = false;
+  DISP_RAPIDA = null;
   spegniRitornoMappa();
   let el = document.getElementById("percorso");
   if(el) el.remove();
@@ -9257,7 +9451,8 @@ function apriPercorso(){
       <button type="button" class="pc-ver" id="pcVer" data-no-tr>${testoVerMappa()}</button>
     </div>
     <h1 class="pc-tit">${S.profilo.nome ? L("Ciao ", "Hi ") + esc(S.profilo.nome) + "!" : L("Che cucino?","What’s cooking?")}</h1>
-    <p class="pc-sub">${L("Tocca una tappa per andarci. Quella che pulsa \u00e8 la prossima da fare.","Tap a stop to go there. The pulsing one is next.")}</p>
+    <button type="button" class="pc-rapida" id="pcRapida"><span aria-hidden="true">\u26A1</span><span><b>${L("Via rapida","Quick way")}</b><small>${L("cosa cucino con quello che ho?","what can I cook with what I have?")}</small></span><span class="pc-rapida-va" aria-hidden="true">\u203A</span></button>
+    <p class="pc-sub">${L("Oppure fai il percorso: tocca una tappa per andarci. Quella che pulsa \u00e8 la prossima da fare.","Or follow the path: tap a stop to go there. The pulsing one is next.")}</p>
     <div class="pc-mappa">
       <svg class="pc-strada" viewBox="0 0 360 625" preserveAspectRatio="none" aria-hidden="true">
         <style>.pc-sent{fill:none;stroke:currentColor;stroke-width:3;stroke-dasharray:2 7;stroke-linecap:round;opacity:.45}</style>
@@ -9279,6 +9474,7 @@ function apriPercorso(){
      (e il tasto Indietro del telefono riporta qui); con "Entra nell'app" no */
   const vaiA = (f, ritorno)=>{ chiudiP(); if(ritorno !== false) attivaRitornoMappa(); f(); };
   el.querySelector("#pcVer").onclick = e=>tastoVerMappa(e.currentTarget);
+  el.querySelector("#pcRapida").onclick = ()=>{ aperturaDaMappa = true; vaiA(apriRapida); };
   el.querySelector("#pcLingua").onclick = ()=>cambiaLingua(IN_INGLESE ? "it" : "en");
   el.querySelectorAll("[data-pc-t]").forEach(b=>b.onclick = ()=>{ passoIngresso = Math.min(+b.dataset.pcT, 4); vaiA(TAPPE[+b.dataset.pcT].go); });
   /* i cartelli aprono pannelli sopra la mappa: chiudendoli si torna alla mappa, non alla pagina sotto */
@@ -9524,11 +9720,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v304".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v305".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.24.0";
+var NOME_VERSIONE = "2.25.0";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
