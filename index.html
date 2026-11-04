@@ -3032,9 +3032,9 @@ function fonteRapida(){
   return (S.dispensa || []).filter(k=>!BASE.has(k)).length >= 3 ? "disp" : "lista";
 }
 const GRUPPI_RAPIDA = [
-  {id:"unico",   e:"\u{1F958}", t:()=>L("Piatti unici","One-dish meals"), ok:r=>r.unico && r.cat !== "Dolci"},
-  {id:"Primi",   e:"\u{1F35D}", t:()=>L("Primi","First courses"),        ok:r=>r.cat === "Primi" && !r.unico},
-  {id:"Secondi", e:"\u{1F969}", t:()=>L("Secondi","Main courses"),        ok:r=>r.cat === "Secondi" && !r.unico}
+  {id:"unico",   e:"\u{1F958}", t:()=>L("Piatti unici","One-dish meals"), uno:()=>L("piatto unico","one-dish meal"), ok:r=>r.unico && r.cat !== "Dolci"},
+  {id:"Primi",   e:"\u{1F35D}", t:()=>L("Primi","First courses"), uno:()=>L("primo","first course"),        ok:r=>r.cat === "Primi" && !r.unico},
+  {id:"Secondi", e:"\u{1F969}", t:()=>L("Secondi","Main courses"), uno:()=>L("secondo","main course"),        ok:r=>r.cat === "Secondi" && !r.unico}
 ];
 /* quanti ingredienti della lista scritta usa la ricetta (sale, olio, acqua e pepe non contano) */
 function usaScritti(r, scritti){
@@ -3112,7 +3112,7 @@ function apriRapida(){
     ${!pronti ? "" : !tot
       ? `<p style="margin-top:14px">${L("Con questi ingredienti non trovo ricette. Aggiungine qualcuno, oppure prova la ricerca completa da «Cosa mangiamo?».","I can’t find recipes with these ingredients. Add a few, or try the full search from “What shall we eat?”.")}</p>`
       : `<p class="rp-conta">${tutte ? L(`✅ ${tutte} ${tutte === 1 ? "ricetta" : "ricette"} con tutto quello che serve`, `✅ ${tutte} recipe${tutte === 1 ? "" : "s"} with everything you need`)
-          + " (" + GRUPPI_RAPIDA.map(g=>[g, gr[g.id].filter(v=>!v.mancanti.length).length]).filter(x=>x[1]).map(([g, n])=>`${g.e} ${n} ${g.t().toLowerCase()}`).join(", ") + ")"
+          + " (" + GRUPPI_RAPIDA.map(g=>[g, gr[g.id].filter(v=>!v.mancanti.length).length]).filter(x=>x[1]).map(([g, n])=>`${g.e} ${n} ${n === 1 ? g.uno() : g.t().toLowerCase()}`).join(", ") + ")"
           : L("Nessuna ricetta completa: ecco quelle a cui manca poco.","No complete recipe: here are the ones missing little.")}</p>
         <p class="mini">${L("In ogni gruppo vengono prima le ricette complete, poi quelle a cui manca poco: la scheda dice cosa.","In each group complete recipes come first, then those missing a little: the card says what.")}</p>
         ${GRUPPI_RAPIDA.map(g=>{
