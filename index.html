@@ -1350,7 +1350,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.25.1</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.26.0</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -7018,9 +7018,9 @@ function consegnaImport(ric){
     }
   }
   const e = esameImport(ric);
-  if(e.idonea){ apriEditor(e.pulita, e.spazzatura); return; }
+  if(e.idonea){ apriEditor(e.pulita, e.spazzatura, true); return; }
   const box = document.getElementById("impEsame");
-  if(!box){ apriEditor(e.pulita, e.spazzatura); return; }
+  if(!box){ apriEditor(e.pulita, e.spazzatura, true); return; }
   velo._impScarta = e;
   box.innerHTML = `<div class="imp-ko">
     <b>\u26A0\uFE0F Questa ricetta non ha un formato idoneo ad essere conservata</b>
@@ -7772,12 +7772,14 @@ document.addEventListener("click", e=>{
     leggiTestoImport(t, false);
     return;
   }
-  if(a === "sistemo"){ const e = velo._impScarta; if(e) apriEditor(e.pulita, e.spazzatura); return; }
+  if(a === "sistemo"){ const e = velo._impScarta; if(e) apriEditor(e.pulita, e.spazzatura, true); return; }
   if(a === "dup-salva"){ const r = velo._impDup; if(r){ r._dupOk = true; document.getElementById("impEsame").innerHTML = ""; consegnaImport(r); } return; }
   if(a === "lascia"){ document.getElementById("impEsame").innerHTML = ""; document.getElementById("impEsito").textContent = "Va bene, non salvo niente. Puoi provare con un altro sito."; return; }
 });
 
-function apriEditor(r, tolte){
+/* scaricata = la ricetta arriva dal web (o da un testo incollato): scaricarla vale gia' come convalida,
+   quindi un solo tasto la mette nell'archivio e apre subito il salvataggio nel cloud */
+function apriEditor(r, tolte, scaricata){
   const nuovo = !r || !r.id;
   const v = r || {n:"", cat:"Primi", tempo:40, diff:"facile", tags:[], ing:[], proc:[],
                   nota:"", luogo:"", all:[], unico:false};
@@ -7828,9 +7830,11 @@ function apriEditor(r, tolte){
     <label class="campo"><span>Nota (facoltativa)</span>
       <textarea id="eNota" rows="2">${esc(v.nota||"")}</textarea></label>
     <div class="azioni">
-      <button class="btn" data-ed="salva" data-id="${r && r.id ? r.id : 0}">Salva la ricetta</button>
+      <button class="btn" data-ed="salva" data-id="${r && r.id ? r.id : 0}">${scaricata ? "\u2705 " + L("Aggiungi e salva nel cloud","Add and save to the cloud") : "Salva la ricetta"}</button>
       <button class="btn ghost" data-ed="chiudi">Annulla</button>
-    </div>`);
+    </div>
+    ${scaricata ? `<p class="mini">${L("Scaricarla vale come convalida: entra subito nell\u2019archivio con tutte le altre e si apre il salvataggio nel cloud. Potrai sempre correggerla dalla sua scheda.","Downloading it counts as validating it: it goes straight into the archive with all the others and the cloud save opens. You can always correct it from its card.")}</p>` : ""}`);
+  velo._edScaricata = !!scaricata;
   velo.querySelectorAll("[data-tag],[data-all]").forEach(b=>b.onclick = ()=>b.classList.toggle("on"));
   caricaMiniature(velo);
 }
@@ -7870,6 +7874,7 @@ document.addEventListener("click", e=>{
   /* le foto dell'originale restano con la ricetta anche dopo correzioni e trascrizioni */
   const prec = trovaMia(bozza.id);
   if(prec && prec.foto && prec.foto.length) bozza.foto = prec.foto.slice();
+  if(velo._edScaricata) bozza._scaricata = true;
   const orfani = ing.filter(i=>!i.k);
   orfani.length ? apriAbbina(bozza, orfani) : salvaMia(bozza);
 });
@@ -7937,13 +7942,17 @@ document.addEventListener("click", e=>{
 });
 
 function salvaMia(r){
+  /* scaricata dal web = gia' convalidata: un solo passaggio, poi subito il salvataggio nel cloud */
+  const scaricata = !!r._scaricata; delete r._scaricata;
   preparaRicetta(r);
+  if(scaricata){ r.validata = Date.now(); S.promemoriaDopo = 0; }
   segnaDaSalvare("ricetta", r.id, nomeR(r));
   S.mie = (S.mie || []).filter(x=>x.id !== r.id);
   S.mie.push(r);
   salva();
   chiudiVelo();
   passo === 4 ? tappaRicette() : apriMie();
+  if(scaricata) esportaDati();
 }
 
 /* ===========================================================
@@ -8479,7 +8488,7 @@ function apriTutto(){
       ["\u{1F4F8}", L("Foto di impiattamento","Plating photos"), L("Idee da chef per presentare il piatto.","Chef ideas for presenting the dish."), ricette],
       ["\u{1F4DD}", L("Voto, nota e Manda a un amico","Rating, note and Send to a friend"), L("Ricordati com\u2019\u00e8 venuta e condividi la ricetta.","Remember how it turned out and share the recipe."), ricette]]],
     [L("Le tue ricette","Your recipes"), "#7A2E4A", [
-      ["\u2795", L("Aggiungi ricette","Add recipes"), L("Cercale sul web dentro l\u2019app, fotografa un libro, conserva come foto quelle scritte a mano, o scrivile tu. Poi le convalidi.","Search the web inside the app, photograph a book, keep handwritten ones as photos, or write them yourself. Then validate them."), chiudiE(()=>apriMie())]]],
+      ["\u2795", L("Aggiungi ricette","Add recipes"), L("Cercale sul web dentro l\u2019app, fotografa un libro, conserva come foto quelle scritte a mano, o scrivile tu. Quelle scaricate dal web entrano subito nell\u2019archivio e si salvano nel cloud; le altre prima le convalidi.","Search the web inside the app, photograph a book, keep handwritten ones as photos, or write them yourself. Recipes downloaded from the web go straight into the archive and are saved to the cloud; the others you validate first."), chiudiE(()=>apriMie())]]],
     [L("Imparare e conoscere","Learn and discover"), "#2F6FA3", [
       ["\u{1F393}", L("Impariamo a cucinare","Let\u2019s learn to cook"), L("Tecniche, attrezzatura, pasticceria, guarnizioni e impiattamento gourmet, conservare in casa, fare la spesa e la scienza in cucina, con le ricette per esercitarti.","Techniques, equipment, pastry, gourmet garnishes and plating, preserving, shopping and kitchen science, with recipes to practise."), chiudiE(()=>apriScuola())],
       ["\u{1F3F7}\uFE0F", L("Leggere il cartellino","Reading the label"), L("Da dove arriva quello che compri: zone FAO, pescato o allevato, decongelato.","Where what you buy comes from: FAO areas, caught or farmed, defrosted."), chiudiE(()=>apriScuola("cartellino"))],
@@ -9723,11 +9732,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v306".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v307".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.25.1";
+var NOME_VERSIONE = "2.26.0";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
