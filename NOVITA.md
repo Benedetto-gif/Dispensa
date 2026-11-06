@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.26.1 | v308 | 06/11/2026 | Ricerca ricette sul web: i risultati si alternano fra i siti consigliati (non più quasi solo GialloZafferano); cerca anche dentro Benedetta, Misya, Ricette della Nonna e Cookist |
 | 2.26.0 | v307 | 06/11/2026 | Ricetta scaricata dal web = convalidata: un solo tasto «Aggiungi e salva nel cloud» la mette nell’archivio e apre subito il salvataggio |
 | 2.25.1 | v306 | 04/11/2026 | Via rapida: il conteggio dice in quale gruppo sono le ricette complete |
 | 2.25.0 | v305 | 04/11/2026 | «Via rapida» in cima alla mappa: dalla dispensa, oppure dagli ingredienti che scrivi o detti, alle ricette fattibili divise in piatti unici, primi e secondi |

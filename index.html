@@ -1350,7 +1350,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.26.0</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.26.1</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -7605,22 +7605,54 @@ function risultatiDaPagina(html){
   });
   return out;
 }
+/* i risultati arrivano a ondate e GialloZafferano, con la sua ricerca interna, ne manda tanti e per primo:
+   li alterno sito per sito (uno di GialloZafferano, uno di Benedetta, uno di Misya...) cosi' nessun sito
+   riempie da solo l'elenco: in cima al massimo 4 per sito, gli altri dopo */
+function alternaPerSito(lista, max){
+  const gruppi = new Map();
+  lista.forEach(r=>{ const k = nomeSito(r.url); if(!gruppi.has(k)) gruppi.set(k, []); gruppi.get(k).push(r); });
+  const g = [...gruppi.values()], out = [];
+  const perSito = g.length > 1 ? 4 : max;
+  for(let giro = 0; giro < perSito && out.length < max; giro++)
+    g.forEach(x=>{ if(x[giro] && out.length < max) out.push(x[giro]); });
+  /* se gli altri siti ne hanno dati pochi, completo l'elenco in fondo con quelli rimasti */
+  lista.forEach(r=>{ if(out.length < max && !out.includes(r)) out.push(r); });
+  return out;
+}
+/* le pagine di ricerca interne dei siti hanno anche i link del menu (chi siamo, categorie...):
+   da quelle tengo solo i link che contengono almeno una parola cercata */
+function parolePiatto(q){ return normTesto(q).split(/[^a-z0-9]+/).filter(w=>w.length >= 3 && !/^(con|del|della|alla|alle|allo|agli|dei|per|and|the|with)$/.test(w)).map(w=>w.slice(0, 5)); }
+function pertinente(r, parole){
+  if(!parole.length) return true;
+  let t = ""; try{ t = normTesto(decodeURIComponent(new URL(r.url).pathname) + " " + r.t); }catch(e){ t = normTesto(r.t); }
+  return parole.some(w=>t.includes(w));
+}
 async function cercaRicetteWeb(q, quando){
   const siti = IN_INGLESE ? SITI_OK_EN : SITI_OK_IT;
   const filtro = siti.map(([d])=>"site:" + d).join(" OR ");
+  /* nei motori di ricerca GialloZafferano vince quasi sempre: una ricerca la faccio senza di lui,
+     tanto le sue ricette arrivano gia' dalla sua ricerca interna */
+  const filtroAltri = siti.filter(([d])=>d !== "giallozafferano.it").map(([d])=>"site:" + d).join(" OR ");
   const parola = L("ricetta ","recipe ");
-  const fonti = [];
-  if(!IN_INGLESE) fonti.push("https://www.giallozafferano.it/ricerca-ricette/" + encodeURIComponent(q.trim().replace(/\s+/g, " ")) + "/");
-  fonti.push("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(parola + q + " " + filtro));
-  fonti.push("https://www.bing.com/search?q=" + encodeURIComponent(parola + q + " (" + filtro + ")"));
+  const qq = encodeURIComponent(q.trim().replace(/\s+/g, " "));
+  const fonti = [];   /* [indirizzo, serve il controllo di pertinenza?] */
+  if(!IN_INGLESE){
+    fonti.push(["https://www.giallozafferano.it/ricerca-ricette/" + qq + "/", false]);
+    ["fattoincasadabenedetta.it","misya.info","ricettedellanonna.net","cookist.it"].forEach(d=>fonti.push(["https://www." + d + "/?s=" + qq, true]));
+  }
+  fonti.push(["https://html.duckduckgo.com/html/?q=" + encodeURIComponent(parola + q + " " + filtroAltri), false]);
+  fonti.push(["https://html.duckduckgo.com/html/?q=" + encodeURIComponent(parola + q + " " + filtro), false]);
+  fonti.push(["https://www.bing.com/search?q=" + encodeURIComponent(parola + q + " (" + filtro + ")"), false]);
+  const parole = parolePiatto(q);
   const visti = new Set(), tutti = [];
-  await Promise.allSettled(fonti.map(f=>primaPagina(f).then(html=>{
-    risultatiDaPagina(html).forEach(r=>{ const k = r.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""); if(visti.has(k)) return; visti.add(k);
+  await Promise.allSettled(fonti.map(([f, controlla])=>primaPagina(f).then(html=>{
+    risultatiDaPagina(html).forEach(r=>{ if(controlla && !pertinente(r, parole)) return;
+      const k = r.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""); if(visti.has(k)) return; visti.add(k);
       const vecchio = tutti.find(x=>x.t.toLowerCase() === r.t.toLowerCase() && nomeSito(x.url) === nomeSito(r.url)); if(vecchio){ if(!vecchio.foto && r.foto) vecchio.foto = r.foto; return; }
       tutti.push(r); });
-    quando(tutti.slice(0, 15));
+    quando(alternaPerSito(tutti, 15));
   })));
-  return tutti.slice(0, 15);
+  return alternaPerSito(tutti, 15);
 }
 function nomeSito(url){
   try{ const h = new URL(url).hostname.replace(/^www\./, ""); const s = SITI_OK_IT.concat(SITI_OK_EN).find(([d])=>h === d || h.endsWith("." + d)); return s ? s[1] : h; }catch(e){ return ""; }
@@ -9732,11 +9764,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v307".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v308".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.26.0";
+var NOME_VERSIONE = "2.26.1";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
