@@ -1350,7 +1350,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.26.1</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.26.2</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -5663,7 +5663,7 @@ function htmlPromemoriaSalva(){
         ${x.tipo !== "scheda" ? `<button type="button" class="link-mini" data-prom-apri="${x.id}">${L("apri","open")}</button>` : ""}</li>`).join("")}</ul></details>`; })()}
     <div class="azioni"><button class="btn" id="promSalva">☁️ ${L("Salva nel cloud","Save to the cloud")}</button><button class="btn ghost" id="promFile">\u{1F4C1} ${L("Salva come file","Save as a file")}</button><button class="btn ghost" id="promDopo">${L("Pi\u00f9 tardi","Later")}</button></div></div>`;
 }
-async function esportaDati(soloFile){
+async function esportaDati(soloFile, dopo){
   /* le foto delle ricette (scritte a mano e originali) viaggiano nel salvataggio, cosi' non si perdono */
   const foto = {};
   for(const id of tutteLeFoto()){
@@ -5681,6 +5681,7 @@ async function esportaDati(soloFile){
     if(navigator.canShare && navigator.canShare({files:[f]})){
       await navigator.share({files:[f], title:"Che cucino? \u2014 " + giorno});
       salvataggioFatto();
+      if(dopo) dopo();
       return;
     }
   }catch(e){ if(e && e.name === "AbortError") return; }
@@ -7984,7 +7985,13 @@ function salvaMia(r){
   salva();
   chiudiVelo();
   passo === 4 ? tappaRicette() : apriMie();
-  if(scaricata) esportaDati();
+  if(scaricata) esportaDati(false, esciDopoSalvataggio);
+}
+/* ricetta scaricata e salvata nel cloud: il lavoro e' finito, l'app si chiude.
+   Se il telefono non lascia chiudere la finestra, torno alla mappa (mai alla vecchia pagina a box) */
+function esciDopoSalvataggio(){
+  chiudiVelo();
+  setTimeout(()=>{ apriPercorso(); try{ window.close(); }catch(e){} }, 50);
 }
 
 /* ===========================================================
@@ -9764,11 +9771,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v308".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v309".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.26.1";
+var NOME_VERSIONE = "2.26.2";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
