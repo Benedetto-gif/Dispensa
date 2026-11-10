@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.28.0 | v311 | 10/11/2026 | Nuovo capitolo delle lezioni «Conoscere gli ingredienti»: ci passano Sali, Pepi, Spezie ed erbe, Farine e Legumi, e arrivano cinque lezioni nuove: «Gli oli», «Gli aceti», «Il riso», «Il pomodoro», «L’aglio»; ogni voce con il suo disegno e le parole nuove cliccabili |
 | 2.27.0 | v310 | 10/11/2026 | Due lezioni nuove tra le tecniche: «I pepi» (nero, bianco, verde, rosso, i cugini e i falsi pepi, con l’avviso sulle bacche rosa per chi è allergico ad anacardi e pistacchi) e «I sali» (marino e di miniera, grosso, fino, fior di sale e fiocchi, sali colorati, iodato e iposodico, quanto e quando salare); ogni pepe e ogni sale con il suo disegno; nelle due lezioni le parole nuove si toccano e si apre la spiegazione |
 | 2.26.2 | v309 | 07/11/2026 | Ricetta scaricata e salvata nel cloud: l’app si chiude (o, se il telefono non lo permette, torna alla mappa) invece di mostrare la vecchia pagina a box |
 | 2.26.1 | v308 | 06/11/2026 | Ricerca ricette sul web: i risultati si alternano fra i siti consigliati (non più quasi solo GialloZafferano); cerca anche dentro Benedetta, Misya, Ricette della Nonna e Cookist |
