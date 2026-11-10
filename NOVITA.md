@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.30.0 | v313 | 10/11/2026 | Due lezioni nuove in «Conoscere gli ingredienti»: «Il burro» (tipi, chiarificato, nocciola, freddo o a pomata) e «I formaggi» (come nascono, famiglie, DOP, quali fondono, crosta e muffa, sicurezza e lattosio); ogni voce con il suo disegno; corretto anche il numero di versione mostrato nella pagina |
 | 2.29.0 | v312 | 10/11/2026 | Quattro lezioni nuove in «Conoscere gli ingredienti»: «Le cipolle e i loro parenti», «Le patate», «Zucche e zucchine», «Verdure e ortaggi»; ogni voce con il suo disegno e le parole nuove cliccabili |
 | 2.28.0 | v311 | 10/11/2026 | Nuovo capitolo delle lezioni «Conoscere gli ingredienti»: ci passano Sali, Pepi, Spezie ed erbe, Farine e Legumi, e arrivano cinque lezioni nuove: «Gli oli», «Gli aceti», «Il riso», «Il pomodoro», «L’aglio»; ogni voce con il suo disegno e le parole nuove cliccabili |
 | 2.27.0 | v310 | 10/11/2026 | Due lezioni nuove tra le tecniche: «I pepi» (nero, bianco, verde, rosso, i cugini e i falsi pepi, con l’avviso sulle bacche rosa per chi è allergico ad anacardi e pistacchi) e «I sali» (marino e di miniera, grosso, fino, fior di sale e fiocchi, sali colorati, iodato e iposodico, quanto e quando salare); ogni pepe e ogni sale con il suo disegno; nelle due lezioni le parole nuove si toccano e si apre la spiegazione |
