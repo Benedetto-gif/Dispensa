@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.32.1 | v317 | 12/11/2026 | «Inventami una ricetta»: la ricetta inventata ora si legge anche con lo sfondo scuro (prima il testo era scuro su scuro) |
 | 2.32.0 | v316 | 12/11/2026 | Nuovo box «Inventami una ricetta» in «Cosa ti va oggi?»: l’app inventa una ricetta nuova con quello che hai in dispensa (antipasto, primo, secondo, contorno o piatto unico; niente dolci), usando gli abbinamenti dell’archivio, il foodpairing (molecole aromatiche in comune, pesate per rarità) e le regole delle lezioni; rispetta stile, allergie e regole di chi è a tavola; spiega «perché dovrebbe funzionare» con le molecole che si toccano; un solo tasto «Inventa» / «Un’altra idea»; la ricetta si può cucinare subito o tenere tra quelle da convalidare |
 | 2.31.0 | v315 | 10/11/2026 | Due lezioni nuove in «Conoscere gli ingredienti»: «Il pesce e i frutti di mare» (famiglie, pescato o allevato, fresco o surgelato, cotture, omega-3, mercurio) e «Conoscere le uova» (com’è fatto, il codice sul guscio, la confezione, falsi miti, conservazione); ogni voce con il suo disegno |
 | 2.30.1 | v314 | 10/11/2026 | «I tagli della carne» passa dalle tecniche al capitolo «Conoscere gli ingredienti» |
