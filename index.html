@@ -1382,7 +1382,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.32.2</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.33.0</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -4600,6 +4600,38 @@ function invAroma(a, b){
   return sh.reduce((t, m)=>t + invPeso(m), 0) / Math.sqrt(tot(A) * tot(B));
 }
 
+/* --- il gusto di chi usa l'app: impara dai voti dati alle ricette inventate ---
+   S.invVoti = {id: {s: stelle, n: nome, k: [ingredienti]}}. Ogni coppia di ingredienti di una ricetta votata
+   prende (stelle - 3) / 2: +1 con cinque stelle, -1 con una. Resta sul telefono di ciascuno. */
+let _invGusto = null;
+function invGustoMappa(){
+  const v = S.invVoti || {}, firma = JSON.stringify(Object.keys(v).map(id=>id + ":" + v[id].s));
+  if(_invGusto && _invGusto.firma === firma) return _invGusto;
+  const m = {}, fonti = {};
+  for(const id in v){
+    const peso = (v[id].s - 3) / 2, ks = v[id].k || [];
+    if(!peso) continue;
+    for(let i=0; i<ks.length; i++) for(let j=i+1; j<ks.length; j++){
+      const c = [ks[i], ks[j]].sort().join("|");
+      m[c] = (m[c] || 0) + peso;
+      if(peso > 0) (fonti[c] = fonti[c] || []).push(v[id].n || "");
+    }
+  }
+  return _invGusto = {firma, m, fonti};
+}
+function invGusto(a, b){ const g = invGustoMappa().m[[a, b].sort().join("|")] || 0; return Math.max(-2, Math.min(2, g)); }
+function invVotiN(){ return Object.values(S.invVoti || {}).filter(x=>x.s).length; }
+/* il voto si registra qui, anche per una ricetta inventata non ancora salvata (cucinata subito con «Cuciniamo») */
+function invRegistraVoto(id, n){
+  const r = trovaRicetta(id);
+  if(!r || !r.inventata) return;
+  S.invVoti = S.invVoti || {};
+  /* pasta, riso, pane e soffritto non contano: un voto basso non deve far sparire la pasta o la cipolla */
+  const neutri = ["pasta","riso","gnocchi","cereale","pane","aroma","brodo"];
+  if(n) S.invVoti[id] = {s: n, n: r.n, k: [...new Set(r.ing.map(i=>invBase(i.k)))].filter(k=>!neutri.includes(INV_RUOLO[k]))};
+  else delete S.invVoti[id];
+}
+
 /* --- quello che c'e' in dispensa, con il suo ruolo; tolto cio' che il tavolo non puo' mangiare --- */
 function invDisponibili(){
   const stile = sess.stile || "onnivoro";
@@ -4666,6 +4698,9 @@ function invPunti(c, scelti, P, caso){
   scelti.forEach(x=>{
     const peso = x === P ? 1.6 : 0.6;
     p += peso * (1.2 * invTradizione(x.b, c.b) + 0.9 * invAroma(x.b, c.b));
+    /* i tuoi voti: un abbinamento che ti e' piaciuto torna, uno bocciato quasi sparisce */
+    const g = invGusto(x.b, c.b);
+    p += g > 0 ? peso * 0.8 * g : peso * 2.5 * g;
   });
   if(INV_VERD[c.b] && diStagioneOra(c.b) === true) p += 0.25;
   if(INV_VERD[c.b] && diStagioneOra(c.b) === false) p -= 0.25;
@@ -5505,6 +5540,14 @@ function invPerche(scelti, P){
         : `${coppia} nell’archivio non stanno mai insieme, ma hanno in comune ${mol}. È l’idea del foodpairing: ingredienti con le stesse molecole aromatiche tendono ad abbinarsi.`});
       spiegato = true; }
   });
+  /* 1b) i tuoi voti */
+  const tutti = [P].concat(altri), gm = invGustoMappa();
+  let piaciuto = null;
+  for(let i=0; i<tutti.length && !piaciuto; i++) for(let j=i+1; j<tutti.length; j++){
+    const c = [tutti[i].b, tutti[j].b].sort().join("|");
+    if((gm.m[c] || 0) > 0){ piaciuto = {a: tutti[i], b: tutti[j], n: (gm.fonti[c] || [])[0]}; break; }
+  }
+  if(piaciuto) out.unshift({tipo:"gusto", testo:`${Maiusc(ar(piaciuto.a.b))} e ${ar(piaciuto.b.b)} ti sono già ${invGn(piaciuto.a.b).startsWith("f") && invGn(piaciuto.b.b).startsWith("f") ? "piaciute" : "piaciuti"} insieme${piaciuto.n ? ", in «" + esc(piaciuto.n) + "»" : ""}: dai tuoi voti l’app ha imparato che fanno per te.`});
   /* 2) abbinamenti collaudati */
   const coll = altri.filter(x=>!usati.has(x)).map(x=>({x, n: invInsieme(P.b, x.b)})).filter(o=>o.n >= 2).sort((a,b)=>b.n - a.n);
   if(coll.length) out.push({tipo:"tradizione", testo: coll.length === 1
@@ -5565,7 +5608,7 @@ function corpoInventa(){
   if(INV.errore) ris = `<div class="inv-err" id="invRis">⚠️ ${esc(INV.errore)}</div>`;
   else if(INVENTATA){
     const r = INVENTATA;
-    const ic = {nuovo:"✨", molecole:"\u{1F52C}", tradizione:"\u{1F4DA}", equilibrio:"⚖️"};
+    const ic = {gusto:"\u{1F44D}", nuovo:"✨", molecole:"\u{1F52C}", tradizione:"\u{1F4DA}", equilibrio:"⚖️"};
     ris = `<div class="inv-ris" id="invRis">
       <div class="inv-badge">\u{1F9EA} ${L("Ricetta inventata ora: nessuno l’ha ancora cucinata. Assaggia mentre cuoci e aggiusta di sale.","Recipe invented just now: nobody has cooked it yet. Taste as you go and adjust the salt.")}${IN_INGLESE ? "<br><small>The recipe text is in Italian.</small>" : ""}</div>
       <div class="ric-grid">${scheda(valutaCompleta(r)).replace('<details class="ric', '<details open class="ric')}</div>
@@ -5580,6 +5623,7 @@ function corpoInventa(){
   }
   return `<p class="inv-intro">${L("L’app inventa una ricetta nuova con quello che hai in dispensa. Usa tre cose: gli abbinamenti che tornano spesso nelle ricette dell’archivio, gli ingredienti che hanno in comune le stesse molecole del profumo (si chiama foodpairing) e le regole delle lezioni su cotture ed equilibrio dei sapori.","The app invents a new recipe from your pantry, using pairings that recur in the archive, ingredients sharing the same aroma molecules (foodpairing) and the lessons’ rules on cooking and balance of flavours.")}</p>
     <p class="mini">${L("Niente dolci: in pasticceria le dosi devono essere esatte e non si improvvisano. Rispetta lo stile, le allergie e le regole di chi è a tavola.","No desserts: pastry needs exact quantities. It respects the style, allergies and rules of everyone at the table.")}</p>
+    <p class="mini">\u2B50 ${L("Quando hai cucinato una ricetta inventata, dalle un voto con «Voto e nota» (o alla fine di «Cuciniamo»): l’app impara i tuoi gusti. Gli abbinamenti che ti sono piaciuti tornano più spesso, quelli bocciati quasi spariscono.","Once you’ve cooked an invented recipe, rate it: the app learns your taste.")}${invVotiN() ? " " + L(`Finora ha imparato da ${invVotiN()} ${invVotiN() === 1 ? "voto" : "voti"}.`, `So far it has learnt from ${invVotiN()} rating(s).`) : ""}</p>
     <div class="inv-sez">${L("Che piatto?","Which course?")}</div>
     <div class="chips" id="invPort">${INV_PORTATE.map(p=>`<button type="button" class="chip ${INV.portata === p.v ? "on" : ""}" data-v="${p.v}">${p.e} ${L(p.it, p.en)}</button>`).join("")}</div>
     <div class="inv-sez">${L("Il protagonista","The main ingredient")}</div>
@@ -6659,6 +6703,7 @@ function salvaGiudizio(id, n, nota){
   nota = (nota || "").trim();
   if(!n && !nota) delete S.giudizi[id];
   else S.giudizi[id] = {s: n || 0, nota, d: Date.now()};
+  if(typeof invRegistraVoto === "function") invRegistraVoto(id, n || 0);   /* le ricette inventate imparano dal voto */
   salva();
 }
 function apriGiudizio(r){
@@ -11129,11 +11174,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v318".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v319".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.32.2";
+var NOME_VERSIONE = "2.33.0";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
