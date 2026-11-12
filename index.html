@@ -427,6 +427,30 @@ html.box-su, html.box-su body{overflow:hidden}
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .pgrid .full{grid-column:1/-1}
 .pgrid3{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.pgrid3 .full{grid-column:1/-1}
+/* Inventami una ricetta */
+.va-inv{width:120px}
+.va-provetta{position:absolute;left:0;bottom:2px;font-size:28px;animation:va-prov 2.6s ease-in-out infinite;transform-origin:50% 90%}
+@keyframes va-prov{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+.va-inv .va-esce{left:40px;top:4px;font-size:22px}
+.va-inv .va-esce2{left:78px;top:14px;font-size:20px}
+.inv-sez{font-weight:800;margin:14px 0 6px;font-size:1rem}
+.inv-intro{line-height:1.5;opacity:.95;margin:0 0 4px}
+.inv-ris{margin-top:16px}
+.inv-badge{background:rgba(255,255,255,.18);border:2px dashed rgba(255,255,255,.7);border-radius:14px;padding:10px 12px;margin-bottom:10px;line-height:1.45;font-weight:600}
+.inv-ris .ric{margin:0;color:#2B2522}
+.inv-perche{background:#fff;color:#2B2522;border-radius:14px;padding:12px 14px;margin:10px 0;line-height:1.5}
+.inv-perche b{display:block;margin-bottom:6px;font-size:1.02rem}
+.inv-perche ul{margin:0;padding-left:0;list-style:none}
+.inv-perche li{display:flex;gap:8px;margin:6px 0}
+.inv-perche li>span:first-child{flex:none;font-size:1.15rem;line-height:1.3}
+.inv-perche .sc-def{color:#157159}
+.inv-perche .mini{color:#5D554F!important;opacity:1}
+.inv-ris .ric .mini, .inv-ris .ric p{color:#5D554F}
+.inv-lez{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.inv-lez button{border:1.5px solid #157159;background:#EAF5F1;color:#0E4F3E;border-radius:999px;padding:6px 12px;font-size:.88rem;font-weight:700;cursor:pointer}
+.inv-salva{display:block;width:100%;margin-top:6px;background:#fff!important;color:#1F2A30!important;font-weight:800}
+.inv-err{background:#8A2A21;color:#fff;border-radius:14px;padding:12px 14px;margin-top:14px;line-height:1.5}
 .pcella{border-radius:14px;padding:14px;border:2px solid transparent;
   background:var(--superficie2);cursor:pointer;transition:transform .12s,border-color .15s;-webkit-tap-highlight-color:transparent}
 .pcella:active{transform:scale(.97)}
@@ -1357,7 +1381,7 @@ html[lang="en"] .all-chiusi:not(:has(.chip.on))::before{content:"No allergens to
     <button class="menu-btn tondo" id="tonoBtn" type="button" aria-label="Sfondo" title="Sfondo" data-no-tr><span class="tono-n" id="tonoN">1</span></button>
     <button class="menu-btn lingua-btn" id="linguaBtn" type="button" data-no-tr></button>
     <button class="menu-btn tondo cond-app-hdr" style="width:34px" id="condBtn" type="button" onclick="condividiApp()" aria-label="Condividi l'app" title="Condividi l'app" data-no-tr>📤</button>
-    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.31.0</span></button>
+    <button class="menu-btn" id="infoBtn" aria-label="Perché questa app" title="Perché questa app" style="min-width:38px;padding:0 8px;font-weight:800;font-style:italic;font-family:Newsreader,Georgia,serif" data-no-tr>i<span class="ver">v2.32.0</span></button>
     <button class="menu-btn" id="menuBtn" aria-haspopup="true" aria-expanded="false">Extra</button>
   </div>
   <script>/* la versione si scrive in un posto solo (il tasto "i"): la schermata iniziale la copia da li' */
@@ -2592,7 +2616,7 @@ for(const [k, cat] of Object.entries(S.ingSpostati || {})){
 Object.keys(CAT_DISP).forEach(ordinaCat);
 function archivio(){ return D.ricette.concat((S.mie || []).filter(r=>!r.soloFoto)); }
 function trovaMia(id){ return (S.mie || []).find(x=>x.id === id); }
-function trovaRicetta(id){ return archivio().find(x=>x.id === id); }
+function trovaRicetta(id){ return archivio().find(x=>x.id === id) || (typeof INVENTATA !== "undefined" && INVENTATA && INVENTATA.id === id ? INVENTATA : undefined); }
 let sess = nuovaSessione();
 let passo = 0, menuAperto = false, cercaDisp = "";
 let soloPref = false;
@@ -3763,6 +3787,8 @@ function scenaVoglia(m){
   if(m === "recupero")  /* il frigo si apre, gli avanzi finiscono in padella */
     return `<span class="va va-rec" aria-hidden="true"><span class="va-frigo"><span class="va-porta"></span></span>
       <span class="va-volo"><i>\u{1F345}</i><i>\u{1F34B}</i><i>\u{1F9C0}</i></span><span class="va-padella">\u{1F373}</span></span>`;
+  if(m === "inventa")   /* la provetta oscilla e ne escono gli ingredienti che si abbinano */
+    return `<span class="va va-inv" aria-hidden="true"><span class="va-provetta">\u{1F9EA}</span>${giro(["\u{1F9C4}","\u{1F34B}","\u{1F33F}","\u{1F9C0}"], "va-esce", 8, .4)}${giro(["\u{1F345}","\u{1F95C}","\u{1F41F}","\u{1F344}"], "va-esce2", 8, 1.4)}</span>`;
   /* il mappamondo gira e a ogni giro si accende un paese col suo piatto */
   return `<span class="va va-tema" aria-hidden="true"><span class="va-globo">${giro(["\u{1F30D}","\u{1F30E}","\u{1F30F}"], "va-gira")}</span>
     ${giro(["\u{1F1EA}\u{1F1F8}\u{1F958}","\u{1F1EF}\u{1F1F5}\u{1F363}","\u{1F1EC}\u{1F1F7}\u{1F957}","\u{1F1EE}\u{1F1F3}\u{1F35B}"], "va-paese", 10.4, 1.7)}</span>`;
@@ -3816,6 +3842,7 @@ function tappaVoglia(){
     <div class="chips" id="temiSpeciali" style="margin-top:8px" data-no-tr>
       ${TEMI_SPECIALI.map(t=>`<button class="chip" data-ts="${t.v}">${t.e} ${L(t.n,t.en)}</button>`).join("")}
     </div>`,
+    inventa: ()=>corpoInventa(),
     port: ()=>`<div class="chips" id="port" style="margin-top:10px">
         ${PORTATE.map(p2=>`<button class="chip ${sess.portate.includes(p2)?"on":""}" data-v="${p2}">${ICONA_PORTATA[p2]||""} ${p2.toLowerCase()}</button>`).join("")}
         <button class="chip ${sess.unico?"on":""}" id="swUnico">\u{1F958} ${L("piatto unico","one-dish")}</button>
@@ -3837,6 +3864,7 @@ function tappaVoglia(){
   const b0 = boxAperto ? BOX_VOGLIA[boxAperto] : null;
   const piede = !b0 ? "" :
       boxAperto === "recupero" ? `<button class="btn" data-bp="ricette">${L("Vedi le ricette","See the recipes")}</button>`
+    : boxAperto === "inventa" ? `<button class="btn" data-bp="inventa">${INVENTATA || INV.errore ? "\u{1F3B2} " + L("Un’altra idea","Another idea") : "\u{1F9EA} " + L("Inventa la ricetta","Invent the recipe")}</button>`
     : ["port","tempo","pasto","stile"].includes(boxAperto) ? `<button class="btn" data-bp="chiudi">${L("Fatto","Done")}</button>` : "";
 
   app.innerHTML = `
@@ -3860,6 +3888,10 @@ function tappaVoglia(){
     <div class="pcella c-bordeaux ${sess.modo==="tema"?"sel":""}" data-m="tema">
       ${scenaVoglia("tema")}
       <b>Menu a tema</b><small>Un paese, il mare, la terra, leggero o le feste</small>
+    </div>
+    <div class="pcella c-menta full ${sess.modo==="inventa"?"sel":""}" data-m="inventa">
+      ${scenaVoglia("inventa")}
+      <b>${L("Inventami una ricetta","Invent me a recipe")}</b><small>${L("Una ricetta nuova, pensata ora con quello che hai: abbinamenti e foodpairing","A brand-new recipe, made up now from what you have: pairings and foodpairing")}</small>
     </div>
   </div>
 
@@ -3913,7 +3945,9 @@ function tappaVoglia(){
   document.getElementById("tendPasto").onclick = ()=>apriBox("pasto");
   document.getElementById("tendStile").onclick = ()=>apriBox("stile");
   app.querySelectorAll("[data-bp]").forEach(b=>b.onclick=()=>{
-    if(b.dataset.bp === "ricette") vai(4); else chiudiBox();
+    if(b.dataset.bp === "ricette") vai(4);
+    else if(b.dataset.bp === "inventa") lanciaInventa();
+    else chiudiBox();
   });
   const qi = document.getElementById("qIdea");
   if(qi){ qi.oninput = e=>{ sess.cerca = e.target.value; };
@@ -3973,6 +4007,7 @@ function tappaVoglia(){
 
   /* la pagina-box: animazione d'apertura dal box, scorrimento conservato fra un ridisegno e l'altro */
   const pag = document.getElementById("boxPag");
+  if(boxAperto === "inventa") collegaInventa();
   /* sta fuori da #app (che fa da contenitore con il suo livello): cosi' copre davvero tutto, intestazione e barra comprese */
   if(pag) document.body.appendChild(pag);
   if(pag){
@@ -3985,6 +4020,7 @@ function tappaVoglia(){
                     {duration: 300, easing: "cubic-bezier(.2,.8,.2,1)"});
       if(boxAperto === "idea"){ const q = document.getElementById("qIdea"); if(q) setTimeout(()=>q.focus({preventScroll:true}), 320); }
     } else if(corpo) corpo.scrollTop = scorrPrima;
+    if(corpo && INV.scorri){ INV.scorri = false; const ris = document.getElementById("invRis"); if(ris) corpo.scrollTop = ris.offsetTop - 12; }
   }
 
   pulsanti("\u{1F9ED} Mappa", "Vedi le ricette", ()=>vai(4), ()=>tornaAllaMappa());
@@ -3997,6 +4033,7 @@ let boxAperto = null, boxAnima = false, ignoraPop = false;
 const BOX_VOGLIA = {
   idea:     {c:"c-senape",   ic:()=>`<svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="12" r="7" stroke="currentColor" stroke-width="2"/><path d="M11 19h6M12 22h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`, t:()=>L("Ho in mente un piatto","I have a dish in mind")},
   recupero: {c:"c-mattone",  ic:()=>`<svg viewBox="0 0 28 28" fill="none"><rect x="7" y="10" width="14" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 10h18M11 10V7a3 3 0 0 1 6 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 14v5M12 16l2-2 2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`, t:()=>L("Devo consumare","I need to use up")},
+  inventa:  {c:"c-menta",    ic:()=>`<span class="bp-emo">\u{1F9EA}</span>`, t:()=>L("Inventami una ricetta","Invent me a recipe")},
   tema:     {c:"c-bordeaux", ic:()=>`<svg viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="10" stroke="currentColor" stroke-width="2"/><path d="M4 14h20M14 4c3 3 4 7 4 10s-1 7-4 10c-3-3-4-7-4-10s1-7 4-10z" stroke="currentColor" stroke-width="1.8"/></svg>`, t:()=>L("Menu a tema","Themed menu")},
   port:     {c:"c-crema",    ic:()=>`<span class="bp-emo">\u{1F37D}️</span>`, t:()=>L("Portata","Course")},
   tempo:    {c:"c-menta",    ic:()=>`<span class="bp-emo">⏱️</span>`, t:()=>L("Tempo","Time")},
@@ -4034,7 +4071,7 @@ function chiudiBox(daStoria){
     if(boxAperto !== k) return;
     boxAperto = null;
     /* un box di partenza chiuso senza scegliere nulla non resta selezionato */
-    if(k === sess.modo && (k === "tema" || (k === "idea" && !sess.cerca.trim()) || (k === "recupero" && !sess.recupero.length))) sess.modo = null;
+    if(k === sess.modo && (k === "tema" || k === "inventa" || (k === "idea" && !sess.cerca.trim()) || (k === "recupero" && !sess.recupero.length))) sess.modo = null;
     tappaVoglia();
   };
   const r = rettBox(k);
@@ -4288,6 +4325,1284 @@ function apriMenuTema(paese, nome){
     ${blocchi}
   `);
 }
+/* ===========================================================
+   Inventami una ricetta: una ricetta nuova, costruita sul momento
+   con quello che c'e' in dispensa. Tre fonti, tutte gia' nell'app:
+   1) l'archivio: quali ingredienti stanno spesso insieme (abbinamenti collaudati)
+   2) il foodpairing: D.profili, gli ingredienti che hanno molecole aromatiche in comune
+   3) le lezioni: struttura del piatto, cotture e tempi, equilibrio dei sapori
+   Niente dolci: in pasticceria le dosi devono essere esatte, non si improvvisano.
+   =========================================================== */
+const INV = {portata:"sorpresa", prot:"", seme:1, errore:"", scorri:false};
+let INVENTATA = null;            /* l'ultima ricetta inventata, finche' non la salvi */
+
+/* --- un numero a caso ripetibile: lo stesso seme da' la stessa ricetta --- */
+function invCaso(seme){
+  let a = seme >>> 0;
+  return ()=>{ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+/* la "forma base" di un ingrediente: i ceci in scatola sono ceci, gli spinaci surgelati sono spinaci */
+function invBase(k){ return (D.conserve||{})[k] || (D.surgelati||{})[k] || (D.essiccati||{})[k] || k; }
+
+/* --- grammatica: articolo e accordo (le frasi devono suonare italiane) --- */
+const INV_NOME = {"carota":"carote","formaggio feta":"feta","formaggio fontina":"fontina","formaggio toma":"toma","formaggio gruviera":"gruviera",
+  "formaggio montasio":"montasio","formaggio pecorino fresco":"pecorino fresco","formaggio tuma":"tuma"};
+const INV_GN = {"limone":"ms","melone":"ms","noce moscata":"fs","senape":"fs","latte di cocco":"ms","tahina":"fs","kiwi":"mp","feta":"fs","fontina":"fs","toma":"fs","gruviera":"fs","montasio":"ms","pecorino fresco":"ms","mango":"ms","pane":"ms","latte":"ms","miele":"ms","lime":"ms","mais":"ms","tofu":"ms","cous cous":"ms","bulgur":"ms","speck":"ms",
+  "yogurt":"ms","yogurt greco":"ms","noci":"fp","noci pecan":"fp","uova":"fp","porri":"mp","pepe verde":"ms","curry":"ms","miso":"ms",
+  "formaggio feta":"fs","mascarpone":"ms","provolone":"ms","caciocavallo":"ms","stracchino":"ms","squacquerone":"ms","caprino":"ms","gorgonzola":"ms",
+  "parmigiano":"ms","pecorino romano":"ms","brodo vegetale":"ms","cardamomo":"ms","salmone":"ms","salmone affumicato":"ms","pesce spada":"ms",
+  "palombo":"ms","branzino":"ms","sgombro":"ms","polpo":"ms","baccalà dissalato":"ms","pesce di lago":"ms","tonno fresco":"ms","radicchio":"ms",
+  "cavolfiore":"ms","cavolo nero":"ms","cavolo cappuccio":"ms","sedano":"ms","tartufo nero":"ms","cetriolo":"ms","semi di sesamo":"mp","semi di zucca":"mp",
+  "semi di girasole":"mp","semi di finocchio":"mp","arachidi":"fp","nocciole":"fp","mandorle":"fp","olive":"fp","acciughe sott’olio":"fp","acciughe sotto sale":"fp",
+  "alici fresche":"fp","sardine in scatola":"fp","capesante":"fp","erbette":"fp","cime di rapa":"fp","bietole":"fp","lenticchie":"fp","fave":"fp","fave secche":"fp",
+  "barbabietole":"fp","melanzane":"fp","zucchine":"fp","patate":"fp","carote":"fp","puntarelle":"fp","prugne":"fp","susine":"fp","pesche":"fp","albicocche":"fp",
+  "fragole":"fp","ciliegie":"fp","mele":"fp","pere":"fp","clementine":"fp","albicocche secche":"fp","prugne secche":"fp","pinoli":"mp","pomodori secchi":"mp",
+  "mirtilli rossi secchi":"mp","fichi secchi":"mp","gnocchi di patate":"mp","funghi champignon":"mp","funghi porcini":"mp","germogli di soia":"mp","fiori di zucca":"mp",
+  "orzo perlato":"ms","grano saraceno":"ms","cereali misti":"mp","pangrattato":"ms","aceto balsamico":"ms","vino bianco":"ms","vino rosso":"ms","vincotto":"ms",
+  "zafferano":"ms","zenzero":"ms","cumino":"ms","peperoncino secco":"ms","peperoncino fresco":"ms","prezzemolo":"ms","basilico":"ms","coriandolo fresco":"ms",
+  "finocchietto selvatico":"ms","aneto":"ms","timo":"ms","rosmarino":"ms","alloro":"ms","origano":"ms","stracotto di manzo":"ms","ossobuco di vitello":"ms",
+  "coda di bue":"fs","cinghiale":"ms","agnello":"ms","coniglio":"ms","maiale":"ms","manzo":"ms","vitello":"ms","pollo":"ms","petto di pollo":"ms",
+  "lonza di maiale":"fs","carne macinata":"fs","salsiccia":"fs","guanciale":"ms","lardo":"ms","prosciutto crudo":"ms","prosciutto cotto":"ms","salame":"ms",
+  "nduja":"fs","bresaola":"fs","pancetta":"fs","mortadella":"fs","chorizo":"ms","filetto di pesce bianco":"ms","burro":"ms","panna":"fs","riso":"ms","farro":"ms"};
+function invNome(x){ const k = typeof x === "string" ? x : x.k; return INV_NOME[k] || k; }
+function invGn(x){
+  const n = invNome(x), k = typeof x === "string" ? x : x.k, nb = invNome(invBase(k));
+  if(INV_GN[n]) return INV_GN[n];
+  /* "salmone surgelato" si accorda come "salmone"; "ceci in scatola" come "ceci" */
+  const testa = n.replace(/ (surgelat[oaie]|in scatola|sott’olio|secc[hoiae]+|essiccat[oaie])$/, "");
+  if(INV_GN[testa]) return INV_GN[testa];
+  if(n !== nb && INV_GN[nb]) return INV_GN[nb];
+  const w = n.split(" ")[0], c = w.slice(-1);
+  return c === "a" ? "fs" : c === "o" ? "ms" : c === "e" ? "fp" : c === "i" ? "mp" : "ms";
+}
+/* l'articolo giusto davanti al nome: il, lo, la, l', i, gli, le */
+function ar(x){
+  const n = invNome(x), g = invGn(x);
+  const voc = /^[aeiouàèéìòù]/i.test(n), speciale = /^(s[bcdfgklmnpqrstvz]|z|gn|ps|x|y)/i.test(n);
+  if(g === "ms") return (voc ? "l’" : speciale ? "lo " : "il ") + n;
+  if(g === "fs") return (voc ? "l’" : "la ") + n;
+  if(g === "mp") return (voc || speciale ? "gli " : "i ") + n;
+  return "le " + n;
+}
+/* "di" + articolo: della, dello, dei... */
+function di_(x){ return ar(x).replace(/^il /,"del ").replace(/^lo /,"dello ").replace(/^la /,"della ").replace(/^l’/,"dell’").replace(/^i /,"dei ").replace(/^gli /,"degli ").replace(/^le /,"delle "); }
+/* accordo dell'aggettivo: agg("tritat", "prezzemolo") = "tritato" */
+function agg(rad, x){ return rad + {ms:"o", fs:"a", mp:"i", fp:"e"}[invGn(x)]; }
+/* il pronome attaccato al verbo: sciacqua-li, sciacqua-le */
+function pr(x){ return {ms:"lo", fs:"la", mp:"li", fp:"le"}[invGn(x)]; }
+
+/* --- i ruoli: che cosa fa un ingrediente nel piatto --- */
+const INV_GRUPPI = {
+  pasta:     ["pasta","fregola","fregula"],
+  gnocchi:   ["gnocchi di patate"],
+  riso:      ["riso"],
+  cereale:   ["cous cous","bulgur","farro","orzo perlato","grano saraceno","cereali misti"],
+  pane:      ["pane","pane di Matera","pane casereccio","pane toscano","pane di semola"],
+  legume:    ["ceci","fagioli","lenticchie","fave secche","legumi misti","fagioli borlotti","fagioli cannellini"],
+  tofu:      ["tofu"],
+  tenera:    ["pollo","petto di pollo","vitello","manzo","maiale","lonza di maiale","agnello","coniglio"],
+  lunga:     ["stracotto di manzo","ossobuco di vitello","coda di bue","cinghiale","muscolo di manzo"],
+  macinato:  ["carne macinata"],
+  salsiccia: ["salsiccia","luganega"],
+  salume:    ["guanciale","pancetta","speck","prosciutto crudo","prosciutto cotto","salame","nduja","mortadella","bresaola"],
+  filetto:   ["filetto di pesce bianco","salmone","pesce spada","tonno fresco","palombo","baccalà dissalato","branzino","orata","sgombro","alici fresche","sarde","pesce di lago"],
+  bivalvi:   ["cozze","vongole"],
+  cefalopodi:["polpo","seppie","calamari","moscardini"],
+  crostacei: ["gamberi","scampi","capesante"],
+  conservaPesce: ["tonno sott’olio","acciughe sott’olio","acciughe sotto sale","sardine in scatola","salmone affumicato"],
+  uova:      ["uova"],
+  grattugia: ["parmigiano","pecorino romano","ricotta salata","caciocavallo","provolone"],
+  cremoso:   ["ricotta","mascarpone","stracchino","squacquerone","caprino","burrata","formaggio fresco","gorgonzola","yogurt greco"],
+  filante:   ["mozzarella","provola","scamorza","formaggio fontina","formaggio toma","casera","formaggio gruviera","tomini","formaggio montasio"],
+  feta:      ["formaggio feta"],
+  aroma:     ["aglio","cipolla","scalogno","porri","cipollotto","cipolla rossa"],
+  agrume:    ["limone","arancia","lime","pompelmo","mandarini","clementine","scorza di limone"],
+  fruttaFresca: ["mele","pere","fichi","uva","pesche","albicocche","fragole","melagrana","melone","ciliegie","kiwi","mango","prugne","susine","cachi"],
+  fruttaSecca:  ["noci","nocciole","mandorle","pinoli","pistacchi","anacardi","arachidi","semi di zucca","semi di girasole","semi di sesamo","noci pecan"],
+  fruttaEssiccata: ["uvetta","albicocche secche","fichi secchi","prugne secche","datteri","mirtilli rossi secchi"],
+  erbaFine:  ["basilico","prezzemolo","menta","mentuccia","aneto","erba cipollina","coriandolo fresco","finocchietto selvatico","maggiorana","origano"],
+  erbaCotta: ["rosmarino","salvia","timo","alloro"],
+  spezia:    ["cumino","curcuma","paprica","cannella","noce moscata","zenzero","zafferano","curry","peperoncino secco","peperoncino fresco","semi di finocchio","pepe verde"],
+  sapido:    ["capperi","olive","pomodori secchi","salsa di soia","miso","senape"],
+  acido:     ["aceto","aceto balsamico","vino bianco","yogurt"],
+  dolce:     ["miele","vincotto"],
+  pomodoro:  ["passata di pomodoro","polpa di pomodoro"],
+  brodo:     ["brodo vegetale"],
+  pangrattato:["pangrattato"],
+  grasso:    ["burro","panna"],
+  vino:      ["vino rosso"]
+};
+const INV_RUOLO = {};
+let INV_SPALLA = null;     /* la verdura di contorno nel piatto: dose piu' piccola */
+for(const g in INV_GRUPPI) INV_GRUPPI[g].forEach(k=>{ INV_RUOLO[k] = g; });
+
+/* --- le verdure: come si tagliano e quanto cuociono (lezioni «Verdure e ortaggi», «Zucche e zucchine», «Le patate») ---
+   p = in padella (minuti), f = in forno a 200 °C (minuti), c = per una crema (minuti in poca acqua),
+   r = buona cruda, s = da sbollentare prima (minuti), t = taglio */
+const INV_VERD = {
+  "zucchine":       {t:"a rondelle sottili", tc:"a nastri sottili, con il pelapatate", p:7, f:20, c:8, r:1},
+  "funghi champignon":{t:"a fettine", p:8, f:15},
+  "funghi porcini": {t:"a fettine", p:8, f:15},
+  "spinaci":        {t:"ben lavati", p:3, c:3},
+  "bietole":        {t:"a striscioline, con le coste a dadini", p:6},
+  "cime di rapa":   {t:"tenendo solo le cime e le foglie tenere", p:6, s:4},
+  "friarielli":     {t:"tenendo solo le cime e le foglie tenere", p:8},
+  "broccoli":       {t:"a cimette", p:6, f:20, c:8, s:4},
+  "cavolfiore":     {t:"a cimette", p:8, f:25, c:12, s:4},
+  "asparagi":       {t:"a tocchetti, lasciando intere le punte", p:6, f:12, c:8},
+  "piselli":        {t:"sgranati", p:9, c:8},
+  "fagiolini":      {t:"spuntati e tagliati a metà", p:5, s:7},
+  "carciofi":       {t:"puliti, a spicchi sottili", p:12, f:22},
+  "peperoni":       {t:"a listarelle", p:14, f:30},
+  "melanzane":      {t:"a dadini", p:12, f:25},
+  "cavolo nero":    {t:"a striscioline, senza la costa", p:10, c:12, s:3},
+  "verza":          {t:"a striscioline", p:12},
+  "scarola":        {t:"a striscioline", p:6},
+  "cicoria":        {t:"a pezzi", p:6, s:5},
+  "radicchio":      {t:"a striscioline", p:5, f:14, r:1},
+  "erbette":        {t:"a striscioline", p:5},
+  "fave":           {t:"sgranate", p:6, c:8},
+  "pomodorini":     {t:"a metà", p:4, f:18, r:1},
+  "pomodori":       {t:"a spicchi", p:6, r:1},
+  "zucca":          {t:"a dadini di 2 centimetri, senza buccia", p:14, f:28, c:15},
+  "carota":         {t:"a rondelle", tc:"a julienne, cioè a bastoncini sottili", p:10, f:28, c:15, r:1},
+  "finocchi":       {t:"a spicchi sottili", tc:"a fettine sottilissime", p:12, f:25, r:1},
+  "patate":         {t:"a spicchi", p:20, f:38, c:15},
+  "barbabietole":   {t:"a spicchi, senza buccia", tc:"a fettine sottilissime, senza buccia", f:40, r:1},
+  "porri":          {t:"a rondelle", p:8},
+  "rucola":         {t:"lavata e asciugata", r:1},
+  "lattuga romana": {t:"a striscioline", r:1},
+  "cetriolo":       {t:"a fettine sottili", r:1},
+  "puntarelle":     {t:"a listarelle sottili, lasciate 15 minuti in acqua fredda perché si arriccino", r:1},
+  "cavolo cappuccio":{t:"a striscioline sottilissime", r:1, p:10},
+  "sedano":         {t:"a fettine sottili", r:1},
+  "mais":           {t:"sgranato", p:5},
+  "germogli di soia":{t:"sciacquati", p:2, r:1, acc:1},
+  "fiori di zucca": {t:"aperti e senza pistillo", p:2, acc:1},
+  "tartufo nero":   {t:"a lamelle sottili, all’ultimo momento", r:1, acc:1}
+};
+const INV_CREMA_OK = k=>INV_VERD[k] && INV_VERD[k].c;
+const INV_PREP = {
+  "spinaci":"Lava bene gli spinaci.", "piselli":"Sgrana i piselli, se sono freschi.", "fave":"Sgrana le fave.",
+  "mais":"Sgrana il mais, se è fresco.", "germogli di soia":"Sciacqua i germogli.", "rucola":"Lava e asciuga la rucola.",
+  "fiori di zucca":"Apri i fiori di zucca e togli il pistillo.", "cime di rapa":"Pulisci le cime di rapa: tieni solo le cime e le foglie tenere.",
+  "friarielli":"Pulisci i friarielli: tieni solo le cime e le foglie tenere.", "fagiolini":"Spunta i fagiolini e tagliali a metà.",
+  "carciofi":"Pulisci i carciofi, togliendo le foglie dure e la barbetta interna, e tagliali a spicchi sottili.",
+  "puntarelle":"Taglia le puntarelle a listarelle sottili e lasciale 15 minuti in acqua fredda: si arricciano.",
+  "tartufo nero":"Affetta il tartufo a lamelle sottili, all’ultimo momento.", "spinaci surgelati":"", "lattuga romana":"Lava la lattuga e tagliala a striscioline."
+};
+/* la frutta: come si taglia e se annerisce all'aria */
+const INV_FRUTTA = {"ciliegie":["!Snocciola le ciliegie e tagliale a metà.",0], "uva":["!Taglia gli acini a metà.",0], "fragole":["a fettine",0], "fichi":["a spicchi",0],
+  "mele":["a fettine sottili",1], "pere":["a fettine sottili",1], "pesche":["a spicchi",1], "albicocche":["a spicchi",1], "prugne":["a spicchi",0], "susine":["a spicchi",0],
+  "melone":["a cubetti, senza buccia",0], "kiwi":["a rondelle, senza buccia",0], "mango":["a cubetti, senza buccia",0], "cachi":["a spicchi, senza buccia",0]};
+function invTagliaFrutta(f){
+  if(f.k === "melagrana") return `Sgrana la melagrana e tieni gli arilli, cioè i chicchi rossi.`;
+  const t = INV_FRUTTA[f.k] || ["a fettine sottili", 0];
+  return (t[0].startsWith("!") ? t[0].slice(1) : `Taglia ${ar(f)} ${t[0]}.`) + (t[1] ? ` Se aspetti a servire, ${f.k === "mele" || f.k === "pere" ? "bagnal" + (invGn(f) === "fp" ? "e" : "i") : "bagnal" + (invGn(f) === "fp" ? "e" : "i")} con qualche goccia di limone: così non anneriscono.` : "");
+}
+/* la prima frase per una verdura: come prepararla */
+function invPrep(v, crudo){
+  const d = INV_VERD[v.b] || {};
+  const nota = (D.note_surgelati||{})[v.k];
+  if(nota && /^Scongel/.test(nota)) return nota.replace(/^Scongela(li|le|lo|la) e /, `Scongela ${ar(v)} e `);
+  if(/surgelat/.test(v.k)) return `Prendi ${ar(v)}: non serve scongelar${pr(v)}.`;
+  if(INV_PREP[v.b]) return INV_PREP[v.b];
+  return `Taglia ${ar(v.b)} ${(crudo && d.tc) || d.t || (crudo ? "sottile" : "a pezzi")}.`;
+}
+
+/* --- dosi per 4 persone --- */
+const INV_DOSE = {
+  pasta:"320 gr", gnocchi:"800 gr", riso:"320 gr", cereale:"300 gr", pane:"8 fette", legume:"400 gr",
+  tofu:"400 gr", tenera:"600 gr", lunga:"1 kg", macinato:"500 gr", salsiccia:"400 gr", salume:"100 gr",
+  filetto:"600 gr", bivalvi:"1 kg", cefalopodi:"800 gr", crostacei:"500 gr", conservaPesce:"160 gr",
+  uova:"6", grattugia:"60 gr", cremoso:"250 gr", filante:"200 gr", feta:"150 gr",
+  agrume:"1", fruttaFresca:"2", fruttaSecca:"40 gr", fruttaEssiccata:"40 gr",
+  erbaFine:"1 ciuffo", erbaCotta:"2 rametti", spezia:"1 cucchiaino", sapido:"2 cucchiai",
+  acido:"2 cucchiai", dolce:"1 cucchiaio", pomodoro:"400 gr", brodo:"1 l", pangrattato:"4 cucchiai",
+  grasso:"40 gr", vino:"1 bicchiere", verdura:"500 gr"
+};
+function invDose(it, quanto){
+  const k = it.k, g = it.g;
+  if(quanto) return quanto;
+  if(g === "aroma") return k === "aglio" ? "2 spicchi" : k === "scalogno" ? "2" : "1";
+  if((g === "erbaFine" || g === "erbaCotta") && k !== it.b) return "1 cucchiaino";
+  if(g === "erbaCotta") return k === "alloro" ? "2 foglie" : k === "salvia" ? "8 foglie" : "2 rametti";
+  if(g === "spezia") return /peperoncino/.test(k) ? "1" : k === "zafferano" ? "1 bustina" : k === "noce moscata" ? "1 pizzico" : "1 cucchiaino";
+  if(g === "sapido") return k === "olive" ? "80 gr" : k === "pomodori secchi" ? "6" : k === "capperi" ? "1 cucchiaio" : k === "senape" ? "1 cucchiaio" : k === "miso" ? "1 cucchiaio" : "2 cucchiai";
+  if(g === "conservaPesce") return /acciughe/.test(k) ? "6 filetti" : k === "salmone affumicato" ? "150 gr" : "160 gr";
+  if(g === "acido") return k === "vino bianco" ? "1/2 bicchiere" : k === "yogurt" ? "150 gr" : k === "aceto balsamico" ? "1 cucchiaio" : "2 cucchiai";
+  if(g === "agrume") return k === "scorza di limone" ? "1 cucchiaino" : "1";
+  if(g === "grasso") return k === "panna" ? "100 ml" : "40 gr";
+  if(g === "fruttaFresca") return k === "melagrana" ? "1" : k === "uva" ? "200 gr" : k === "fichi" ? "6" : k === "fragole" ? "200 gr" : "2";
+  if(g === "verdura" && INV_SPALLA === it) return it.b === "sedano" ? "2 coste" : ["rucola","lattuga romana"].includes(it.b) ? "80 gr" : "300 gr";
+  if(g === "verdura") return ["rucola","lattuga romana"].includes(k) ? "150 gr" : k === "tartufo nero" ? "30 gr" : ["pomodorini","funghi champignon","spinaci","piselli"].includes(invBase(k)) ? "400 gr" : "500 gr";
+  if(g === "filetto" && ["branzino","orata","sgombro"].includes(k)) return "2 pesci da 400 gr";
+  return INV_DOSE[g] || "q.b.";
+}
+
+/* --- gruppi per le regole --- */
+const INV_PROTEINE = ["tenera","lunga","macinato","salsiccia","filetto","bivalvi","cefalopodi","crostacei","uova","legume","tofu"];
+const INV_PESCI    = ["filetto","bivalvi","cefalopodi","crostacei","conservaPesce"];
+const INV_CARNI    = ["tenera","lunga","macinato","salsiccia","salume"];
+const INV_FORMAGGI = ["grattugia","cremoso","filante","feta"];
+const INV_MEDIT    = ["basilico","origano","rosmarino","salvia","maggiorana","timo"];
+const INV_ESOTICI  = ["curry","curcuma","salsa di soia","miso","coriandolo fresco","zenzero","semi di sesamo"];
+
+/* --- abbinamenti collaudati: calcolati dall'archivio (e dalle tue ricette) --- */
+let _invCo = null;
+function invCo(){
+  const firma = archivio().length;
+  if(_invCo && _invCo.firma === firma) return _invCo;
+  const cnt = {}, co = {};
+  archivio().forEach(r=>{
+    const ks = [...new Set((r.ing||[]).map(i=>invBase(i.k)))];
+    ks.forEach(a=>{ cnt[a] = (cnt[a]||0) + 1; });
+    for(let i=0; i<ks.length; i++) for(let j=i+1; j<ks.length; j++){
+      const a = ks[i], b = ks[j];
+      (co[a] = co[a] || {})[b] = (co[a][b]||0) + 1;
+      (co[b] = co[b] || {})[a] = (co[b][a]||0) + 1;
+    }
+  });
+  return _invCo = {firma, cnt, co};
+}
+function invInsieme(a, b){ const c = invCo().co; return (c[a] && c[a][b]) || 0; }
+/* forza dell'abbinamento nell'archivio, da 0 a 1: quante volte insieme, rispetto a quante volte ciascuno */
+function invTradizione(a, b){
+  const n = invInsieme(a, b); if(!n) return 0;
+  const c = invCo().cnt; return n / Math.sqrt((c[a]||1) * (c[b]||1));
+}
+/* molecole aromatiche in comune. Non conto cio' che non e' un profumo (umami, piccante, amaro del cacao, colore)
+   e peso ogni molecola per quanto e' rara: averne in comune una diffusissima (le pirazine del tostato, l'esenale del "verde")
+   dice poco; una rara (l'anetolo dell'anice, il timolo) dice molto */
+const INV_NON_AROMA = new Set(["umami","capsaicina","piperina","teobromina","curcumina","gingeroli"]);
+let _invDf = null;
+function invDf(){
+  if(_invDf) return _invDf;
+  const df = {}, P = D.profili || {}, N = Object.keys(P).length || 1;
+  for(const k in P) P[k].forEach(m=>{ df[m] = (df[m]||0) + 1; });
+  return _invDf = {df, N};
+}
+function invPeso(m){ const {df, N} = invDf(); return Math.log(N / (df[m] || 1)); }
+const INV_DISTINTIVA = m=>(invDf().df[m] || 0) <= 22;    /* presente in meno di un ingrediente su dieci */
+function invMolecole(a, b){
+  const P = D.profili || {}, A = P[a], B = P[b];
+  if(!A || !B) return [];
+  return A.filter(m=>!INV_NON_AROMA.has(m) && B.includes(m)).sort((x, y)=>invPeso(y) - invPeso(x));
+}
+function invAroma(a, b){
+  const P = D.profili || {}, A = P[a], B = P[b];
+  if(!A || !B) return 0;
+  const sh = invMolecole(a, b);
+  if(!sh.length) return 0;
+  const tot = l=>l.filter(m=>!INV_NON_AROMA.has(m)).reduce((t, m)=>t + invPeso(m), 0) || 1;
+  return sh.reduce((t, m)=>t + invPeso(m), 0) / Math.sqrt(tot(A) * tot(B));
+}
+
+/* --- quello che c'e' in dispensa, con il suo ruolo; tolto cio' che il tavolo non puo' mangiare --- */
+function invDisponibili(){
+  const stile = sess.stile || "onnivoro";
+  const alg = allergeniTavolo(), evita = paroleEvita(), regole = regoleTavolo();
+  const out = [], visti = new Set();
+  [...new Set(dispAttiva())].forEach(k=>{
+    const b = invBase(k);
+    let g = INV_RUOLO[b] || INV_RUOLO[k] || (INV_VERD[b] ? "verdura" : "");
+    if(/sott’olio|sott’aceto|sottaceto|in barattolo/.test(k) && !["conservaPesce","sapido","legume"].includes(g)) g = "";
+    if(g === "bivalvi" && k !== b) g = "";
+    if(!g || visti.has(b)) return;
+    const carne = INV_CARNI.includes(g), pesce = INV_PESCI.includes(g);
+    const anim = INV_FORMAGGI.includes(g) || g === "uova" || ["burro","panna","yogurt","miele"].includes(b);
+    if(stile !== "onnivoro" && (carne || pesce)) return;
+    if(stile === "vegano" && anim) return;
+    if(alg.some(a=>(ALLERG_ING[k]||[]).includes(a) || (ALLERG_ING[b]||[]).includes(a))) return;
+    if(evita.some(v=>k.includes(v) || b.includes(v))) return;
+    const prova = {n:k, ing:[{k, n:k}], proc:[]};
+    if(regole.some(rel=>violaRegola(prova, rel))) return;
+    visti.add(b);
+    out.push({k, b, g});
+  });
+  return out;
+}
+
+/* --- le regole di buon senso: non tutto cio' che condivide una molecola sta bene insieme --- */
+function invVietato(c, scelti, P){
+  const pesce = INV_PESCI.includes(P.g);
+  const tr = invInsieme(P.b, c.b);
+  if(scelti.some(x=>x.b === c.b)) return true;
+  /* una sola proteina principale */
+  if(INV_PROTEINE.includes(c.g) && INV_PROTEINE.includes(P.g)) return true;
+  /* pesce e formaggio, pesce e salumi, pesce e frutta dolce: solo se la tradizione li ha gia' messi insieme */
+  if(pesce && (INV_FORMAGGI.includes(c.g) || c.g === "salume" || c.g === "fruttaFresca" || c.g === "dolce") && !tr) return true;
+  if(pesce && c.g === "conservaPesce" && !/acciughe/.test(c.k)) return true;
+  if(INV_PESCI.includes(c.g) && INV_CARNI.includes(P.g)) return true;
+  if(c.g === "salume" && ["salsiccia","macinato","lunga"].includes(P.g)) return true;
+  /* il dolce solo dove regge: carni saporite, pesce azzurro, verdure amare o dolci, formaggi, legumi */
+  if(c.g === "fruttaEssiccata" || c.g === "dolce"){
+    const ok = ["maiale","lonza di maiale","agnello","coniglio","pollo","sarde","alici fresche","sgombro","radicchio","cicoria","zucca","carota","cavolfiore","finocchi","barbabietole","rucola","spinaci"].includes(P.b)
+      || INV_FORMAGGI.includes(P.g) || P.g === "legume";
+    if(!ok) return true;
+  }
+  /* due formaggi solo se uno e' da grattugiare */
+  const form = scelti.filter(x=>INV_FORMAGGI.includes(x.g));
+  if(INV_FORMAGGI.includes(c.g) && form.length && !(c.g === "grattugia" || form.every(f=>f.g === "grattugia"))) return true;
+  if(INV_FORMAGGI.includes(c.g) && form.length >= 2) return true;
+  /* spezie dolci e calde (cannella, noce moscata) solo con carni da cottura lunga, zucca, carote, spinaci, legumi */
+  if(["cannella","noce moscata"].includes(c.k) && !(["lunga","legume"].includes(P.g) || ["zucca","carota","spinaci","patate","cavolfiore"].includes(P.b))) return true;
+  /* sapori lontani (curry, soia, zenzero...) non si mescolano con le erbe mediterranee */
+  const italiano = x=>INV_MEDIT.includes(x.k) || x.g === "grattugia" || x.g === "salume" || x.g === "filante" || (x.g === "cremoso" && x.k !== "yogurt greco");
+  if(INV_ESOTICI.includes(c.k) && scelti.some(italiano)) return true;
+  if(italiano(c) && scelti.some(x=>INV_ESOTICI.includes(x.k))) return true;
+  /* sulla frutta cruda solo erbe fresche e dolci (menta, basilico...), non origano o rosmarino */
+  if(["origano","rosmarino","salvia","timo","alloro","maggiorana"].includes(c.b) && scelti.concat([P]).some(x=>x.g === "fruttaFresca")) return true;
+  /* soia, miso e senape solo dove hanno senso */
+  if(["salsa di soia","miso"].includes(c.k) && !["tofu","crostacei","filetto","legume"].includes(P.g)) return true;
+  return false;
+}
+
+/* punteggio di un candidato rispetto a cio' che e' gia' nel piatto */
+function invPunti(c, scelti, P, caso){
+  let p = 0;
+  scelti.forEach(x=>{
+    const peso = x === P ? 1.6 : 0.6;
+    p += peso * (1.2 * invTradizione(x.b, c.b) + 0.9 * invAroma(x.b, c.b));
+  });
+  if(INV_VERD[c.b] && diStagioneOra(c.b) === true) p += 0.25;
+  if(INV_VERD[c.b] && diStagioneOra(c.b) === false) p -= 0.25;
+  if((sess.recupero||[]).includes(c.k)) p += 0.5;
+  return p + caso() * 0.55;
+}
+/* il migliore di un gruppo di ruoli (o nessuno, se nessuno va bene) */
+function invScegli(pool, gruppi, scelti, P, caso, filtro){
+  const cand = pool.filter(c=>gruppi.includes(c.g) && c !== P && !invVietato(c, scelti, P) && (!filtro || filtro(c)));
+  if(!cand.length) return null;
+  cand.forEach(c=>{ c._p = invPunti(c, scelti, P, caso); });
+  cand.sort((a,b)=>b._p - a._p);
+  return cand[0];
+}
+
+const INV_PORTATE = [
+  {v:"sorpresa", e:"\u{1F3B2}", it:"Sorprendimi", en:"Surprise me"},
+  {v:"Antipasti", e:"\u{1F962}", it:"Antipasto", en:"Starter"},
+  {v:"Primi", e:"\u{1F35D}", it:"Primo", en:"First course"},
+  {v:"Secondi", e:"\u{1F37D}️", it:"Secondo", en:"Main course"},
+  {v:"Contorni", e:"\u{1F957}", it:"Contorno", en:"Side dish"},
+  {v:"unico", e:"\u{1F958}", it:"Piatto unico", en:"One-dish meal"}
+];
+const elenco = l=>l.length <= 1 ? (l[0]||"") : l.slice(0,-1).join(", ") + " e " + l[l.length-1];
+const Maiusc = s=>s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+/* "la scorza di limone" / "la scorza di arancia" */
+const scorzaDi = x=>x.k === "scorza di limone" ? "la scorza di limone" : "la scorza " + di_(x);
+const succoDi  = x=>x.k === "scorza di limone" ? "il succo di mezzo limone" : "il succo " + di_(x);
+
+/* --- come si cuoce la proteina principale (frasi brevi, un'idea per frase) --- */
+function invCuociProteina(P, ctx, opz){
+  opz = opz || {};
+  const b = P.b, passi = [];
+  if(P.g === "tenera"){
+    if(["agnello","coniglio"].includes(b)){
+      passi.push(`Taglia ${ar(P)} a pezzi regolari. Asciugali con carta da cucina e salali.`);
+      passi.push(`Rosolali in una casseruola larga con 3 cucchiai d’olio, a fuoco vivo, finché sono dorati su tutti i lati: circa 8 minuti.`);
+      ctx.lunga = b === "coniglio" ? 40 : 35;
+      ctx.temp = b === "coniglio" ? "Il coniglio è pronto quando la carne si stacca facilmente dall’osso." : "L’agnello è rosa al cuore a 57–60 °C e ben cotto a 70 °C: un termometro a sonda ti toglie ogni dubbio.";
+    } else {
+      passi.push(`Taglia ${ar(P)} a straccetti larghi un dito. Asciugali con carta da cucina: la carne bagnata non rosola, lessa.`);
+      passi.push(`Scalda bene una padella larga con 2 cucchiai d’olio. Rosola gli straccetti a fuoco vivo, senza ammucchiarli, 2–3 minuti per lato. Sala alla fine.`);
+      passi.push(`Togli la carne dalla padella e tienila da parte.`);
+      ctx.temp = /pollo/.test(b) ? "Il pollo è cotto quando al cuore arriva a 74 °C: dentro non deve restare rosa."
+        : /maiale/.test(b) ? "Il maiale è cotto, e ancora succoso, quando al cuore arriva a 63–68 °C."
+        : "Manzo e vitello a straccetti restano teneri se cuociono poco: rosati dentro vanno benissimo.";
+      ctx.dopo = true;
+    }
+    ctx.lezioni.push("cotture");
+  } else if(P.g === "lunga"){
+    passi.push(`Asciuga la carne, salala e rosolala su tutti i lati in una casseruola pesante con 3 cucchiai d’olio, finché è ben dorata. Poi toglila e tienila da parte.`);
+    ctx.lezioni.push("cotture-mestiere","collagene");
+  } else if(P.g === "filetto"){
+    const intero = ["branzino","orata","sgombro"].includes(b), piccolo = ["alici fresche","sarde"].includes(b);
+    if(intero && !opz.intero) passi.push(`Fai sfilettare il pesce dal pescivendolo, oppure fallo tu come spiega la lezione sul pesce. Togli le spine rimaste con una pinzetta.`);
+    if(piccolo) passi.push(`Pulisci ${ar(P)}: togli testa e interiora, aprile a libro e togli la lisca centrale.`);
+    if(b === "baccalà dissalato") passi.push(`Asciuga bene il baccalà e taglialo a pezzi regolari, togliendo le spine.`);
+    ctx.lezioni.push(intero || piccolo ? "pesce" : "pesci");
+  } else if(P.g === "bivalvi"){
+    passi.push(b === "cozze"
+      ? `Pulisci le cozze: raschia i gusci, strappa la barbetta e sciacquale più volte. Scarta quelle rotte, e quelle aperte che non si chiudono se le picchietti.`
+      : `Lascia le vongole in acqua fredda salata per 2 ore, cambiando l’acqua un paio di volte: così buttano fuori la sabbia.`);
+    ctx.lezioni.push("pesce");
+  } else if(P.g === "cefalopodi"){
+    if(b === "polpo"){
+      passi.push(`Metti il polpo pulito in una pentola coperta, a fuoco basso, senza acqua: cuoce nel liquido che butta fuori. Servono circa 45 minuti, finché una forchetta lo infilza senza fatica.`);
+      passi.push(`Lascialo intiepidire nel suo liquido, poi taglialo a pezzi.`);
+    } else passi.push(`Pulisci ${ar(P)} come spiega la lezione sul pesce e ${b === "moscardini" ? "lasciali interi" : "tagliali ad anelli o a striscioline"}. Asciugali bene.`);
+    ctx.lezioni.push("pesce");
+  } else if(P.g === "crostacei"){
+    passi.push(b === "capesante" ? `Asciuga le capesante con carta da cucina: solo se sono ben asciutte fanno la crosticina.`
+      : `Sguscia ${ar(P)} e togli il filo nero sul dorso con uno stuzzicadenti.`);
+    ctx.lezioni.push("pesci");
+  } else if(P.g === "legume"){
+    if(P.k !== P.b) passi.push(`Scola ${ar(P.b)} dal barattolo e sciacqua${pr(P.b)}: il liquido è salato e sa di lattina.`);
+    else if(b === "lenticchie") passi.push(`Se le lenticchie sono secche, sciacquale e cuocile in acqua senza sale per 25–30 minuti. Se sono già cotte, scolale.`);
+    else passi.push(`Se ${ar(P)} sono secch${invGn(P) === "fp" ? "e" : "i"}, mettil${invGn(P) === "fp" ? "e" : "i"} in ammollo in acqua fredda per 12 ore, poi cuocil${invGn(P) === "fp" ? "e" : "i"} in acqua nuova per circa un’ora e mezza, salando solo alla fine. Se sono già cott${invGn(P) === "fp" ? "e" : "i"}, scolal${invGn(P) === "fp" ? "e" : "i"}.`);
+    ctx.lezioni.push("legumi");
+  } else if(P.g === "tofu"){
+    passi.push(`Avvolgi il tofu in un canovaccio e premilo 10 minuti sotto un peso: perde acqua e poi rosola meglio. Taglialo a cubetti.`);
+    passi.push(`Rosola i cubetti in padella con 2 cucchiai d’olio, a fuoco medio-alto, girandoli, finché sono dorati su tutti i lati: circa 8 minuti. Toglili e tienili da parte.`);
+    ctx.dopo = true;
+  }
+  return passi;
+}
+/* --- come si cuoce una verdura, a seconda del modo (senza pronomi: niente "saltalo" detto delle zucchine) --- */
+function invCuociVerdura(v, modo, dove){
+  const d = INV_VERD[v.b] || {}, surg = /surgelat/.test(v.k);
+  const taglio = invPrep(v);
+  if(modo === "forno") return `${taglio} Condisci con olio e sale e stendi in una teglia con carta forno, in un solo strato. Cuoci in forno a 200 °C per ${d.f || 25} minuti, finché i bordi sono dorati.`;
+  if(modo === "crudo") return invPrep(v, true);
+  if(modo === "crema") return `${taglio} Cuoci in poca acqua salata, con il coperchio, per ${d.c || 10} minuti, finché ${invGn(v.b).endsWith("p") ? "sono teneri" : "è tenero"}.`.replace("sono teneri", invGn(v.b) === "fp" ? "sono tenere" : "sono teneri").replace("è tenero", invGn(v.b) === "fs" ? "è tenera" : "è tenero");
+  const sb = d.s && !surg ? ` Prima sbollenta in acqua salata per ${d.s} minuti e scola.` : "";
+  return `${taglio}${sb} Salta ${dove || "in padella con un filo d’olio"} per ${d.p || 8} minuti${(d.p||8) >= 10 ? ", con un goccio d’acqua se si attacca" : ""}.`;
+}
+
+/* --- il cuore: costruisce la ricetta --- */
+function inventaRicetta(opz){
+  opz = opz || {};
+  const caso = invCaso(opz.seme || Date.now());
+  const pool = opz.pool || invDisponibili();
+  const di = g=>pool.filter(x=>x.g === g);
+  const ha = g=>pool.some(x=>x.g === g);
+  const amidi = ["pasta","riso","gnocchi","cereale"].filter(ha);
+  const proteine = pool.filter(x=>INV_PROTEINE.includes(x.g) && x.g !== "uova");
+  const verdure = di("verdura");
+
+  /* quali piatti si possono fare con questa dispensa */
+  const fattibili = [];
+  if(amidi.length && (verdure.length || proteine.some(p=>p.g !== "lunga" && p.g !== "tofu"))) fattibili.push("Primi");
+  if(proteine.length || ha("uova")) fattibili.push("Secondi");
+  if(verdure.some(v=>INV_VERD[v.b].p || INV_VERD[v.b].f || INV_VERD[v.b].r)) fattibili.push("Contorni");
+  if((ha("pane") && (ha("cremoso") || ha("legume") || verdure.some(v=>INV_CREMA_OK(v.b)))) || (verdure.some(v=>INV_VERD[v.b].r) && (ha("fruttaFresca") || ha("feta") || ha("cremoso") || ha("fruttaSecca") || ha("grattugia")))) fattibili.push("Antipasti");
+  if((ha("cereale") && (verdure.length || proteine.length)) || (ha("legume") && verdure.length) || (proteine.some(p=>["tenera","filetto","salsiccia"].includes(p.g)) && pool.some(v=>v.b === "patate"))) fattibili.push("unico");
+  if(!fattibili.length) return {errore: L("In dispensa c’è troppo poco per inventare un piatto. Aggiungi almeno una verdura, oppure una pasta o un riso con qualcosa per condirli.", "There’s too little in the pantry to invent a dish. Add at least a vegetable, or some pasta or rice with something to dress it.")};
+  const portata = opz.portata && opz.portata !== "sorpresa" ? opz.portata : fattibili[Math.floor(caso() * fattibili.length)];
+  if(!fattibili.includes(portata)) return {errore: invPercheNo(portata)};
+
+  /* il protagonista: quello scelto, o il piu' adatto (fresco, di stagione, da consumare) */
+  const adatto = {
+    Primi: x=>(INV_PROTEINE.includes(x.g) && !["uova","tofu","lunga"].includes(x.g)) || (x.g === "verdura" && (INV_VERD[x.b].p || INV_VERD[x.b].c)),
+    Secondi: x=>INV_PROTEINE.includes(x.g),
+    Contorni: x=>x.g === "verdura" && !INV_VERD[x.b].acc && (INV_VERD[x.b].p || INV_VERD[x.b].f || INV_VERD[x.b].r),
+    Antipasti: x=>(x.g === "verdura" && !INV_VERD[x.b].acc) || x.g === "cremoso" || x.g === "feta" || x.g === "fruttaFresca" || x.g === "legume" || x.b === "salmone affumicato",
+    unico: x=>(INV_PROTEINE.includes(x.g) && x.g !== "uova") || (x.g === "verdura" && !INV_VERD[x.b].acc)
+  }[portata];
+  let P = null;
+  if(opz.prot){
+    P = pool.find(x=>x.k === opz.prot || x.b === opz.prot);
+    if(!P) return {errore: L(`«${opz.prot}» non va bene per chi è a tavola (stile, allergie o ingredienti da evitare).`, `“${opz.prot}” doesn’t suit the people at the table.`)};
+    if(!adatto(P)) return {errore: L(`«${opz.prot}» non è adatto a questa portata: scegline un’altra, o lascia decidere a me il protagonista.`, `“${opz.prot}” doesn’t suit this course: pick another, or let me choose the main ingredient.`)};
+  }
+  if(!P){
+    const cand = pool.filter(adatto);
+    if(!cand.length) return {errore: invPercheNo(portata)};
+    cand.forEach(c=>{
+      c._p = caso() * 1.4 + ((sess.recupero||[]).includes(c.k) ? 2 : 0)
+        + (INV_VERD[c.b] && diStagioneOra(c.b) === true ? .5 : 0)
+        + (DEPERIBILI.some(rep=>(CAT_DISP[rep]||[]).includes(c.k)) ? .4 : 0)
+        + (portata === "Secondi" && c.g !== "uova" ? .3 : 0);
+    });
+    cand.sort((a,b)=>b._p - a._p);
+    P = cand[0];
+  }
+
+  const ctx = {lezioni:[], forno:false};
+  INV_SPALLA = null;
+  const ric = portata === "Primi" ? invPrimo(P, pool, caso, ctx)
+            : portata === "Secondi" ? invSecondo(P, pool, caso, ctx)
+            : portata === "Contorni" ? invContorno(P, pool, caso, ctx)
+            : portata === "Antipasti" ? invAntipasto(P, pool, caso, ctx)
+            : invUnico(P, pool, caso, ctx);
+  if(!ric) return {errore: invPercheNo(portata), riprova:true};
+  return invCompleta(ric, P, ctx);
+}
+function invPercheNo(portata){
+  const cosa = {Primi:"una pasta, un riso, degli gnocchi o un cereale, più una verdura o una proteina",
+    Secondi:"carne, pesce, uova, legumi o tofu", Contorni:"almeno una verdura",
+    Antipasti:"del pane con un formaggio fresco, dei legumi o una verdura da fare in crema; oppure una verdura da mangiare cruda con frutta, formaggio o frutta secca",
+    unico:"un cereale (cous cous, farro, orzo...) o dei legumi con le verdure, oppure carne o pesce con le patate"}[portata] || "più ingredienti";
+  const nome = {Primi:"un primo", Secondi:"un secondo", Contorni:"un contorno", Antipasti:"un antipasto", unico:"un piatto unico"}[portata] || "questo piatto";
+  return L(`Per inventare ${nome} mi serve ${cosa}. Con quello che hai in dispensa, e quello che il tavolo può mangiare, non ci arrivo.`, `To invent that course I need more than your pantry (and the table’s needs) allow.`);
+}
+
+/* --- gli accenti: profumo, sapidita', acidita', croccante (lezione «L'equilibrio dei sapori») --- */
+function invAccenti(P, pool, caso, scelti, cosa){
+  const presi = {};
+  const prendi = (nome, gruppi, filtro)=>{ const c = invScegli(pool, gruppi, scelti, P, caso, filtro); if(c){ scelti.push(c); presi[nome] = c; } return c; };
+  if(cosa.aroma !== false) prendi("aroma", ["aroma"], c=>!cosa.aromaSolo || cosa.aromaSolo.includes(c.b));
+  if(cosa.spalla){ const sp = prendi("spalla", cosa.spalla, cosa.spallaFiltro); if(sp) INV_SPALLA = sp; }
+  if(cosa.formaggio) prendi("formaggio", cosa.formaggio);
+  const daCuocere = ["guanciale","pancetta","speck","prosciutto crudo","nduja","lardo"];
+  if(cosa.sapido !== false && caso() < (cosa.sapidoP || .6)) prendi("sapido", cosa.sapidoGruppi || ["sapido","salume","conservaPesce"],
+    c=>(c.k !== "senape" || cosa.senape) && !(cosa.crudo && ["miso","salsa di soia","senape"].includes(c.k)) && (c.g !== "salume" || cosa.salumiCrudi || daCuocere.includes(c.b)));
+  if(cosa.erba !== false) prendi("erba", cosa.erbaGruppi || ["erbaFine","erbaCotta"]);
+  if(cosa.spezia && caso() < .5) prendi("spezia", ["spezia"]);
+  /* l'acido arriva sempre se il piatto e' ricco (salumi, formaggi cremosi, carni grasse, pesce azzurro), se no a volte */
+  const ricco = scelti.some(x=>["salume","cremoso","filante","salsiccia","grasso"].includes(x.g) || ["salmone","sgombro","maiale","lonza di maiale","agnello","sarde","alici fresche"].includes(x.b));
+  if(cosa.acido !== false && (ricco || caso() < .55)) prendi("acido", ["agrume","acido"], c=>!(c.k === "yogurt" && !cosa.yogurtOk) && !(c.k === "vino bianco" && !cosa.vinoOk));
+  if(cosa.croccante && caso() < (cosa.croccanteP || .7)) prendi("croccante", ["fruttaSecca","pangrattato"]);
+  if(cosa.dolce && caso() < .4) prendi("dolce", ["fruttaEssiccata","dolce"]);
+  return presi;
+}
+/* l'erba nel testo: fresca e tritata, o secca cosi' com'e' */
+const erbaT = E=>E.k !== E.b ? ar(E) : ar(E) + " " + agg("tritat", E);
+const nomeC = C=>C.g === "pangrattato" ? "il pangrattato tostato" : ar(C) + " " + agg("tostat", C);
+
+/* --- PRIMI --- */
+function invPrimo(P, pool, caso, ctx){
+  const scelti = [P];
+  const risoOk = P.g === "verdura" || ["salsiccia","crostacei","filetto"].includes(P.g) || (P.g === "cefalopodi" && P.b !== "polpo");
+  const base = invScegli(pool, ["pasta","gnocchi"].concat(risoOk ? ["riso"] : []).concat(P.g === "legume" || P.g === "bivalvi" ? [] : ["cereale"]), [], P, caso,
+    b=>b.g !== "cereale" || caso() < .3);
+  if(!base) return null;
+  if(base.g === "cereale") return invInsalataCereale(P, pool, caso, ctx, base);
+  scelti.push(base);
+  const verdP = P.g === "verdura";
+  const crema = verdP && INV_CREMA_OK(P.b) && caso() < .5;
+  const pesce = INV_PESCI.includes(P.g);
+  const riso = base.g === "riso", gn = base.g === "gnocchi";
+  const acc = invAccenti(P, pool, caso, scelti, {
+    spalla: verdP ? (caso() < .4 ? ["verdura","legume"] : null) : ["verdura"],
+    spallaFiltro: v=>(v.g === "legume" && v.k !== v.b) || (INV_VERD[v.b] && INV_VERD[v.b].p),
+    formaggio: !pesce && caso() < .8 ? (riso ? ["grattugia"] : ["grattugia","cremoso"]) : null,
+    sapidoGruppi: ["sapido","salume","conservaPesce"],
+    erbaGruppi: ["erbaFine","erbaCotta"], spezia: true, croccante: !riso, croccanteP: crema ? .9 : pesce ? .6 : .45,
+    vinoOk: riso || pesce, dolce: verdP, acido: !gn || caso() < .5
+  });
+  const ing = [], proc = [], it = x=>ing.push({n:invNome(x), q:invDose(x), k:x.k});
+  it(base); it(P); Object.values(acc).forEach(it);
+  const A = acc.aroma, S = acc.sapido, F = acc.formaggio, E = acc.erba, C = acc.croccante, AC = acc.acido, SP = acc.spalla, SZ = acc.spezia, DL = acc.dolce;
+  const pepeIn = SZ && /peperoncino/.test(SZ.k);
+  const nomeA = A ? (A.k === "aglio" ? "l’aglio schiacciato" : ar(A) + " " + agg("tritat", A) + " fine") : "";
+  const tosta = ()=>{ if(C) proc.push(C.g === "pangrattato"
+      ? `In un padellino tosta il pangrattato con un filo d’olio, mescolando, finché è dorato e croccante. Tienilo da parte.`
+      : `Tosta ${ar(C)} in un padellino senza grassi per 3 minuti, finché profumano. Tritali grossolanamente.`); };
+  let tempo = 30, diff = "facile", titolo = "";
+
+  if(riso){
+    const brodo = pool.find(x=>x.g === "brodo");
+    const burro = pesce ? null : pool.find(x=>x.k === "burro");
+    ctx.lezioni.push("risotto");
+    if(brodo){ ing.push({n:brodo.k, q:"1,5 l", k:brodo.k}); proc.push(`Scalda il brodo e tienilo caldo sul fuoco basso.`); }
+    else proc.push(`Scalda un litro e mezzo d’acqua con un cucchiaino di sale e tienila calda sul fuoco basso: farà da brodo.`);
+    if(!verdP) proc.push(...invCuociProteina(P, ctx));
+    if(P.g === "salsiccia") proc.push(`Togli la pelle alla salsiccia, sbriciolala e rosolala nella casseruola del risotto, senza olio, per 8 minuti. Poi toglila e tienila da parte.`);
+    if(verdP && crema) proc.push(invCuociVerdura(P, "crema") + " Frullane metà con un mestolo della sua acqua: ottieni una crema.");
+    else if(verdP) proc.push(invCuociVerdura(P, "padella"));
+    if(SP) proc.push(invCuociVerdura(SP, "padella"));
+    if(S && S.g === "salume") proc.push(`Rosola ${ar(S)} a listarelle in un padellino senza olio, finché è croccante.`);
+    proc.push(`In una casseruola larga scalda 2 cucchiai d’olio${A ? " e fai appassire " + nomeA + (E && E.g === "erbaCotta" ? ", con " + ar(E) + "," : "") + " a fuoco dolce per 5 minuti" : E && E.g === "erbaCotta" ? " con " + ar(E) : ""}.`);
+    proc.push(`Versa il riso e mescolalo per 2 minuti a fuoco medio, finché diventa lucido. Si chiama tostatura: aiuta i chicchi a restare interi.`);
+    if(AC && AC.k === "vino bianco") proc.push(`Versa il vino e lascialo evaporare mescolando.`);
+    proc.push(`Aggiungi un mestolo di brodo caldo e mescola. Quando il riso lo ha assorbito, aggiungine un altro. Vai avanti così per 16–18 minuti.`);
+    if(verdP) proc.push(crema ? `A metà cottura unisci la crema e i pezzi rimasti interi.` : `A metà cottura unisci ${ar(P)}.`);
+    if(P.g === "salsiccia") proc.push(`A metà cottura rimetti la salsiccia.`);
+    if(SP) proc.push(`A metà cottura unisci anche ${ar(SP.b)}.`);
+    if(pesce) proc.push(`Negli ultimi 4 minuti unisci ${ar(P)}${P.g === "filetto" ? " a cubetti, senza pelle" : ""}: ${P.g === "crostacei" || P.g === "cefalopodi" ? "cuociono" : "cuoce"} in fretta.`);
+    if(S && S.g !== "salume") proc.push(`Unisci ${ar(S)}${S.g === "conservaPesce" ? " sminuzzate" : ""}.`);
+    if(S && S.g === "salume") proc.push(`Unisci ${ar(S)} croccante, tenendone un po’ per sopra.`);
+    const mant = [burro ? "una noce di burro freddo" : "", F ? ar(F) + (F.g === "grattugia" ? " " + agg("grattugiat", F) : "") : ""].filter(Boolean);
+    proc.push(`Spegni il fuoco. Aggiungi ${mant.length ? elenco(mant) : "2 cucchiai d’olio"} e mescola con energia per un minuto. Si chiama mantecatura: rende il risotto cremoso.`);
+    if(burro) ing.push({n:"burro", q:"30 gr", k:"burro"});
+    if(AC && AC.g === "agrume") proc.push(`Grattugia sopra ${scorzaDi(AC)} e aggiungi qualche goccia di succo.`);
+    const sopra = [E && E.g === "erbaFine" ? erbaT(E) : "", SZ && !pepeIn ? "un pizzico di " + SZ.k : "", pepeIn ? ar(SZ) + " " + agg("sbriciolat", SZ) : ""].filter(Boolean);
+    proc.push(`Copri e lascia riposare 2 minuti.${sopra.length ? " Servi con " + elenco(sopra) + "." : ""}`);
+    tempo = 40 + (P.g === "bivalvi" ? 120 : 0); diff = "media";
+    titolo = `Risotto ${crema ? "con crema di " + invNome(P.b) : "con " + invNome(P.b)}`;
+    ctx.nota = "La mantecatura si fa a fuoco spento: il grasso freddo e l’amido del riso si legano in una crema.";
+  } else {
+    if(!gn) proc.push(`Metti sul fuoco una pentola grande con abbondante acqua. Quando bolle, sala: 10 grammi di sale per ogni litro.`);
+    tosta();
+    if(P.g === "legume" || ["tenera","filetto","bivalvi","cefalopodi","crostacei"].includes(P.g)) proc.push(...invCuociProteina(P, ctx));
+    const nellOlio = [A ? nomeA : "", pepeIn ? ar(SZ) : "", E && E.g === "erbaCotta" ? ar(E) : ""].filter(Boolean);
+    proc.push(`In una padella larga scalda 3 cucchiai d’olio${nellOlio.length ? " con " + elenco(nellOlio) : ""}, a fuoco dolce, per 3–4 minuti${A && A.k === "aglio" ? ". L’aglio deve appena dorare: se scurisce diventa amaro" : ""}.`);
+    if(S && S.g === "salume") proc.push(S.b === "nduja" ? `Unisci la nduja e lasciala sciogliere nell’olio, mescolando.` : `Unisci ${ar(S)} a listarelle e lascia rosolare finché è croccante.`);
+    if(S && S.g === "conservaPesce") proc.push(`Unisci le acciughe e schiacciale con un cucchiaio di legno: si sciolgono nell’olio.`);
+    if(verdP){
+      if(crema){ proc.push(invCuociVerdura(P, "crema"));
+        proc.push(`Frullane due terzi con un filo d’olio e un mestolo della sua acqua: ottieni una crema liscia. Il resto mettilo nella padella.`); ctx.frullatore = true; }
+      else proc.push(invCuociVerdura(P, "padella", "nella padella"));
+    }
+    if(P.g === "legume") proc.push(`Unisci ${ar(P.b)} con un mestolo d’acqua e lascia insaporire 5 minuti. Schiacciane una parte con la forchetta: lega il condimento.`);
+    if(P.g === "bivalvi"){ proc.push(`Metti ${ar(P)} nella padella, alza il fuoco e copri. In 3–5 minuti si aprono: scarta quelle rimaste chiuse.`.replace("quelle rimaste chiuse", invGn(P) === "fp" ? "quelle rimaste chiuse" : "quelli rimasti chiusi"));
+      proc.push(`Sgusciane metà. Filtra con un colino fitto il liquido che hanno buttato fuori: è il condimento.`); }
+    if(P.g === "cefalopodi") proc.push(P.b === "polpo" ? `Unisci il polpo a pezzi e lascialo insaporire 2 minuti.` : `Unisci ${ar(P)}, alza il fuoco e salta per 2–3 minuti: se cuociono di più diventano gommosi.`);
+    if(P.g === "crostacei") proc.push(`Unisci ${ar(P)} e cuoci 2 minuti per lato, finché cambiano colore.`);
+    if(P.g === "filetto") proc.push(`Unisci ${ar(P)} a cubetti, senza pelle, e cuoci 3–4 minuti girando piano, finché la polpa è opaca.`);
+    if(P.g === "salsiccia") proc.push(`Togli la pelle alla salsiccia e sbriciolala nella padella. Rosolala a fuoco medio per 8 minuti, finché è dorata.`);
+    if(P.g === "macinato") proc.push(`Unisci la carne macinata e sgranala con un cucchiaio di legno. Rosolala per 8 minuti, finché non è più rosa.`);
+    if(SP) proc.push(SP.g === "legume" ? `Unisci ${ar(SP.b)}, già ${agg("cott", SP.b)} e ${agg("scolat", SP.b)}.` : invCuociVerdura(SP, "padella", "nella padella"));
+    if(AC && AC.k === "vino bianco") proc.push(`Sfuma con il vino: versalo e lascialo evaporare a fuoco vivo per un minuto.`);
+    if(S && S.g === "sapido") proc.push(`Aggiungi ${ar(S)}${S.k === "olive" ? " tagliate a rondelle" : S.k === "pomodori secchi" ? " tagliati a striscioline" : ""}.`);
+    if(gn) proc.push(`Cuoci gli gnocchi in acqua bollente salata. Quando salgono a galla, aspetta 30 secondi e scolali con una schiumarola.`);
+    else proc.push(`Cuoci la pasta e scolala 2 minuti prima del tempo scritto sulla confezione. Tieni da parte una tazza della sua acqua di cottura.`);
+    if(P.g === "tenera") proc.push(`Rimetti la carne nella padella.`);
+    proc.push(`Versa ${gn ? "gli gnocchi" : "la pasta"} nella padella${crema ? " con la crema" : ""}. Aggiungi l’acqua di cottura poca alla volta e mescola per un minuto: l’amido dell’acqua lega l’olio e rende il condimento cremoso.`);
+    const fine = [];
+    if(F) fine.push(F.g === "grattugia" ? ar(F) + " " + agg("grattugiat", F) : ar(F) + " a cucchiaiate");
+    if(AC && AC.g === "agrume") fine.push(scorzaDi(AC) + " grattugiata");
+    if(AC && AC.g === "acido" && AC.k !== "vino bianco") fine.push(AC.k === "yogurt" ? "qualche cucchiaio di yogurt" : "un goccio di " + AC.k);
+    if(E && E.g === "erbaFine") fine.push(erbaT(E));
+    if(SZ && !pepeIn) fine.push("un pizzico di " + SZ.k);
+    if(DL) fine.push(DL.g === "dolce" ? "un filo di " + DL.k : ar(DL) + ", " + agg("ammollat", DL) + " in acqua tiepida e " + agg("strizzat", DL));
+    if(C) fine.push(nomeC(C));
+    if(fine.length) proc.push(`Fuori dal fuoco unisci ${elenco(fine)}. Servi subito.`);
+    tempo = 25 + (crema ? 10 : 0) + (P.g === "bivalvi" ? 120 : 0) + (P.b === "polpo" ? 50 : 0);
+    const nomeBase = gn ? "Gnocchi" : base.k === "pasta" ? "Pasta" : Maiusc(base.k);
+    titolo = `${nomeBase} ${crema ? "con crema di " + invNome(P.b) : "con " + invNome(P.b)}`;
+    if(!gn) ctx.nota = "L’acqua di cottura è il segreto: l’amido che contiene lega l’olio al condimento e lo rende cremoso, senza bisogno di panna.";
+  }
+  return {cat:"Primi", n:invTitolo(titolo, [SP, S, F, C, E, AC, DL]), ing, proc, tempo, diff, unico:false, scelti};
+}
+/* il titolo: il piatto e due accenti */
+function invTitolo(t, acc){
+  const nomi = acc.filter(x=>x && x.g !== "aroma" && !t.includes(invNome(x.b))).slice(0, 2).map(x=>
+    x.g === "fruttaSecca" ? invNome(x) + " " + agg("tostat", x) : x.g === "pangrattato" ? "pangrattato croccante" : invNome(x.b));
+  return nomi.length ? `${t}, ${elenco(nomi)}` : t;
+}
+
+/* --- insalata tiepida di cereali (primo o piatto unico) --- */
+function invInsalataCereale(P, pool, caso, ctx, base){
+  base = base || invScegli(pool, ["cereale"], [], P, caso);
+  if(!base) return null;
+  const scelti = [P, base];
+  const verdP = P.g === "verdura";
+  if(!verdP && !["filetto","crostacei","cefalopodi","legume","tofu","tenera"].includes(P.g)) return null;
+  const acc = invAccenti(P, pool, caso, scelti, {
+    aroma: caso() < .5, aromaSolo: ["cipolla rossa","cipollotto","scalogno"],
+    spalla: verdP ? ["verdura","legume"] : ["verdura"], spallaFiltro: v=>(v.g === "legume" && v.k !== v.b) || (v.g === "verdura" && (INV_VERD[v.b].f || INV_VERD[v.b].r || INV_VERD[v.b].p)),
+    formaggio: INV_PESCI.includes(P.g) ? null : ["feta","grattugia","cremoso"], sapidoGruppi: ["sapido","conservaPesce"],
+    erbaGruppi: ["erbaFine"], spezia: true, croccante: true, croccanteP: .8, acido: true, yogurtOk: true, dolce: true
+  });
+  const ing = [], proc = [], it = x=>ing.push({n:invNome(x), q:invDose(x), k:x.k});
+  it(base); it(P); Object.values(acc).forEach(it);
+  const A = acc.aroma, S = acc.sapido, F = acc.formaggio, E = acc.erba, C = acc.croccante, AC = acc.acido, SP = acc.spalla, SZ = acc.spezia, DL = acc.dolce;
+  const cott = {"cous cous":"Metti il cous cous in una ciotola. Versaci sopra lo stesso peso di acqua bollente salata, con un filo d’olio. Copri e aspetta 5 minuti, poi sgranalo con una forchetta.",
+    "bulgur":"Cuoci il bulgur in acqua bollente salata per 10–12 minuti, poi scolalo.",
+    "farro":"Sciacqua il farro e cuocilo in acqua bollente salata per 25–30 minuti, finché è tenero ma ancora al dente. Scolalo.",
+    "orzo perlato":"Sciacqua l’orzo e cuocilo in acqua bollente salata per 30–35 minuti. Scolalo.",
+    "grano saraceno":"Tosta il grano saraceno per 2 minuti in padella, poi cuocilo in acqua bollente salata per 15 minuti. Scolalo.",
+    "cereali misti":"Sciacqua i cereali e cuocili in acqua bollente salata per il tempo scritto sulla confezione. Scolali."}[base.b];
+  proc.push(cott);
+  proc.push(`Allarga i chicchi su un vassoio con un filo d’olio: si raffreddano in fretta e restano separati.`);
+  const modoV = v=>INV_VERD[v.b].f && caso() < .6 ? "forno" : INV_VERD[v.b].p ? "padella" : "crudo";
+  if(verdP){ const m = modoV(P); proc.push(invCuociVerdura(P, m)); if(m === "forno") ctx.forno = true; }
+  else {
+    proc.push(...invCuociProteina(P, ctx).filter(p=>!/Togli la carne dalla padella|Toglili e tienili da parte/.test(p)));
+    if(P.g === "filetto") proc.push(`Cuoci ${ar(P)} in padella con un filo d’olio, 3–4 minuti dalla parte della pelle e uno dall’altra, poi spezzetta${pr(P)}.`);
+    if(P.g === "crostacei") proc.push(`Saltali in padella con un filo d’olio, 2 minuti per lato.`);
+    if(P.g === "cefalopodi" && P.b !== "polpo") proc.push(`Saltali in padella rovente con un filo d’olio per 2–3 minuti.`);
+  }
+  if(SP){ if(SP.g === "legume") proc.push(SP.k !== SP.b ? `Scola ${ar(SP.b)} e sciacqua${pr(SP.b)}.` : `Prendi ${ar(SP)} già ${agg("cott", SP)} e scola${pr(SP)}.`);
+    else { const m = modoV(SP); proc.push(invCuociVerdura(SP, m)); if(m === "forno") ctx.forno = true; } }
+  if(A) proc.push(`Affetta ${ar(A)} sottilissim${invGn(A).endsWith("s") ? (invGn(A) === "fs" ? "a" : "o") : "i"} e lasciala 10 minuti in acqua fredda: diventa più dolce.`.replace("lasciala", invGn(A) === "fs" ? "lasciala" : "lascialo"));
+  if(C) proc.push(C.g === "pangrattato" ? `Tosta il pangrattato in un padellino con un filo d’olio.` : `Tosta ${ar(C)} in un padellino senza grassi per 3 minuti.`);
+  const cond = AC ? (AC.g === "agrume" ? succoDi(AC) : AC.k === "yogurt" ? "2 cucchiai di yogurt" : "un cucchiaio di " + AC.k) : "un cucchiaio di aceto";
+  proc.push(`In una ciotolina sbatti con una forchetta 4 cucchiai d’olio, ${cond}${SZ ? ", un pizzico di " + SZ.k : ""}${DL && DL.g === "dolce" ? ", un cucchiaino di " + DL.k : ""}, sale e pepe: è il condimento.`);
+  const dentro = [S ? ar(S) : "", F ? ar(F) + (F.g === "feta" ? " sbriciolata" : F.g === "grattugia" ? " a scaglie" : " a cucchiaiate") : "", DL && DL.g !== "dolce" ? ar(DL) : ""].filter(Boolean);
+  proc.push(`Unisci tutto in una ciotola grande${dentro.length ? ", con " + elenco(dentro) : ""}. Versa il condimento e mescola.`);
+  proc.push(`Finisci con ${elenco([E ? erbaT(E) : "", C ? nomeC(C) : ""].filter(Boolean)) || "un filo d’olio"}. È buona tiepida o a temperatura ambiente.`);
+  if(!AC) ing.push({n:"aceto", q:"1 cucchiaio", k:"aceto"});
+  ctx.nota = "Conditi da tiepidi, i chicchi assorbono meglio il condimento.";
+  return {cat:"Primi", n:invTitolo(`Insalata tiepida di ${invNome(base)} con ${invNome(P.b)}`, [SP, F, C, S, E]), ing, proc,
+          tempo: base.b === "cous cous" ? 25 : base.b === "farro" || base.b === "orzo perlato" ? 45 : 35, diff:"facile", unico:true, scelti};
+}
+
+/* --- SECONDI --- */
+function invSecondo(P, pool, caso, ctx){
+  if(P.g === "uova") return invFrittata(P, pool, caso, ctx);
+  if(P.g === "legume" && pool.some(x=>x.g === "pangrattato" || x.g === "pane") && caso() < .65) return invPolpetteLegumi(P, pool, caso, ctx);
+  if(P.g === "macinato") return invPolpette(P, pool, caso, ctx);
+  if(P.g === "lunga") return invBrasato(P, pool, caso, ctx);
+  const scelti = [P];
+  const pesce = INV_PESCI.includes(P.g);
+  const interi = ["branzino","orata","sgombro"].includes(P.b);
+  const cartoccio = P.g === "filetto" && !["alici fresche","sarde","baccalà dissalato"].includes(P.b) && caso() < .45;
+  const crosta = !cartoccio && P.g === "filetto" && pool.some(x=>x.g === "pangrattato") && caso() < .5;
+  const umido = P.g === "legume" || (P.g === "cefalopodi" && P.b !== "polpo" && caso() < .5);
+  const acc = invAccenti(P, pool, caso, scelti, {
+    spalla: ["verdura"], spallaFiltro: v=>INV_VERD[v.b].p,
+    sapidoGruppi: pesce ? ["sapido","conservaPesce"] : ["sapido","salume"], sapidoP: .55,
+    erbaGruppi: ["erbaFine","erbaCotta"], spezia: !pesce || caso() < .3, croccante: crosta || caso() < .3, croccanteP: crosta ? 1 : .5,
+    vinoOk: true, dolce: !pesce || ["sarde","alici fresche","sgombro"].includes(P.b), acido: P.g === "bivalvi" ? caso() < .7 : true
+  });
+  const pom = umido && caso() < .75 ? pool.find(x=>x.g === "pomodoro") : null;
+  const ing = [], proc = [], it = x=>ing.push({n:invNome(x), q:invDose(x), k:x.k});
+  it(P); Object.values(acc).forEach(it); if(pom) it(pom);
+  const A = acc.aroma, S = acc.sapido, E = acc.erba, C = acc.croccante, AC = acc.acido, SP = acc.spalla, SZ = acc.spezia, DL = acc.dolce;
+  const erbaCot = E && E.g === "erbaCotta";
+  let tempo = 30, diff = "facile", titolo = "";
+  const servi = (extra)=>{
+    const l = [E && !erbaCot ? erbaT(E) : "", AC && AC.g === "agrume" && !extra ? scorzaDi(AC) + " grattugiata" : "", AC && AC.k === "yogurt" ? "lo yogurt condito con un pizzico di sale" : "", C ? nomeC(C) : ""].filter(Boolean);
+    return l.length ? `Servi con ${elenco(l)}.` : "Servi subito.";
+  };
+
+  if(cartoccio){
+    ctx.forno = true; ctx.lezioni.push("cotture-mestiere");
+    if(interi) proc.push(`Fai pulire il pesce dal pescivendolo (squame, interiora e branchie), oppure fallo tu come spiega la lezione sul pesce. Lascialo intero.`);
+    else proc.push(...invCuociProteina(P, ctx));
+    proc.push(`Accendi il forno a 190 °C.`);
+    if(SP) proc.push(invCuociVerdura(SP, "padella").replace(/per (\d+) minuti/, (m, n)=>`per ${Math.max(3, Math.round(n/2))} minuti`) + " Deve restare al dente: finirà di cuocere nel cartoccio.");
+    const dentro = [interi ? "il pesce" : ar(P), SP ? "la verdura" : "", S ? ar(S) : ""].filter(Boolean);
+    proc.push(`Ritaglia un grande foglio di carta forno ${interi ? "per ogni pesce" : "per ogni porzione"}. Al centro metti ${elenco(dentro)}.${interi && (E || AC) ? " Nella pancia del pesce infila " + elenco([E ? ar(E) : "", AC && AC.g === "agrume" ? (AC.k === "scorza di limone" ? "un po’ di scorza di limone" : "qualche fetta di " + invNome(AC)) : ""].filter(Boolean)) + "." : ""}`);
+    proc.push(`Condisci con un filo d’olio e sale${AC && AC.g === "acido" && AC.k !== "yogurt" ? ", " + (AC.k === "vino bianco" ? "un goccio di vino" : "un goccio di " + AC.k) : ""}${SZ ? ", un pizzico di " + SZ.k : ""}${E && !interi ? ", " + ar(E) : ""}. Chiudi il foglio a caramella, lasciando aria dentro: il pesce cuoce nel suo vapore.`);
+    proc.push(`Cuoci in forno per ${interi ? "20–25" : "12–15"} minuti. Apri il cartoccio a tavola: il profumo arriva tutto insieme.`);
+    titolo = `${Maiusc(invNome(P.b))} al cartoccio`; tempo = interi ? 40 : 30;
+  } else if(crosta){
+    ctx.forno = true;
+    proc.push(...invCuociProteina(P, ctx));
+    proc.push(`Accendi il forno a 200 °C.`);
+    const pg = pool.find(x=>x.g === "pangrattato");
+    if(!ing.some(i=>i.k === pg.k)) ing.push({n:pg.k, q:"6 cucchiai", k:pg.k});
+    const mix = [E ? erbaT(E) : "", AC && AC.g === "agrume" ? scorzaDi(AC) + " grattugiata" : "", C && C.g === "fruttaSecca" ? ar(C) + " " + agg("tritat", C) : "", S ? ar(S) + " " + agg("tritat", S) : ""].filter(Boolean);
+    proc.push(`In una ciotola mescola il pangrattato con ${elenco(mix.length ? mix : ["un pizzico di sale"])} e 3 cucchiai d’olio: è la crosta.`);
+    if(SP) proc.push(invCuociVerdura(SP, "padella") + " Tienila al caldo.");
+    proc.push(`Metti ${ar(P)} in una teglia con carta forno, con la pelle sotto. Sala e copri la parte di sopra con la crosta, premendo con le dita.`);
+    proc.push(`Cuoci in forno per 12–15 minuti, finché la crosta è dorata e il pesce si sfalda con una forchetta.`);
+    proc.push(SP ? `Servi il pesce sulla verdura${AC && AC.g === "agrume" ? ", con qualche goccia di succo " + di_(AC) : ""}.` : AC && AC.g === "agrume" ? `Servi con spicchi ${di_(AC)} da spremere sopra.` : "Servi subito.");
+    titolo = `${Maiusc(invNome(P.b))} in crosta`; tempo = 30;
+  } else if(P.g === "bivalvi"){
+    proc.push(...invCuociProteina(P, ctx));
+    proc.push(`In una padella larga scalda 3 cucchiai d’olio con ${A ? ar(A) + (A.k === "aglio" ? " schiacciato" : " " + agg("tritat", A)) : "uno spicchio d’aglio schiacciato"}${SZ ? " e " + ar(SZ) : ""} per 2 minuti.`);
+    if(!A) ing.push({n:"aglio", q:"1 spicchio", k:"aglio"});
+    if(SP) proc.push(invCuociVerdura(SP, "padella", "nella padella"));
+    proc.push(`Unisci ${ar(P)}${AC && AC.k === "vino bianco" ? " e il vino" : ""}, alza il fuoco e copri. In 3–5 minuti si aprono: scarta ${invGn(P) === "fp" ? "quelle rimaste chiuse" : "quelli rimasti chiusi"}.`);
+    proc.push(`Servi subito con il loro sugo${E ? " e " + erbaT(E) : ""}${AC && AC.g === "agrume" ? ", con " + scorzaDi(AC) : ""}. Se hai del pane, tostalo: serve a raccogliere il sugo.`);
+    titolo = `Guazzetto di ${invNome(P.b)}`; tempo = 140;
+    ctx.nota = "Cozze e vongole crude o poco cotte possono trasmettere l’epatite A: cuocile sempre finché il guscio si apre.";
+  } else if(umido){
+    if(P.g !== "legume") proc.push(...invCuociProteina(P, ctx));
+    else proc.push(...invCuociProteina(P, ctx));
+    proc.push(`In una casseruola scalda 3 cucchiai d’olio e fai appassire ${A ? ar(A) + " " + agg("tritat", A) : "una cipolla tritata"} per 5 minuti a fuoco dolce.`);
+    if(!A) ing.push({n:"cipolla", q:"1", k:"cipolla"});
+    if(P.g === "cefalopodi") proc.push(`Unisci ${ar(P)} e mescola per 2 minuti${AC && AC.k === "vino bianco" ? ". Sfuma con il vino: versalo e lascialo evaporare" : ""}.`);
+    if(SP) proc.push(invCuociVerdura(SP, "padella", "nella casseruola"));
+    if(P.g === "legume") proc.push(`Unisci ${ar(P.b)}${SZ ? " e " + ar(SZ) : ""}${erbaCot ? ", con " + ar(E) : ""}.`);
+    proc.push(`Versa ${pom ? ar(pom) : "un bicchiere d’acqua calda"}, sala, copri e cuoci a fuoco dolce per ${P.g === "cefalopodi" ? "40 minuti. Seppie e calamari vanno cotti o pochissimo o a lungo: a metà strada sono gommosi" : "20 minuti, finché il sugo è denso"}.`);
+    if(S) proc.push(`Negli ultimi 5 minuti unisci ${ar(S)}.`);
+    proc.push(servi());
+    titolo = `${Maiusc(invNome(P.b))} in umido`; tempo = P.g === "cefalopodi" ? 60 : 40;
+  } else {
+    /* in padella: la proteina, poi un fondo veloce con la verdura e l'acido */
+    if(P.g === "salsiccia") { proc.push(`Bucherella la salsiccia con una forchetta. Rosolala in padella senza olio, a fuoco medio, girandola, per 12–15 minuti. Toglila e tienila da parte.`); ctx.dopo = true; }
+    else proc.push(...invCuociProteina(P, ctx));
+    if(P.g === "filetto"){ proc.push(`Scalda una padella antiaderente con 2 cucchiai d’olio. Cuoci ${ar(P)} dalla parte della pelle per 3–4 minuti, senza toccar${pr(P)}, finché la pelle è croccante.`);
+      proc.push(`Gira e cuoci un altro minuto. Togli il pesce e tienilo al caldo.`); ctx.dopo = true;
+      if(P.b === "tonno fresco") ctx.temp = "Il tonno rosato al centro va bene solo se il pesce è stato abbattuto, cioè congelato per uccidere l’Anisakis: chiedilo al pescivendolo. Altrimenti cuocilo un paio di minuti in più."; }
+    if(P.g === "crostacei") { proc.push(P.b === "capesante" ? `Scalda bene una padella con un filo d’olio. Cuoci le capesante un minuto e mezzo per lato, senza muoverle. Toglile.` : `Scalda una padella con 2 cucchiai d’olio e cuoci ${ar(P)} 2 minuti per lato. Toglili.`); ctx.dopo = true; }
+    if(P.g === "cefalopodi" && P.b !== "polpo") { proc.push(`Scalda bene una padella con 2 cucchiai d’olio e salta ${ar(P)} a fuoco vivo per 2–3 minuti. Toglili.`); ctx.dopo = true; }
+    if(P.b === "polpo") { proc.push(`Scalda una padella con 2 cucchiai d’olio e rosola i pezzi di polpo a fuoco vivo, 2 minuti per lato, finché sono croccanti fuori. Toglili.`); ctx.dopo = true; }
+    if(ctx.lunga){
+      const parti = [A ? ar(A) + (A.k === "aglio" ? " in camicia, cioè con la buccia" : " a spicchi") : "", erbaCot ? ar(E) : ""].filter(Boolean);
+      if(parti.length) proc.push(`Aggiungi ${elenco(parti)}.`);
+      if(AC && AC.k === "vino bianco") proc.push(`Sfuma con il vino: versalo e lascialo evaporare a fuoco vivo.`);
+      if(SP) proc.push(`Unisci ${ar(SP.b)} ${INV_VERD[SP.b].t || "a pezzi"}.`);
+      proc.push(`Copri e cuoci a fuoco dolce per ${ctx.lunga} minuti, girando ogni tanto. Se il fondo si asciuga, aggiungi un goccio d’acqua.`);
+      if(S) proc.push(`Negli ultimi 5 minuti unisci ${ar(S)}.`);
+      if(AC && AC.g === "agrume") proc.push(`Spegni e grattugia sopra ${scorzaDi(AC)}.`);
+      proc.push(servi(true));
+      tempo = ctx.lunga + 20;
+    } else {
+      proc.push(`Nella stessa padella ${A ? "fai appassire " + ar(A) + (A.k === "aglio" ? " schiacciato" : " a fettine") + " per 3 minuti" : "scalda un filo d’olio"}${erbaCot ? " con " + ar(E) : ""}. Stacca con un cucchiaio di legno i residui attaccati al fondo: sono sapore.`);
+      if(SP) proc.push(invCuociVerdura(SP, "padella", "nella padella"));
+      if(AC && AC.g === "agrume" && AC.k !== "scorza di limone") proc.push(`Versa ${succoDi(AC)} e lascialo ridurre un minuto: diventa una salsa leggera.`);
+      else if(AC && AC.k === "vino bianco") proc.push(`Sfuma con il vino: versalo e lascialo evaporare a fuoco vivo.`);
+      else if(AC && AC.g === "acido" && AC.k !== "yogurt") proc.push(`Aggiungi ${AC.k === "aceto balsamico" ? "l’aceto balsamico" : "l’aceto"} e lascialo ridurre un minuto.`);
+      if(DL) proc.push(`Unisci ${DL.g === "dolce" ? "un cucchiaio di " + DL.k : ar(DL)}: il dolce contro l’acido fa un agrodolce leggero.`);
+      if(S) proc.push(S.b === "nduja" ? `Aggiungi la nduja e lasciala sciogliere nel fondo, mescolando.` : `Aggiungi ${ar(S)}${S.g === "salume" ? " a listarelle" : ""}.`);
+      if(ctx.dopo) proc.push(`Rimetti ${P.g === "tenera" ? "la carne" : P.g === "filetto" ? "il pesce" : ar(P)} nella padella e lascia insaporire per un minuto.`);
+      proc.push(servi(AC && AC.g === "agrume" && AC.k !== "scorza di limone"));
+      tempo = P.b === "polpo" ? 70 : 30;
+    }
+    titolo = `${Maiusc(invNome(P.b))} in padella`;
+  }
+  return {cat:"Secondi", n:invTitolo(titolo, [SP, AC, S, E, C, DL]), ing, proc, tempo, diff, unico:false, scelti};
+}
+/* brasato (lezione «Brasare, glassare, gratinare...») */
+function invBrasato(P, pool, caso, ctx){
+  const scelti = [P];
+  const acc = invAccenti(P, pool, caso, scelti, {spalla:["verdura"], spallaFiltro: v=>["carota","sedano","porri","patate","funghi champignon","funghi porcini","zucca","verza"].includes(v.b),
+    sapidoGruppi: ["sapido"], sapidoP: .35, erbaGruppi: ["erbaCotta"], spezia: true, croccante: false, acido: caso() < .5, vinoOk: true});
+  const vinoR = pool.find(x=>x.k === "vino rosso"), pom = caso() < .6 ? pool.find(x=>x.g === "pomodoro") : null;
+  const ing = [], proc = [], it = x=>ing.push({n:invNome(x), q:invDose(x), k:x.k});
+  it(P); Object.values(acc).forEach(it); if(vinoR) it(vinoR); if(pom) ing.push({n:pom.k, q:"200 gr", k:pom.k});
+  const A = acc.aroma, S = acc.sapido, E = acc.erba, AC = acc.acido, SP = acc.spalla, SZ = acc.spezia;
+  proc.push(...invCuociProteina(P, ctx));
+  proc.push(`Nella stessa casseruola fai appassire ${A ? ar(A) + " " + agg("tritat", A) : "una cipolla tritata"}${SP ? " e " + ar(SP.b) + " " + (INV_VERD[SP.b].t || "a pezzi") : ""} per 8 minuti, a fuoco dolce.`);
+  if(!A) ing.push({n:"cipolla", q:"1", k:"cipolla"});
+  if(vinoR || (AC && AC.k === "vino bianco")) proc.push(`Rimetti la carne e versa il vino. Lascialo evaporare per 2 minuti a fuoco vivo.`); else proc.push(`Rimetti la carne.`);
+  proc.push(`Aggiungi ${pom ? ar(pom) + " e " : ""}acqua calda fino a metà altezza della carne${E ? ", con " + ar(E) : ""}${SZ ? " e " + (SZ.k === "noce moscata" ? "un pizzico di noce moscata" : ar(SZ)) : ""}. La carne non deve essere sommersa.`);
+  const ore = P.b === "ossobuco di vitello" ? "un’ora e mezza" : P.b === "coda di bue" ? "3 ore" : "2 ore e mezza";
+  proc.push(`Copri e cuoci a fuoco bassissimo per ${ore}, girando la carne ogni tanto. Deve appena sobbollire: se bolle forte, la carne si asciuga.`);
+  proc.push(`La carne è pronta quando si sfalda con una forchetta. Toglila e fai restringere il fondo a fuoco vivo finché è denso: è la salsa.`);
+  if(S) proc.push(`Unisci alla salsa ${ar(S)}.`);
+  if(AC && AC.g === "agrume") proc.push(`Prima di servire, grattugia sopra ${scorzaDi(AC)}: la nota fresca alleggerisce il piatto.`);
+  ctx.nota = "Brasare vuol dire cuocere a lungo in poco liquido, coperto: il collagene dei tagli duri si scioglie in gelatina e la carne diventa morbida.";
+  return {cat:"Secondi", n:invTitolo(`${Maiusc(invNome(P.b))} brasato`.replace(/brasato$/, agg("brasat", P)), [SP, AC, E, S]), ing, proc,
+          tempo: P.b === "coda di bue" ? 200 : P.b === "ossobuco di vitello" ? 110 : 170, diff:"media", unico:false, scelti};
+}
+/* polpette di carne */
+function invPolpette(P, pool, caso, ctx){
+  const scelti = [P];
+  const acc = invAccenti(P, pool, caso, scelti, {spalla:["verdura"], spallaFiltro: v=>INV_VERD[v.b].p, formaggio:["grattugia"], sapido:false,
+    erbaGruppi:["erbaFine"], spezia: caso() < .5, croccante:false, acido: caso() < .4, vinoOk:true});
+  const pane = pool.find(x=>x.g === "pane" || x.g === "pangrattato"), uova = pool.find(x=>x.g === "uova"), pom = caso() < .6 ? pool.find(x=>x.g === "pomodoro") : null;
+  const ing = [], proc = [], it = x=>ing.push({n:invNome(x), q:invDose(x), k:x.k});
+  it(P); Object.values(acc).forEach(it); if(pom) it(pom);
+  if(pane) ing.push({n:pane.k, q:pane.g === "pane" ? "2 fette" : "3 cucchiai", k:pane.k}); if(uova) ing.push({n:"uova", q:"1", k:"uova"});
+  const A = acc.aroma, F = acc.formaggio, E = acc.erba, SP = acc.spalla, SZ = acc.spezia, AC = acc.acido;
+  const leg = [pane ? (pane.g === "pane" ? "il pane ammollato in acqua e strizzato" : "il pangrattato") : "", uova ? "l’uovo" : "", F ? ar(F) + " " + agg("grattugiat", F) : "", E ? erbaT(E) : "", SZ && !/peperoncino/.test(SZ.k) ? "un pizzico di " + SZ.k : ""].filter(Boolean);
+  proc.push(`In una ciotola impasta la carne con ${leg.length ? leg.join(", ") + ", " : ""}sale e pepe. Lavora poco: la carne impastata troppo diventa dura.`);
+  proc.push(`Con le mani bagnate forma polpette grandi come una noce.`);
+  proc.push(`In una padella larga scalda 3 cucchiai d’olio${A ? " e fai appassire " + ar(A) + " " + agg("tritat", A) + " per 5 minuti" : ""}.`);
+  proc.push(`Rosola le polpette a fuoco medio, girandole, finché sono dorate: circa 6 minuti.`);
+  if(AC && AC.k === "vino bianco") proc.push(`Sfuma con il vino: versalo e lascialo evaporare.`);
+  if(pom) proc.push(`Versa ${ar(pom)}, sala e copri. Cuoci a fuoco dolce per 20 minuti, girando le polpette a metà.`);
+  if(SP) proc.push((pom ? "Intanto, in un’altra padella: " : "Togli le polpette. ") + invCuociVerdura(SP, "padella", pom ? "con un filo d’olio" : "nella stessa padella") + (pom ? " Servila accanto alle polpette." : " Poi rimetti le polpette e cuoci con il coperchio per 10 minuti."));
+  if(!pom && !SP) proc.push(`Abbassa il fuoco, copri e cuoci per altri 10 minuti.`);
+  if(AC && AC.g === "agrume") proc.push(`Prima di servire, grattugia sopra ${scorzaDi(AC)}.`);
+  ctx.temp = "Le polpette sono cotte quando al cuore arrivano a 71 °C."; ctx.lezioni.push("cotture");
+  return {cat:"Secondi", n:invTitolo(`Polpette${pom ? " al sugo" : ""}${SP ? " con " + invNome(SP) : ""}`, [F, E, AC, SZ]), ing, proc, tempo:45, diff:"facile", unico:false, scelti};
+}
+/* frittata al forno (niente da girare) */
+function invFrittata(P, pool, caso, ctx){
+  const scelti = [P];
+  const acc = invAccenti(P, pool, caso, scelti, {
+    spalla: ["verdura"], spallaFiltro: v=>INV_VERD[v.b].p, formaggio: ["grattugia","filante","cremoso","feta"],
+    sapidoGruppi: ["salume","sapido"], sapidoP: .45, erbaGruppi: ["erbaFine","erbaCotta"], acido: false, croccante: false
+  });
+  const ing = [{n:"uova", q:"6", k:P.k}], proc = [], it = x=>ing.push({n:invNome(x), q:invDose(x), k:x.k});
+  Object.values(acc).forEach(it);
+  const A = acc.aroma, S = acc.sapido, F = acc.formaggio, E = acc.erba, SP = acc.spalla;
+  ctx.forno = true; ctx.lezioni.push("uova");
+  proc.push(`Accendi il forno a 180 °C e ungi con un filo d’olio una teglia di 24 centimetri.`);
+  if(SP) proc.push(`In padella scalda 2 cucchiai d’olio${A ? " con " + ar(A) + " " + agg("tritat", A) : ""}. ` + invCuociVerdura(SP, "padella", "nella padella") + " Lascia intiepidire.");
+  else if(A) proc.push(`Fai appassire ${ar(A)} ${agg("tritat", A)} in padella con un filo d’olio per 5 minuti.`);
+  if(S && S.g === "salume") proc.push(`Rosola ${ar(S)} a listarelle in un padellino senza olio, finché è croccante.`);
+  proc.push(`In una ciotola sbatti le uova con un pizzico di sale${F && F.g === "grattugia" ? ", " + ar(F) + " " + agg("grattugiat", F) : ""}${E ? " e " + erbaT(E) : ""}.`);
+  const dentro = [SP ? "la verdura" : A ? ar(A) : "", S ? ar(S) : "", F && F.g !== "grattugia" ? ar(F) + " a pezzetti" : ""].filter(Boolean);
+  proc.push(`${dentro.length ? "Unisci " + elenco(dentro) + " e versa" : "Versa"} tutto nella teglia.`);
+  proc.push(`Cuoci in forno per 20 minuti, finché la frittata è gonfia e il centro non trema più se muovi la teglia.`);
+  ctx.nota = "In forno la frittata cuoce da tutte le parti insieme: non c’è da girarla, e resta alta e morbida.";
+  return {cat:"Secondi", n:invTitolo(`Frittata al forno${SP ? " con " + invNome(SP) : ""}`, [S, F, E]), ing, proc, tempo:35, diff:"facile", unico:false, scelti};
+}
+/* polpette di legumi al forno */
+function invPolpetteLegumi(P, pool, caso, ctx){
+  const scelti = [P];
+  const acc = invAccenti(P, pool, caso, scelti, {
+    formaggio: caso() < .5 ? ["grattugia"] : null, sapido: false,
+    erbaGruppi: ["erbaFine"], spezia: true, acido: true, yogurtOk: true, croccante: false
+  });
+  const lega = pool.find(x=>x.g === "pangrattato") || pool.find(x=>x.g === "pane");
+  const ing = [{n:invNome(P), q:"500 gr", k:P.k}, {n:lega.k, q:lega.g === "pangrattato" ? "5 cucchiai" : "2 fette", k:lega.k}], proc = [];
+  Object.values(acc).forEach(x=>ing.push({n:invNome(x), q:invDose(x), k:x.k}));
+  const A = acc.aroma, F = acc.formaggio, E = acc.erba, SZ = acc.spezia, AC = acc.acido;
+  ctx.forno = true;
+  proc.push(...invCuociProteina(P, ctx));
+  proc.push(`Accendi il forno a 200 °C.`);
+  proc.push(`Schiaccia ${ar(P.b)} con una forchetta, o frullal${invGn(P.b) === "fp" ? "e" : "i"} appena: deve restare qualche pezzetto.`);
+  const dentro = [lega.g === "pangrattato" ? "il pangrattato" : "il pane sbriciolato", A ? ar(A) + " " + agg("tritat", A) + " fine" : "", F ? ar(F) + " " + agg("grattugiat", F) : "", SZ ? (/peperoncino/.test(SZ.k) ? ar(SZ) + " " + agg("tritat", SZ) : "un cucchiaino di " + SZ.k) : "", E ? erbaT(E) : ""].filter(Boolean);
+  proc.push(`Unisci ${dentro.join(", ")}, sale e pepe. Se l’impasto è troppo morbido, aggiungi altro ${lega.g === "pangrattato" ? "pangrattato" : "pane"}.`);
+  proc.push(`Forma polpette grandi come una noce e schiacciale appena. Mettile su una teglia con carta forno e spennellale d’olio.`);
+  proc.push(`Cuoci in forno per 20–25 minuti, girandole a metà, finché sono dorate.`);
+  if(AC) proc.push(AC.k === "yogurt" ? `Servi con lo yogurt condito con un pizzico di sale${E ? " e un po’ di " + E.k : ""}.` : AC.g === "agrume" ? `Servi con spicchi ${di_(AC)} da spremere sopra.` : `Servi con qualche goccia di ${AC.k}.`);
+  return {cat:"Secondi", n:invTitolo(`Polpette di ${invNome(P.b)}${SZ && !/peperoncino/.test(SZ.k) ? " " + (/^[aeiou]/.test(SZ.k) ? "all’" : SZ.k === "zafferano" || SZ.k === "zenzero" ? "allo " : invGn(SZ) === "fs" ? "alla " : "al ") + SZ.k : ""}`, [AC && AC.k === "yogurt" ? AC : null, E, F]), ing, proc, tempo:40, diff:"facile", unico:false, scelti};
+}
+
+/* --- CONTORNI --- */
+function invContorno(P, pool, caso, ctx){
+  const d = INV_VERD[P.b];
+  const modi = [d.f ? "forno" : "", d.p ? "padella" : "", d.r ? "crudo" : ""].filter(Boolean);
+  const modo = modi[Math.floor(caso() * modi.length)];
+  const scelti = [P];
+  const gratin = modo === "forno" && pool.some(x=>x.g === "grattugia" || x.g === "pangrattato") && caso() < .35;
+  const acc = invAccenti(P, pool, caso, scelti, {
+    aroma: modo !== "crudo" || caso() < .4, aromaSolo: modo === "crudo" ? ["cipolla rossa","cipollotto"] : null,
+    formaggio: gratin ? ["grattugia"] : modo === "crudo" && caso() < .5 ? ["grattugia","feta"] : null,
+    sapidoGruppi: ["sapido","conservaPesce"], sapidoP: .45, erbaGruppi: modo === "forno" ? ["erbaCotta","erbaFine"] : modo === "crudo" ? ["erbaFine"] : ["erbaFine","erbaCotta"], crudo: modo === "crudo",
+    spezia: modo !== "crudo", croccante: true, croccanteP: gratin ? 1 : .45, dolce: true
+  });
+  const ing = [{n:invNome(P), q:["rucola","lattuga romana"].includes(P.b) ? "200 gr" : "700 gr", k:P.k}], proc = [];
+  Object.values(acc).forEach(x=>ing.push({n:invNome(x), q:invDose(x), k:x.k}));
+  const A = acc.aroma, S = acc.sapido, F = acc.formaggio, E = acc.erba, C = acc.croccante, AC = acc.acido, SZ = acc.spezia, DL = acc.dolce;
+  const pepeIn = SZ && /peperoncino/.test(SZ.k);
+  let titolo = "";
+  if(modo === "forno"){
+    ctx.forno = true;
+    proc.push(`Accendi il forno a 200 °C.`);
+    const con = ["3 cucchiai d’olio", "sale", A ? ar(A) + (A.k === "aglio" ? " in camicia, cioè con la buccia" : " a spicchi") : "", E && E.g === "erbaCotta" ? ar(E) : "", SZ ? (pepeIn ? ar(SZ) : "un cucchiaino di " + SZ.k) : ""].filter(Boolean);
+    proc.push(`Taglia ${ar(P.b)} ${d.t}. Metti tutto in una ciotola con ${elenco(con)}, e mescola con le mani.`);
+    proc.push(`Stendi in una teglia con carta forno, in un solo strato: se i pezzi si toccano cuociono a vapore e non dorano.`);
+    if(gratin){ proc.push(`Cuoci per ${Math.max(10, d.f - 10)} minuti.`);
+      const sopra = [F ? ar(F) + " " + agg("grattugiat", F) : "", C ? (C.g === "fruttaSecca" ? ar(C) + " " + agg("tritat", C) : "il pangrattato") : ""].filter(Boolean);
+      proc.push(`Cospargi con ${elenco(sopra)} e un filo d’olio. Rimetti in forno per 10 minuti, nella parte alta, finché la superficie è dorata: si chiama gratinatura.`); ctx.lezioni.push("cotture-mestiere"); }
+    else proc.push(`Cuoci per ${d.f} minuti, girando a metà, finché i bordi sono dorati.`);
+    const fine = [AC ? (AC.g === "agrume" ? scorzaDi(AC) + " e qualche goccia di succo" : AC.k === "yogurt" ? "qualche cucchiaio di yogurt" : AC.k === "vino bianco" ? "" : "un filo di " + AC.k) : "", DL ? (DL.g === "dolce" ? "un filo di " + DL.k : ar(DL)) : "", S ? ar(S) : "", E && E.g === "erbaFine" ? erbaT(E) : "", C && !gratin ? nomeC(C) : ""].filter(Boolean);
+    if(fine.length) proc.push(`Appena sfornato, condisci con ${elenco(fine)}.`);
+    titolo = gratin ? `${Maiusc(invNome(P.b))} ${agg("gratinat", P)}` : `${Maiusc(invNome(P.b))} al forno`;
+  } else if(modo === "padella"){
+    if(C) proc.push(C.g === "pangrattato" ? `Tosta il pangrattato in un padellino con un filo d’olio finché è dorato.` : `Tosta ${ar(C)} in un padellino senza grassi per 3 minuti.`);
+    const nellOlio = [A ? (A.k === "aglio" ? "l’aglio schiacciato" : ar(A) + " a fettine") : "", pepeIn ? ar(SZ) : "", E && E.g === "erbaCotta" ? ar(E) : ""].filter(Boolean);
+    if(nellOlio.length) proc.push(`In una padella larga scalda 3 cucchiai d’olio con ${elenco(nellOlio)}, per 3 minuti a fuoco dolce.`);
+    proc.push(invCuociVerdura(P, "padella", nellOlio.length ? "nella padella" : "in padella con 3 cucchiai d’olio"));
+    if(S) proc.push(`A metà cottura unisci ${ar(S)}.`);
+    if(SZ && !pepeIn) proc.push(`Aggiungi un pizzico di ${SZ.k} e mescola.`);
+    if(AC && AC.g === "acido" && AC.k !== "yogurt") proc.push(`Alla fine versa ${AC.k === "vino bianco" ? "il vino" : AC.k === "aceto balsamico" ? "l’aceto balsamico" : "l’aceto"} e lascia evaporare un minuto a fuoco vivo.`);
+    if(DL) proc.push(`Unisci ${DL.g === "dolce" ? "un filo di " + DL.k : ar(DL)}: con l’acido fa un agrodolce leggero.`);
+    const fine = [AC && AC.g === "agrume" ? scorzaDi(AC) : "", AC && AC.k === "yogurt" ? "qualche cucchiaio di yogurt" : "", F ? ar(F) + (F.g === "feta" ? " sbriciolata" : " a scaglie") : "", E && E.g === "erbaFine" ? erbaT(E) : "", C ? nomeC(C) : ""].filter(Boolean);
+    if(fine.length) proc.push(`Servi con ${elenco(fine)}.`);
+    titolo = `${Maiusc(invNome(P.b))} in padella`;
+  } else {
+    const mand = ["finocchi","carota","cetriolo","barbabietole","zucchine","cavolo cappuccio"].includes(P.b);
+    proc.push(invCuociVerdura(P, "crudo") + (mand ? " Una mandolina ti aiuta ad avere fette sottili e tutte uguali." : ""));
+    if(mand) ctx.mandolina = true;
+    if(A) proc.push(`Affetta ${ar(A)} sottilissim${invGn(A) === "fs" ? "a" : "o"} e ${invGn(A) === "fs" ? "lasciala" : "lascialo"} 10 minuti in acqua fredda: diventa più dolce.`);
+    if(C) proc.push(C.g === "pangrattato" ? `Tosta il pangrattato in un padellino con un filo d’olio.` : `Tosta ${ar(C)} in un padellino senza grassi per 3 minuti.`);
+    const cond = AC ? (AC.g === "agrume" ? succoDi(AC) : AC.k === "yogurt" ? "2 cucchiai di yogurt" : AC.k === "vino bianco" ? "un cucchiaio di aceto" : "un cucchiaio di " + AC.k) : "un cucchiaio di aceto";
+    if(!AC || AC.k === "vino bianco") ing.push({n:"aceto", q:"1 cucchiaio", k:"aceto"});
+    proc.push(`In una ciotolina sbatti 4 cucchiai d’olio con ${cond}${DL && DL.g === "dolce" ? ", un cucchiaino di " + DL.k : ""}, sale e pepe. Olio e acido restano uniti per qualche minuto: è un’emulsione.`);
+    const sopra = [S ? ar(S) : "", F ? ar(F) + (F.g === "feta" ? " sbriciolata" : " a scaglie") : "", DL && DL.g !== "dolce" ? ar(DL) : "", E ? ar(E) : "", C ? nomeC(C) : ""].filter(Boolean);
+    proc.push(`Condisci all’ultimo momento, così la verdura resta croccante.${sopra.length ? " Finisci con " + elenco(sopra) + "." : ""}`);
+    titolo = `Insalata di ${invNome(P.b)}`;
+  }
+  if(AC && AC.k === "vino bianco" && modo === "forno") ing.splice(ing.findIndex(i=>i.k === "vino bianco"), 1);
+  return {cat:"Contorni", n:invTitolo(titolo, [AC && AC.k !== "vino bianco" ? AC : null, S, F, C, E, DL]), ing, proc,
+          tempo: modo === "forno" ? d.f + 10 : modo === "padella" ? (d.p||8) + 10 : 15, diff:"facile", unico:false, scelti};
+}
+
+/* --- ANTIPASTI: crostini o insalata composta --- */
+function invAntipasto(P, pool, caso, ctx){
+  const pane = pool.find(x=>x.g === "pane");
+  const crudo = P.g === "verdura" && INV_VERD[P.b].r;
+  if(pane && (!crudo || caso() < .5)){ const r = invCrostini(P, pool, caso, ctx, pane); if(r) return r; }
+  if(crudo || P.g === "fruttaFresca" || P.g === "feta" || P.g === "cremoso" || P.b === "salmone affumicato") return invInsalataComposta(P, pool, caso, ctx);
+  return null;
+}
+function invCrostini(P, pool, caso, ctx, pane){
+  const scelti = [P, pane];
+  /* la base da spalmare: un formaggio fresco, una crema di legumi o una crema di verdura */
+  const baseCrema = ["cremoso","legume"].includes(P.g) ? P : invScegli(pool, ["cremoso","legume"], scelti, P, caso);
+  const cremaVerd = !baseCrema && P.g === "verdura" && INV_CREMA_OK(P.b);
+  if(!baseCrema && !cremaVerd) return null;
+  if(baseCrema && baseCrema !== P) scelti.push(baseCrema);
+  let top = null;
+  if(P.g === "verdura" && !cremaVerd) top = P;
+  else if(P.g === "fruttaFresca" || P.b === "salmone affumicato") top = P;
+  else top = invScegli(pool, ["verdura","fruttaFresca"], scelti, P, caso, v=>v.g === "fruttaFresca" || INV_VERD[v.b].p || INV_VERD[v.b].f || INV_VERD[v.b].r);
+  if(top && top !== P) scelti.push(top);
+  const acc = invAccenti(P, pool, caso, scelti, {
+    aroma: false, sapidoGruppi: ["sapido","salume","conservaPesce"], sapidoP: .5, erbaGruppi: ["erbaFine"], salumiCrudi: true,
+    spezia: false, croccante: true, croccanteP: .6, dolce: true, acido: true
+  });
+  const ing = [{n:pane.k, q:"8 fette", k:pane.k}], proc = [];
+  if(baseCrema) ing.push({n:invNome(baseCrema), q:"250 gr", k:baseCrema.k});
+  if(cremaVerd) ing.push({n:invNome(P), q:"400 gr", k:P.k});
+  if(top) ing.push({n:invNome(top), q:top.g === "verdura" ? "300 gr" : invDose(top), k:top.k});
+  Object.values(acc).forEach(x=>ing.push({n:invNome(x), q:invDose(x), k:x.k}));
+  const S = acc.sapido, E = acc.erba, C = acc.croccante, AC = acc.acido, DL = acc.dolce;
+  if(baseCrema && baseCrema.g === "legume"){ proc.push(...invCuociProteina(baseCrema, ctx));
+    proc.push(`Frulla ${ar(baseCrema.b)} con 3 cucchiai d’olio, un po’ d’acqua e sale${AC && AC.g === "agrume" ? ", con qualche goccia di succo " + di_(AC) : ""}, finché la crema è liscia.`); ctx.frullatore = true; }
+  else if(baseCrema) proc.push(`In una ciotola lavora ${ar(baseCrema)} con una forchetta, un filo d’olio, sale e pepe, finché ${invGn(baseCrema) === "fs" ? "è cremosa" : "è cremoso"}.`);
+  else { proc.push(invCuociVerdura(P, "crema")); proc.push(`Frulla con 3 cucchiai d’olio e sale: è la crema da spalmare.`); ctx.frullatore = true; }
+  if(top && top.g === "verdura"){ const d = INV_VERD[top.b], m = d.f ? "forno" : d.p ? "padella" : "crudo"; proc.push(invCuociVerdura(top, m)); if(m === "forno") ctx.forno = true; }
+  if(top && top.g === "fruttaFresca") proc.push(invTagliaFrutta(top));
+  if(top && top.b === "salmone affumicato") proc.push(`Taglia il salmone a striscioline.`);
+  if(S && S.g === "salume" && ["guanciale","pancetta","speck","nduja","lardo"].includes(S.b)) proc.push(`Rosola ${ar(S)} a listarelle in un padellino senza olio, finché è croccante.`);
+  if(C) proc.push(C.g === "pangrattato" ? `Tosta il pangrattato in un padellino con un filo d’olio.` : `Tosta ${ar(C)} in un padellino senza grassi per 3 minuti e tritali grossolanamente.`);
+  proc.push(`Tosta le fette di pane in forno a 200 °C per 5 minuti, o su una griglia, finché sono croccanti.`);
+  const sopra = [top ? (top.g === "fruttaFresca" && top.k === "melagrana" ? "gli arilli di melagrana" : ar(top)) : "", S ? ar(S) : "", DL ? (DL.g === "dolce" ? "un filo di " + DL.k : ar(DL)) : "", AC && AC.g === "acido" && !["yogurt","vino bianco"].includes(AC.k) ? "qualche goccia di " + AC.k : "", AC && AC.g === "agrume" ? "un po’ di " + scorzaDi(AC).replace(/^la /, "") : "", E ? ar(E) : "", C ? nomeC(C) : ""].filter(Boolean);
+  proc.push(`Spalma la crema sul pane ancora tiepido e completa con ${elenco(sopra) || "un filo d’olio"}. Servi subito, prima che il pane si ammorbidisca.`);
+  const cosa = baseCrema ? (baseCrema.g === "legume" ? "crema di " + invNome(baseCrema.b) : invNome(baseCrema)) : "crema di " + invNome(P);
+  return {cat:"Antipasti", n:invTitolo(`Crostini con ${elenco([cosa, top ? invNome(top.b) : ""].filter(Boolean))}`, [S, C, DL, E]), ing, proc, tempo:25, diff:"facile", unico:false, scelti};
+}
+function invInsalataComposta(P, pool, caso, ctx){
+  const scelti = [P];
+  const base = P.g === "verdura" ? P : invScegli(pool, ["verdura"], scelti, P, caso, v=>INV_VERD[v.b].r && !INV_VERD[v.b].acc);
+  if(!base) return null;
+  if(base !== P) scelti.push(base);
+  const acc = invAccenti(P, pool, caso, scelti, {
+    aroma: caso() < .3, aromaSolo: ["cipolla rossa","cipollotto"],
+    spalla: P.g === "fruttaFresca" ? null : ["fruttaFresca"],
+    formaggio: INV_PESCI.includes(P.g) || INV_FORMAGGI.includes(P.g) ? null : ["feta","cremoso","grattugia"],
+    sapidoGruppi: ["sapido","conservaPesce"], sapidoP: .4, erbaGruppi: ["erbaFine"], croccante: true, croccanteP: .85, dolce: true, crudo: true
+  });
+  const ing = [], proc = [], it = x=>ing.push({n:invNome(x), q:x.g === "verdura" ? (["rucola","lattuga romana"].includes(x.b) ? "150 gr" : "400 gr") : invDose(x), k:x.k});
+  it(P); if(base !== P) it(base); Object.values(acc).forEach(it);
+  const A = acc.aroma, S = acc.sapido, F = acc.formaggio, E = acc.erba, C = acc.croccante, AC = acc.acido, DL = acc.dolce;
+  const FR = acc.spalla || (P.g === "fruttaFresca" ? P : null);
+  const mand = ["finocchi","carota","cetriolo","barbabietole","zucchine","cavolo cappuccio"].includes(base.b);
+  if(mand) ctx.mandolina = true;
+  proc.push(invCuociVerdura(base, "crudo"));
+  if(FR) proc.push(invTagliaFrutta(FR));
+  if(A) proc.push(`Affetta ${ar(A)} sottilissim${invGn(A) === "fs" ? "a" : "o"} e ${invGn(A) === "fs" ? "lasciala" : "lascialo"} 10 minuti in acqua fredda: diventa più dolce.`);
+  if(C) proc.push(C.g === "pangrattato" ? `Tosta il pangrattato in un padellino con un filo d’olio.` : `Tosta ${ar(C)} in un padellino senza grassi per 3 minuti.`);
+  const cond = AC ? (AC.g === "agrume" ? succoDi(AC) : AC.k === "yogurt" ? "2 cucchiai di yogurt" : AC.k === "vino bianco" ? "un cucchiaio di aceto" : "un cucchiaio di " + AC.k) : "un cucchiaio di aceto";
+  if(!AC || AC.k === "vino bianco") ing.push({n:"aceto", q:"1 cucchiaio", k:"aceto"});
+  proc.push(`In una ciotolina sbatti 4 cucchiai d’olio con ${cond}${DL && DL.g === "dolce" ? ", un cucchiaino di " + DL.k : ""}, sale e pepe.`);
+  const sopra = [FR ? (FR.k === "melagrana" ? "gli arilli" : ar(FR)) : "", P !== base && P !== FR ? ar(P) + (P.g === "feta" ? " sbriciolata" : P.g === "cremoso" ? " a cucchiaiate" : "") : "", F ? ar(F) + (F.g === "feta" ? " sbriciolata" : F.g === "grattugia" ? " a scaglie" : " a cucchiaiate") : "", S ? ar(S) : "", DL && DL.g !== "dolce" ? ar(DL) : ""].filter(Boolean);
+  proc.push(`Disponi ${ar(base.b)} nel piatto${sopra.length ? " e sopra " + elenco(sopra) : ""}. Condisci all’ultimo momento e finisci con ${elenco([E ? ar(E) : "", C ? nomeC(C) : ""].filter(Boolean)) || "un filo d’olio"}.`);
+  return {cat:"Antipasti", n:invTitolo(`Insalata di ${invNome(base)}${P !== base ? " con " + invNome(P) : ""}`, [FR !== P ? FR : null, F, C, S, E]), ing, proc, tempo:15, diff:"facile", unico:false, scelti};
+}
+
+/* --- PIATTO UNICO: insalata di cereali, teglia con le patate, zuppa di legumi --- */
+function invUnico(P, pool, caso, ctx){
+  const patate = pool.find(x=>x.b === "patate");
+  const strade = [];
+  if(pool.some(x=>x.g === "cereale") && (P.g === "verdura" || ["filetto","crostacei","cefalopodi","legume","tofu","tenera"].includes(P.g))) strade.push("cereale");
+  if(patate && ["tenera","filetto","salsiccia"].includes(P.g)) strade.push("teglia");
+  if((P.g === "legume" && pool.some(x=>x.g === "verdura" && (INV_VERD[x.b].p || INV_VERD[x.b].c))) || (P.g === "verdura" && (INV_VERD[P.b].p || INV_VERD[P.b].c) && pool.some(x=>x.g === "legume"))) strade.push("zuppa");
+  if(!strade.length) return null;
+  const s = strade[Math.floor(caso() * strade.length)];
+  if(s === "cereale") return invInsalataCereale(P, pool, caso, ctx);
+  if(s === "teglia") return invTeglia(P, pool, caso, ctx, patate);
+  return invZuppa(P, pool, caso, ctx);
+}
+function invTeglia(P, pool, caso, ctx, patate){
+  const scelti = [P, patate];
+  const pesce = P.g === "filetto";
+  const acc = invAccenti(P, pool, caso, scelti, {
+    spalla: ["verdura"], spallaFiltro: v=>INV_VERD[v.b].f && v.b !== "patate", sapidoGruppi: pesce ? ["sapido"] : ["sapido","salume"], sapidoP: .5,
+    erbaGruppi: ["erbaCotta","erbaFine"], spezia: true, croccante: false, vinoOk: true
+  });
+  const ing = [{n:invNome(P), q:invDose(P), k:P.k}, {n:patate.k, q:"700 gr", k:patate.k}], proc = [];
+  Object.values(acc).forEach(x=>ing.push({n:invNome(x), q:invDose(x), k:x.k}));
+  const A = acc.aroma, S = acc.sapido, E = acc.erba, AC = acc.acido, SP = acc.spalla, SZ = acc.spezia;
+  ctx.forno = true;
+  if(pesce && ["branzino","orata","sgombro","alici fresche","sarde"].includes(P.b)) proc.push(...invCuociProteina(P, ctx));
+  proc.push(`Accendi il forno a 200 °C.`);
+  const con = ["3 cucchiai d’olio","sale", A ? ar(A) + (A.k === "aglio" ? " in camicia, cioè con la buccia" : " a spicchi") : "", E && E.g === "erbaCotta" ? ar(E) : "", SZ ? (/peperoncino/.test(SZ.k) ? ar(SZ) : "un cucchiaino di " + SZ.k) : ""].filter(Boolean);
+  proc.push(`Taglia le patate a spicchi${SP ? " e " + ar(SP.b) + " " + INV_VERD[SP.b].t : ""}. Condisci con ${elenco(con)}.`);
+  proc.push(`Stendi tutto in una teglia larga, in un solo strato, e cuoci per ${pesce ? 25 : 15} minuti.`);
+  if(P.g === "tenera") proc.push(`Intanto taglia ${ar(P)} a pezzi regolari, sala e ungi d’olio.`);
+  if(P.g === "salsiccia") proc.push(`Intanto taglia la salsiccia a pezzi di 4 centimetri.`);
+  if(pesce) proc.push(`Intanto sala ${ar(P)} e ungi${pr(P)} d’olio.`);
+  const quanto = pesce ? "12–15 minuti, finché il pesce si sfalda con una forchetta" : ["agnello","coniglio"].includes(P.b) ? "35–40 minuti, finché la carne si stacca dall’osso" : /pollo/.test(P.b) ? "25–30 minuti, finché il pollo al cuore arriva a 74 °C" : "25 minuti, girando a metà";
+  proc.push(`Adagia ${pesce ? "il pesce" : P.g === "salsiccia" ? "la salsiccia" : "la carne"} sopra le verdure${AC && AC.k === "vino bianco" ? " e bagna con il vino" : ""}. Rimetti in forno per ${quanto}.`);
+  if(S) proc.push(`Negli ultimi 5 minuti aggiungi ${ar(S)}.`);
+  const fine = [AC && AC.g === "agrume" ? scorzaDi(AC) + " grattugiata" : "", AC && AC.g === "acido" && !["vino bianco","yogurt"].includes(AC.k) ? "un filo di " + AC.k : "", AC && AC.k === "yogurt" ? "lo yogurt a parte" : "", E && E.g === "erbaFine" ? erbaT(E) : ""].filter(Boolean);
+  if(fine.length) proc.push(`Prima di servire, completa con ${elenco(fine)}.`);
+  ctx.nota = "Le patate partono prima perché hanno bisogno di più tempo: così tutto è pronto nello stesso momento.";
+  return {cat:"Secondi", n:invTitolo(`Teglia di ${invNome(P.b)} e patate`, [SP, AC, E, S]), ing, proc, tempo: pesce ? 50 : 60, diff:"facile", unico:true, scelti};
+}
+function invZuppa(P, pool, caso, ctx){
+  const leg = P.g === "legume" ? P : invScegli(pool, ["legume"], [P], P, caso);
+  const verd = P.g === "verdura" ? P : invScegli(pool, ["verdura"], [P], P, caso, v=>INV_VERD[v.b].p || INV_VERD[v.b].c);
+  if(!leg || !verd) return null;
+  const scelti = [P, leg === P ? verd : leg];
+  const acc = invAccenti(P, pool, caso, scelti, {
+    sapidoGruppi: ["salume","sapido"], sapidoP: .4, formaggio: ["grattugia"],
+    erbaGruppi: ["erbaCotta","erbaFine"], spezia: true, croccante: true, croccanteP: .5, acido: false
+  });
+  const pane = pool.find(x=>x.g === "pane"), brodo = pool.find(x=>x.g === "brodo"), pom = caso() < .5 ? pool.find(x=>x.g === "pomodoro") : null;
+  const ing = [{n:invNome(leg), q:"400 gr", k:leg.k}, {n:invNome(verd), q:"400 gr", k:verd.k}], proc = [];
+  Object.values(acc).forEach(x=>ing.push({n:invNome(x), q:invDose(x), k:x.k}));
+  if(pane) ing.push({n:pane.k, q:"4 fette", k:pane.k}); if(brodo) ing.push({n:brodo.k, q:"1 l", k:brodo.k}); if(pom) ing.push({n:pom.k, q:"200 gr", k:pom.k});
+  const A = acc.aroma, S = acc.sapido, F = acc.formaggio, E = acc.erba, SZ = acc.spezia, C = acc.croccante;
+  proc.push(...invCuociProteina(leg, ctx));
+  proc.push(`In una pentola scalda 3 cucchiai d’olio${S && S.g === "salume" ? " con " + ar(S) + " a dadini" : ""} e fai appassire ${A ? ar(A) + " " + agg("tritat", A) : "una cipolla tritata"} per 8 minuti a fuoco dolce: è il soffritto.`);
+  if(!A) ing.push({n:"cipolla", q:"1", k:"cipolla"});
+  ctx.lezioni.push("soffritto");
+  if(INV_PREP[verd.b] || /surgelat/.test(verd.k)) proc.splice(proc.length - 1, 0, invPrep(verd));
+  const dentro = [ar(verd.b) + (INV_PREP[verd.b] || /surgelat/.test(verd.k) ? "" : " " + (INV_VERD[verd.b].t || "a pezzi")), ar(leg.b), pom ? ar(pom) : "", E && E.g === "erbaCotta" ? ar(E) : "", SZ ? (/peperoncino/.test(SZ.k) ? ar(SZ) : SZ.k === "noce moscata" ? "un pizzico di noce moscata" : "un cucchiaino di " + SZ.k) : ""].filter(Boolean);
+  proc.push(`Unisci ${elenco(dentro)}.`);
+  proc.push(`Copri con ${brodo ? "il brodo" : "un litro d’acqua calda"}, sala e cuoci a fuoco dolce per 25 minuti.`);
+  proc.push(`Frullane un terzo e rimettilo nella pentola: la zuppa diventa cremosa, ma restano dei pezzi interi.`);
+  ctx.frullatore = true;
+  if(C) proc.push(C.g === "pangrattato" ? `Tosta il pangrattato in un padellino con un filo d’olio.` : `Tosta ${ar(C)} in un padellino senza grassi.`);
+  if(pane) proc.push(`Tosta il pane e mettilo sul fondo dei piatti.`);
+  const sopra = ["un filo d’olio a crudo", F ? ar(F) + " " + agg("grattugiat", F) : "", E && E.g === "erbaFine" ? erbaT(E) : "", S && S.g === "sapido" ? ar(S) : "", C ? nomeC(C) : ""].filter(Boolean);
+  proc.push(`Servi la zuppa con ${elenco(sopra)}.`);
+  ctx.nota = "Frullare una parte della zuppa la addensa senza farina: l’amido dei legumi fa da legante.";
+  return {cat:"Primi", n:invTitolo(`Zuppa di ${invNome(leg.b)} e ${invNome(verd.b)}`, [S, E, C, F]), ing, proc, tempo:45, diff:"facile", unico:true, scelti};
+}
+
+/* --- rifinitura: campi della ricetta, spiegazione del foodpairing, controlli --- */
+let _invId = 0;
+function invCompleta(ric, P, ctx){
+  const visti = new Set();
+  ric.ing = ric.ing.filter(i=>{ if(visti.has(i.k)) return false; visti.add(i.k); return true; });
+  /* note su conserve e surgelati, prese dall'app */
+  const note = [];
+  ric.ing.forEach(i=>{ const n = (D.note_conserve||{})[i.k]; if(n && !/^Scola/.test(n)) note.push(n); });
+  if(ctx.temp) ric.proc.push(ctx.temp);
+  ric.scelti.filter(x=>/surgelat/.test(x.k) && INV_PROTEINE.concat(["conservaPesce"]).includes(x.g)).forEach(x=>{
+    ric.proc.unshift(`La sera prima, metti ${ar(x)} a scongelare in frigorifero, mai a temperatura ambiente o sotto l’acqua calda. Prima di cuocer${pr(x)}, asciuga${pr(x)} bene con carta da cucina.`);
+  });
+  const k = ric.ing.map(i=>i.k);
+  const gr = x=>INV_RUOLO[invBase(x)];
+  const carne = k.some(x=>CARNE.has(x) || INV_CARNI.includes(gr(x)));
+  const pesce = k.some(x=>PESCE.has(x) || INV_PESCI.includes(gr(x)));
+  const anim = carne || pesce || k.some(x=>LATT.has(x) || INV_FORMAGGI.includes(gr(x))) || k.some(x=>["miele","burro","panna","uova","yogurt"].includes(invBase(x)));
+  const tags = [];
+  if(!carne && !pesce) tags.push("vegetariano");
+  if(!anim) tags.push("vegano");
+  if(!ctx.forno) tags.push("senza forno");
+  const att = []; if(ctx.frullatore && D.attrezzi["frullatore o minipimer"]) att.push("frullatore o minipimer");
+  const att_opz = []; if(ctx.mandolina && D.attrezzi["mandolina"]) att_opz.push("mandolina");
+  const perche = invPerche(ric.scelti, P);
+  const fp = perche.find(x=>x.tipo === "nuovo") || perche.find(x=>x.tipo === "molecole");
+  const r = {
+    id: -(Date.now() * 10 + (++_invId % 10)), n: ric.n, cat: ric.cat, tempo: ric.tempo, diff: ric.diff, tags, ing: ric.ing, proc: ric.proc,
+    nota: [note.join(" "), ctx.nota || "", fp ? "Perché funziona: " + fp.testo.replace(/<[^>]+>/g, "") : ""].filter(Boolean).join(" "),
+    luogo: "", estero: false, all: [], unico: !!ric.unico, nvoci: ric.ing.length, porz: 4,
+    minimo: false, leggero: !k.some(x=>["burro","panna","mascarpone","gorgonzola"].includes(x)),
+    att, att_opz, inventata: Date.now()
+  };
+  r._perche = perche;
+  r._lezioni = [...new Set(ctx.lezioni.concat("sapori"))];
+  preparaRicetta(r);
+  /* il parente piu' stretto nell'archivio: se e' quasi uguale, non e' un'invenzione */
+  const kb = new Set(k.map(invBase));
+  let simile = null, best = 0;
+  D.ricette.forEach(x=>{
+    const xb = new Set(x.ing.map(i=>invBase(i.k)));
+    let inter = 0; kb.forEach(a=>{ if(xb.has(a)) inter++; });
+    const j = inter >= 3 ? inter / (kb.size + xb.size - inter) : 0;
+    if(j > best){ best = j; simile = x; }
+  });
+  r._simile = best >= .5 ? {id: simile.id, n: simile.n, j: best} : null;
+  r._copia = best >= .8;
+  return r;
+}
+/* le molecole si toccano e si apre la spiegazione (come nelle lezioni) */
+function invMolHtml(m){
+  const d = (D.molecole||{})[m];
+  const def = Maiusc(m) + (d ? ": dà un profumo di " + d.desc + "." : ".") + " È uno dei composti aromatici che il naso riconosce in ingredienti diversi.";
+  return `<span class="sc-def" data-def="${esc(def)}">${esc(m)}</span>`;
+}
+function invPerche(scelti, P){
+  const out = [];
+  const altri = (scelti||[]).filter(x=>x !== P && !["pasta","riso","gnocchi","pane"].includes(x.g));
+  /* 1) molecole in comune con il protagonista: prima quelle mai viste insieme nell'archivio (l'invenzione vera) */
+  const conMol = altri.map(x=>({x, mol: invMolecole(P.b, x.b).filter(INV_DISTINTIVA), n: invInsieme(P.b, x.b)})).filter(o=>o.mol.length);
+  conMol.sort((a,b)=>(a.n ? 1 : 0) - (b.n ? 1 : 0) || b.mol.length - a.mol.length);
+  const usati = new Set();
+  let spiegato = false;
+  conMol.slice(0, 2).forEach(o=>{
+    usati.add(o.x);
+    const mol = o.mol.slice(0, 2).map(invMolHtml).join(" e ");
+    const coppia = `${Maiusc(ar(P.b))} e ${ar(o.x.b)}`;
+    if(o.n) out.push({tipo:"molecole", testo:`${coppia} hanno in comune ${mol}: i loro profumi si richiamano. Nell’archivio stanno insieme in ${o.n} ${o.n === 1 ? "ricetta" : "ricette"}.`});
+    else { out.push({tipo:"nuovo", testo: spiegato
+        ? `Anche ${ar(P.b)} e ${ar(o.x.b)} nell’archivio non stanno mai insieme, ma condividono ${mol}.`
+        : `${coppia} nell’archivio non stanno mai insieme, ma hanno in comune ${mol}. È l’idea del foodpairing: ingredienti con le stesse molecole aromatiche tendono ad abbinarsi.`});
+      spiegato = true; }
+  });
+  /* 2) abbinamenti collaudati */
+  const coll = altri.filter(x=>!usati.has(x)).map(x=>({x, n: invInsieme(P.b, x.b)})).filter(o=>o.n >= 2).sort((a,b)=>b.n - a.n);
+  if(coll.length) out.push({tipo:"tradizione", testo: coll.length === 1
+    ? `${Maiusc(ar(P.b))} con ${ar(coll[0].x.b)}: un abbinamento collaudato, che nell’archivio torna in ${coll[0].n} ricette.`
+    : `${Maiusc(ar(P.b))} con ${ar(coll[0].x.b)} e con ${ar(coll[1].x.b)}: abbinamenti collaudati, che nell’archivio tornano in ${coll[0].n} e ${coll[1].n} ricette.`});
+  /* 3) equilibrio dei sapori (lezione) */
+  const ac = altri.find(x=>x.g === "agrume" || (x.g === "acido" && x.k !== "vino bianco"));
+  const ricco = altri.find(x=>["salume","cremoso","filante","grattugia","salsiccia"].includes(x.g)) || (["salmone","sgombro","maiale","lonza di maiale","agnello","sarde","alici fresche","salsiccia"].includes(P.b) ? P : null);
+  if(ac && ricco) out.push({tipo:"equilibrio", testo:`L’acidità ${di_(ac.b)} alleggerisce la ricchezza ${di_(ricco.b)}: è uno degli equilibri della lezione sui sapori.`});
+  const cr = altri.find(x=>x.g === "fruttaSecca" || x.g === "pangrattato");
+  if(cr) out.push({tipo:"equilibrio", testo:`${Maiusc(nomeC(cr))} ${invGn(cr).endsWith("p") ? "danno" : "dà"} il croccante: un piatto è più interessante quando morbido e croccante si alternano.`});
+  const dl = altri.find(x=>x.g === "dolce" || x.g === "fruttaEssiccata"), am = altri.concat([P]).find(x=>["radicchio","cicoria","puntarelle","rucola","scarola"].includes(x.b));
+  if(dl && am) out.push({tipo:"equilibrio", testo:`Il dolce ${di_(dl.b)} ammorbidisce l’amaro ${di_(am.b)}.`});
+  else if(dl && ac) out.push({tipo:"equilibrio", testo:`${Maiusc(ar(dl.b))} e ${ar(ac.b)} insieme fanno un agrodolce: dolce e acido si bilanciano.`});
+  const sp = altri.find(x=>["sapido","conservaPesce","grattugia"].includes(x.g));
+  if(sp && !(ac && ricco)) out.push({tipo:"equilibrio", testo:`${Maiusc(ar(sp.b))} ${invGn(sp).endsWith("p") ? "portano" : "porta"} sapidità e umami, il gusto «pieno» che rende un piatto più saporito senza aggiungere sale.`});
+  if(!out.some(o=>o.tipo === "molecole" || o.tipo === "nuovo")){
+    /* il protagonista non ha molecole in comune con gli altri: cerco la coppia migliore fra gli altri */
+    let best = null;
+    for(let i=0; i<altri.length; i++) for(let j=i+1; j<altri.length; j++){
+      const m = invMolecole(altri[i].b, altri[j].b).filter(INV_DISTINTIVA); if(m.length && (!best || m.length > best.m.length)) best = {a:altri[i], b:altri[j], m};
+    }
+    if(best) out.unshift({tipo: invInsieme(best.a.b, best.b.b) ? "molecole" : "nuovo",
+      testo:`${Maiusc(ar(best.a.b))} e ${ar(best.b.b)} hanno in comune ${best.m.slice(0,2).map(invMolHtml).join(" e ")}: i loro profumi si richiamano e fanno da ponte nel piatto.`});
+  }
+  if(!out.length) out.push({tipo:"equilibrio", testo:`Un piatto semplice: pochi ingredienti, scelti perché stanno bene con ${ar(P.b)}.`});
+  return out;
+}
+/* prova piu' volte (semi diversi) finche' la ricetta rispetta il tavolo e non e' la copia di una gia' in archivio */
+function inventaConTentativi(opz){
+  let ultimo = null;
+  const pool = invDisponibili();
+  for(let t = 0; t < 30; t++){
+    const r = inventaRicetta(Object.assign({}, opz, {seme: (opz.seme || 1) * 7919 + t * 104729, pool}));
+    if(r.errore && !r.riprova) return r;
+    if(r.errore){ ultimo = r; continue; }
+    ultimo = r;
+    if(!adattaAlTavolo(r)) { ultimo = {errore: L("Non trovo una combinazione che vada bene per tutti a tavola: prova a cambiare portata.", "I can’t find a combination that suits everyone at the table: try another course.")}; continue; }
+    if(r._copia) continue;
+    return r;
+  }
+  return ultimo && !ultimo.errore ? ultimo : (ultimo || {errore: invPercheNo(opz.portata)});
+}
+
+/* ===========================================================
+   La pagina "Inventami una ricetta" (dentro "Cosa ti va oggi?")
+   un solo tasto in basso: prima «Inventa la ricetta», poi «Un'altra idea»
+   =========================================================== */
+const INV_LEZ_NOMI = {cotture:"I metodi di cottura", "cotture-mestiere":"Brasare, glassare, gratinare", collagene:"Dal collagene alla gelatina",
+  pesce:"Pulire e sfilettare il pesce", pesci:"Il pesce e i frutti di mare", legumi:"I legumi", risotto:"Il risotto", uova:"Le uova",
+  soffritto:"Il soffritto", sapori:"L’equilibrio dei sapori"};
+function corpoInventa(){
+  const pool = invDisponibili();
+  const protOk = pool.filter(x=>INV_PROTEINE.includes(x.g) || (x.g === "verdura" && !INV_VERD[x.b].acc) || ["cremoso","feta","fruttaFresca"].includes(x.g) || x.b === "salmone affumicato")
+    .sort((a,b)=>a.k.localeCompare(b.k, "it"));
+  if(INV.prot && !protOk.some(x=>x.k === INV.prot)) INV.prot = "";
+  let ris = "";
+  if(INV.errore) ris = `<div class="inv-err" id="invRis">⚠️ ${esc(INV.errore)}</div>`;
+  else if(INVENTATA){
+    const r = INVENTATA;
+    const ic = {nuovo:"✨", molecole:"\u{1F52C}", tradizione:"\u{1F4DA}", equilibrio:"⚖️"};
+    ris = `<div class="inv-ris" id="invRis">
+      <div class="inv-badge">\u{1F9EA} ${L("Ricetta inventata ora: nessuno l’ha ancora cucinata. Assaggia mentre cuoci e aggiusta di sale.","Recipe invented just now: nobody has cooked it yet. Taste as you go and adjust the salt.")}${IN_INGLESE ? "<br><small>The recipe text is in Italian.</small>" : ""}</div>
+      <div class="ric-grid">${scheda(valutaCompleta(r)).replace('<details class="ric', '<details open class="ric')}</div>
+      <div class="inv-perche"><b>\u{1F52C} ${L("Perché dovrebbe funzionare","Why it should work")}</b>
+        <ul>${r._perche.map(x=>`<li><span aria-hidden="true">${ic[x.tipo] || "•"}</span><span data-no-tr>${x.testo}</span></li>`).join("")}</ul>
+        ${r._simile ? `<p class="mini" style="margin-top:8px" data-no-tr>\u{1F46A} ${L("Il parente più vicino nell’archivio è","Its closest relative in the archive is")} «${esc(r._simile.n)}».</p>` : ""}
+        <div class="inv-lez">${r._lezioni.filter(id=>INV_LEZ_NOMI[id]).map(id=>`<button type="button" data-inv-lez="${id}">\u{1F4D6} ${esc(INV_LEZ_NOMI[id])}</button>`).join("")}</div>
+      </div>
+      <button type="button" class="btn inv-salva" id="invSalva">\u{1F4BE} ${L("Tienila tra le tue ricette","Keep it with your recipes")}</button>
+      <p class="mini" style="margin-top:6px">${L("Va in «Aggiungi ricette», tra quelle da convalidare. Quando l’hai cucinata e ti è piaciuta, la convalidi e diventa una ricetta come le altre.","It goes to “Add recipes”, among those to validate. Once you’ve cooked and liked it, validate it and it becomes a recipe like all the others.")}</p>
+    </div>`;
+  }
+  return `<p class="inv-intro">${L("L’app inventa una ricetta nuova con quello che hai in dispensa. Usa tre cose: gli abbinamenti che tornano spesso nelle ricette dell’archivio, gli ingredienti che hanno in comune le stesse molecole del profumo (si chiama foodpairing) e le regole delle lezioni su cotture ed equilibrio dei sapori.","The app invents a new recipe from your pantry, using pairings that recur in the archive, ingredients sharing the same aroma molecules (foodpairing) and the lessons’ rules on cooking and balance of flavours.")}</p>
+    <p class="mini">${L("Niente dolci: in pasticceria le dosi devono essere esatte e non si improvvisano. Rispetta lo stile, le allergie e le regole di chi è a tavola.","No desserts: pastry needs exact quantities. It respects the style, allergies and rules of everyone at the table.")}</p>
+    <div class="inv-sez">${L("Che piatto?","Which course?")}</div>
+    <div class="chips" id="invPort">${INV_PORTATE.map(p=>`<button type="button" class="chip ${INV.portata === p.v ? "on" : ""}" data-v="${p.v}">${p.e} ${L(p.it, p.en)}</button>`).join("")}</div>
+    <div class="inv-sez">${L("Il protagonista","The main ingredient")}</div>
+    <div class="chips" id="invProt">
+      <button type="button" class="chip ${!INV.prot ? "on" : ""}" data-v="">\u{1F3B2} ${L("Decidi tu","You decide")}</button>
+      ${protOk.map(x=>`<button type="button" class="chip ${INV.prot === x.k ? "on" : ""}" data-v="${esc(x.k)}"><span class="ing-em" aria-hidden="true">${emojiIng(x.k)}</span>${esc(nomeIng(x.k))}</button>`).join("")}
+    </div>
+    ${!protOk.length ? `<p class="mini" style="margin-top:6px">${L("In dispensa non c’è niente che possa fare da protagonista: aggiungi verdure, carne, pesce, uova o legumi.","Nothing in the pantry can be the main ingredient: add vegetables, meat, fish, eggs or pulses.")}</p>` : ""}
+    ${ris}`;
+}
+function collegaInventa(){
+  const pag = document.getElementById("boxPag"); if(!pag) return;
+  pag.querySelectorAll("#invPort .chip").forEach(b=>b.onclick=()=>{ INV.portata = b.dataset.v; INVENTATA = null; INV.errore = ""; tappaVoglia(); });
+  pag.querySelectorAll("#invProt .chip").forEach(b=>b.onclick=()=>{ INV.prot = b.dataset.v; INVENTATA = null; INV.errore = ""; tappaVoglia(); });
+  pag.querySelectorAll("[data-inv-lez]").forEach(b=>b.onclick=()=>apriScuola(b.dataset.invLez));
+  const sv = document.getElementById("invSalva"); if(sv) sv.onclick = salvaInventata;
+  /* nella scheda di una ricetta non ancora salvata servono solo «Cuciniamo» e «Aggiungi alla spesa» */
+  const ris = document.getElementById("invRis");
+  if(ris) ris.querySelectorAll(".az-mia, .az-web, .az-piede, .ric-foto").forEach(e=>e.remove());
+}
+function lanciaInventa(){
+  INV.seme = (Date.now() % 1000000) + 1;
+  const r = inventaConTentativi({portata: INV.portata, prot: INV.prot, seme: INV.seme});
+  if(r.errore){ INVENTATA = null; INV.errore = r.errore; }
+  else { INVENTATA = r; INV.errore = ""; }
+  INV.scorri = true;
+  tappaVoglia();
+}
+function salvaInventata(){
+  if(!INVENTATA) return;
+  const r = JSON.parse(JSON.stringify(INVENTATA));
+  ["_perche","_lezioni","_simile","_copia","_txt","_n","_kcal","_clima"].forEach(k=>delete r[k]);
+  INVENTATA = null; INV.errore = "";
+  salvaMia(r);
+}
+
 /* menu a tema non legati a un paese */
 let MS = null;   /* stato del menu speciale aperto: tema, scelte per corso, alternative */
 function candidatiSpeciale(t, cat){
@@ -8544,6 +9859,7 @@ function apriTutto(){
       ["\u{1F4A1}", L("Ho in mente un piatto","I have a dish in mind"), L("Scrivi il nome: l\u2019app ti dice se puoi farlo e cosa ti manca.","Type its name: the app tells you if you can make it and what\u2019s missing."), scegli("idea")],
       ["\u{1F3B2}", L("Lascio scegliere all\u2019app","Let the app choose"), L("Le ricette in ordine di fattibilit\u00e0, con stagione, ora del giorno e tempo che hai.","Recipes by feasibility, taking season, time of day and time available into account."), scegli("app")],
       ["\u267B\uFE0F", L("Devo consumare","I need to use up"), L("Scegli gli ingredienti da non sprecare: avanzi, cose in scadenza.","Choose the ingredients not to waste: leftovers, things about to expire."), scegli("recupero")],
+      ["\u{1F9EA}", L("Inventami una ricetta","Invent me a recipe"), L("Una ricetta nuova, pensata sul momento con quello che hai: abbinamenti collaudati dell\u2019archivio, molecole aromatiche in comune (il foodpairing) e le regole delle lezioni. Ti dice anche perch\u00e9 dovrebbe funzionare.","A brand-new recipe made up on the spot from what you have: proven pairings from the archive, shared aroma molecules (foodpairing) and the rules from the lessons. It also tells you why it should work."), scegli("inventa")],
       ["\u{1F30D}", L("Menu a tema","Themed menu"), L("Un menu completo, dall\u2019antipasto al dolce: per paese, di mare, di terra, leggero, delle feste.","A full menu, from starter to dessert: by country, seafood, meat, light, festive."), scegli("tema")],
       ["\u{1F4C6}", L("Menu della settimana","This week\u2019s menu"), L("Scegli le ricette dei prossimi giorni e fai una spesa sola.","Pick the recipes for the coming days and shop once."), chiudiE(()=>apriMenuSett())],
       ["\u{1F6D2}", L("Lista della spesa","Shopping list"), L("Si riempie da sola con quello che manca; si accende in prima pagina quando c\u2019\u00e8 qualcosa.","Fills itself with what\u2019s missing; lights up on the home page when it has items."), chiudiE(()=>apriSpesa())]]],
@@ -9800,11 +11116,11 @@ function scriviVersione(v){
   document.querySelectorAll(".perche-agg b").forEach(b=>{ b.textContent = v; });
 }
 /* la versione di QUESTO codice: si aggiorna insieme al service worker a ogni rilascio (stessa sigla) */
-var VERSIONE_APP = "checucino-v315".replace("checucino-", "");
+var VERSIONE_APP = "checucino-v316".replace("checucino-", "");
 /* numero di versione "ufficiale" (versionamento semantico, MAGGIORE.MINORE.CORREZIONE):
    2.0.0 = il percorso a tappe (build 260); MINORE sale con una funzione nuova, CORREZIONE con un ritocco o un errore corretto.
    La build (vNNN) resta sotto, per il service worker e per capire quale e' piu' nuova. */
-var NOME_VERSIONE = "2.31.0";
+var NOME_VERSIONE = "2.32.0";
 var verOnlineNome = "";
 function etichetta(v){ return v === VERSIONE_APP ? "v" + NOME_VERSIONE : (v && v === verOnlineNota && verOnlineNome) ? "v" + verOnlineNome : v; }
 function versioneMia(){ return VERSIONE_APP || ((document.querySelector("#infoBtn .ver") || {}).textContent || "").trim(); }
