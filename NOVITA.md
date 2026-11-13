@@ -10,6 +10,7 @@ Accanto c'è la *build* (vNNN), il numero interno che serve al telefono per capi
 
 | Versione | Build | Data | Cosa cambia |
 |---|---|---|---|
+| 2.34.0 | v320 | 13/11/2026 | «Inventami una ricetta»: nuova scelta «Gli ingredienti» — 🏠 Solo quelli che ho, 🛒 Posso comprarne uno o due, 🛍️ Scelta libera (tutto ciò che l’app conosce, sempre di stagione); gli ingredienti da comprare sono elencati in cima e segnati nella ricetta, pronti per «Aggiungi alla spesa»; corretti alcuni accenti scelti ma non usati nei passi (spezie nei secondi in padella, tonno sott’olio nella pasta, agrumi nel cartoccio, dolce nell’agnello e nel coniglio, erbe nelle seppie in umido) |
 | 2.33.0 | v319 | 12/11/2026 | «Inventami una ricetta» impara dai voti: il voto dato a una ricetta inventata (con «Voto e nota» o alla fine di «Cuciniamo») fa tornare più spesso gli abbinamenti piaciuti e quasi sparire quelli bocciati; pasta, riso e soffritto non contano; il gusto resta sul telefono di ciascuno; nel «Perché dovrebbe funzionare» compare quando un abbinamento ti è già piaciuto |
 | 2.32.2 | v318 | 12/11/2026 | «Inventami una ricetta»: guanciale, pancetta e speck si rosolano a parte finché sono croccanti e si uniscono alla fine (non più crudi nel sugo o nella zuppa); nelle zuppe il loro grasso fa da base al soffritto |
 | 2.32.1 | v317 | 12/11/2026 | «Inventami una ricetta»: la ricetta inventata ora si legge anche con lo sfondo scuro (prima il testo era scuro su scuro) |
